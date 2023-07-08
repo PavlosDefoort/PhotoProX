@@ -336,7 +336,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                 <MenuItem value={"custom"}>Custom</MenuItem>
               </Select>
               <Select value={scaleOption} onChange={handleScaleChanged}>
-                <MenuItem value={"none"}>Don't Scale</MenuItem>
+                <MenuItem value={"none"}>Do not Scale</MenuItem>
                 <MenuItem value={"some"}>Scale if too big</MenuItem>
                 <MenuItem value={"all"}>Scale Anyways</MenuItem>
               </Select>
