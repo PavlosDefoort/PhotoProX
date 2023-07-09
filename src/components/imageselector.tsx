@@ -5,6 +5,7 @@ import { Slider } from "@mui/material";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material";
+import configurationsObject from "./configurations.json";
 
 type ImageSelectHandler = (
   selectedImage: HTMLImageElement | string | ArrayBuffer | null,
@@ -39,51 +40,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
     };
   }
 
-  const configurations: Configurations = {
-    highquality: {
-      maxSizeMB: 2,
-      maxWidthOrHeight: 1920,
-      useWebWorker: true,
-      fileType: "image/jpeg",
-    },
-    performance: {
-      maxSizeMB: 0.5,
-      maxWidthOrHeight: 1280,
-      useWebWorker: true,
-      fileType: "image/jpeg",
-    },
-    lowquality: {
-      maxSizeMB: 0.1,
-      maxWidthOrHeight: 720,
-      useWebWorker: true,
-      fileType: "image/jpeg",
-    },
-    potato: {
-      maxSizeMB: 0.05,
-      maxWidthOrHeight: 480,
-      useWebWorker: true,
-      fileType: "image/jpeg",
-    },
-
-    ultraquality: {
-      maxSizeMB: 4,
-      maxWidthOrHeight: 2560,
-      useWebWorker: true,
-      fileType: "image/jpeg",
-    },
-    maxquality: {
-      maxSizeMB: 10,
-      maxWidthOrHeight: 3840,
-      useWebWorker: true,
-      fileType: "image/jpeg",
-    },
-    godquality: {
-      maxSizeMB: 5,
-      maxWidthOrHeight: 7680,
-      useWebWorker: true,
-      fileType: "image/png",
-    },
-  };
+  const configurations: Configurations = configurationsObject;
+  console.log(configurations);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();

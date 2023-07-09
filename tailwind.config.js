@@ -15,6 +15,10 @@ module.exports = {
       },
     },
   },
-  plugins: [require("flowbite/plugin"), require("tw-elements/dist/plugin.cjs")],
+  plugins: [
+    require("flowbite/plugin"),
+    require("tw-elements/dist/plugin.cjs"),
+    require("tailwindcss-animated"),
+  ],
   darkMode: "class",
 };
