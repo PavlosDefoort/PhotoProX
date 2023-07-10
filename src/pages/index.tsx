@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google";
 
 import dynamic from "next/dynamic";
 import { colors } from "@mui/material";
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,7 +20,7 @@ const AnimatedCursor = dynamic(() => import("react-animated-cursor"), {
 export default function Home() {
   return (
     <main
-      className={`z-0 bg-gradient-to-r from-[#f2709c] to-[#ff9472] flex flex-col min-h-screen items-center justify-center p-24 ${poppins.className}`}
+      className={`z-0 bg-gradient-to-t from-[#f2709c] to-[#ff9472] flex flex-col min-h-screen items-center justify-center p-24 ${poppins.className}`}
     >
       <AnimatedCursor
         innerSize={15}
@@ -29,10 +30,11 @@ export default function Home() {
         innerScale={0.7}
         outerScale={3}
       />
-      <div className="absolute top-0 right-0 mt-4 mr-14 flex">
+
+      <div className="animate-jump absolute top-0 right-0 mt-4 mr-14 flex ">
         <a href="https://github.com/PavlosDefoort/PhotoProX" className="pr-4">
           <svg
-            className="w-6 h-6  text-gray-800 dark:text-white "
+            className="w-6 h-6  text-gray-800 dark:text-white hover:animate-bounce"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
@@ -48,7 +50,7 @@ export default function Home() {
         </a>
         <a href="https://www.linkedin.com/in/pavlos-defoort-04a93b223/">
           <svg
-            className="w-6 h-6 text-gray-800 dark:text-white"
+            className="w-6 h-6 text-gray-800 dark:text-white hover:animate-bounce"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
@@ -65,11 +67,22 @@ export default function Home() {
         </a>
       </div>
 
-      <div className="animate-fade relative flex flex-col items-center justify-center text-center">
-        <h1 className="text-7xl text-white">Introducing: PhotoProX</h1>
-        <p className="pt-2 text-2xl text-white">
-          Make Ordinary Photos Look Extraordinary
+      <div className="animate-fade relative flex flex-col items-center justify-center text-center ">
+        <h1 className=" text-7xl font-medium text-transparent bg-clip-text bg-gradient-to-t from-white to-teal-50 leading-tight">
+          Introducing: PhotoProX
+        </h1>
+        <p className="pt-2 text-3xl text-white font-light ">
+          Make <span style={{ color: "white" }}>Ordinary</span> Photos Look{" "}
+          <span style={{ color: "white" }}>Extraordinary</span>
         </p>
+        <Link href="/editor">
+          <button
+            type="button"
+            className="mt-8  text-slate-200 hover:text-black border border-slate-200 hover:bg-slate-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800 hover:animate-jump"
+          >
+            Start Editing
+          </button>
+        </Link>
       </div>
       {/* <div
         className="absolute inset-x-0 -top-40 z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
@@ -83,6 +96,17 @@ export default function Home() {
           }}
         />
       </div> */}
+      <footer className="animate-fade rounded-lg shadow  fixed bottom-0 left-0 w-full dark:bg-gray-800">
+        <div className="w-full mx-auto max-w-screen-xl p-4 md:flex md:items-center md:justify-center">
+          <span className="text-sm text-gray-100 sm:text-center dark:text-gray-100">
+            © 2023{" "}
+            <Link href="/" className="hover:underline">
+              PhotoProX
+            </Link>
+            . All Rights Reserved.
+          </span>
+        </div>
+      </footer>
     </main>
   );
 }
