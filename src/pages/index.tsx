@@ -2,7 +2,6 @@ import Image from "next/image";
 import { Inter } from "next/font/google";
 import { Poppins } from "next/font/google";
 
-import dynamic from "next/dynamic";
 import { colors } from "@mui/material";
 import Link from "next/link";
 
@@ -13,24 +12,11 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-const AnimatedCursor = dynamic(() => import("react-animated-cursor"), {
-  ssr: false,
-});
-
 export default function Home() {
   return (
     <main
       className={`z-0 bg-gradient-to-t from-[#f2709c] to-[#ff9472] flex flex-col min-h-screen items-center justify-center p-24 ${poppins.className}`}
     >
-      <AnimatedCursor
-        innerSize={15}
-        outerSize={15}
-        color="255, 255 ,255"
-        outerAlpha={0.4}
-        innerScale={0.7}
-        outerScale={3}
-      />
-
       <div className="animate-jump absolute top-0 right-0 mt-4 mr-14 flex ">
         <a href="https://github.com/PavlosDefoort/PhotoProX" className="pr-4">
           <svg

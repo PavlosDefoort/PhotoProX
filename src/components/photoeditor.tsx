@@ -218,92 +218,100 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     link.click();
   };
 
-  const handleScroll = (event: WheelEvent) => {
-    // Pinch gestures usually trigger the ctrlKey or metaKey modifier
-    const isPinchGesture = event.ctrlKey || event.metaKey;
-    if (isPinchGesture) {
-      return; // Ignore the event if it's a pinch gesture
-    }
-
-    if (!isZooming) {
-      event.preventDefault();
-
-      // Adjust the width and height based on the rotation (absolute rotation matrix)
-      const newWidth =
-        Math.abs(realNaturalWidth * Math.cos((rotateValue * Math.PI) / 180)) +
-        Math.abs(realNaturalHeight * Math.sin((rotateValue * Math.PI) / 180));
-      const newHeight =
-        Math.abs(realNaturalWidth * Math.sin((rotateValue * Math.PI) / 180)) +
-        Math.abs(realNaturalHeight * Math.cos((rotateValue * Math.PI) / 180));
-
-      const maxOffsetLimit = Math.abs((newHeight * zoomValue - 1400) / 2);
-      const maxOffsetLimitX = Math.abs((newWidth * zoomValue - 2800) / 2);
-
-      // Calculate the maximum vertical offset based on the zoom level (prevent scrolling past the edges of the image)
-      const maxVerticalOffset = Math.min(
-        Math.max(0, newHeight * zoomValue - 1400),
-        maxOffsetLimit
-      );
-      const maxHorizontalOffset = Math.min(
-        Math.max(0, newWidth * zoomValue - 2800),
-        maxOffsetLimitX
-      );
-      const zoomSpeed = 100; // Adjust the zoom speed as needed
-      const deltaY = -event.deltaY; // Get the direction of the vertical scroll (negative to zoom in, positive to zoom out)
-      const deltaX = -event.deltaX; // Get the direction of the horizontal scroll (negative to pan left, positive to pan right)
-      const zoom = deltaY > 0 ? zoomSpeed : -zoomSpeed;
-      const zoomX = deltaX > 0 ? zoomSpeed : -zoomSpeed;
-      let newScaleFactor = fake;
-      let newScaleFactorX = fakeX;
-
-      if (deltaY !== 0) {
-        // Zoom vertically
-        if (zoom > 0) {
-          newScaleFactor = Math.min(
-            fake + zoom,
-            maxVerticalOffset !== 0
-              ? maxVerticalOffset + 100
-              : maxVerticalOffset
-          );
-        } else {
-          newScaleFactor = Math.max(
-            fake + zoom,
-            -maxVerticalOffset !== 0
-              ? -maxVerticalOffset - 100
-              : -maxVerticalOffset
-          );
-        }
-      } else if (deltaX !== 0) {
-        // Pan horizontally
-        if (zoomX > 0) {
-          newScaleFactorX = Math.min(
-            fakeX + zoomX,
-            maxHorizontalOffset !== 0
-              ? maxHorizontalOffset + 100
-              : maxHorizontalOffset
-          );
-        } else {
-          newScaleFactorX = Math.max(
-            fakeX + zoomX,
-            -maxHorizontalOffset !== 0
-              ? -maxHorizontalOffset - 100
-              : -maxHorizontalOffset
-          );
-        }
+  useEffect(() => {
+    const handleScroll = (event: WheelEvent) => {
+      // Pinch gestures usually trigger the ctrlKey or metaKey modifier
+      const isPinchGesture = event.ctrlKey || event.metaKey;
+      if (isPinchGesture) {
+        return; // Ignore the event if it's a pinch gesture
       }
 
-      setFake(newScaleFactor);
-      setFakeX(newScaleFactorX);
-    }
-  };
+      if (!isZooming) {
+        event.preventDefault();
 
-  useEffect(() => {
+        // Adjust the width and height based on the rotation (absolute rotation matrix)
+        const newWidth =
+          Math.abs(realNaturalWidth * Math.cos((rotateValue * Math.PI) / 180)) +
+          Math.abs(realNaturalHeight * Math.sin((rotateValue * Math.PI) / 180));
+        const newHeight =
+          Math.abs(realNaturalWidth * Math.sin((rotateValue * Math.PI) / 180)) +
+          Math.abs(realNaturalHeight * Math.cos((rotateValue * Math.PI) / 180));
+
+        const maxOffsetLimit = Math.abs((newHeight * zoomValue - 1400) / 2);
+        const maxOffsetLimitX = Math.abs((newWidth * zoomValue - 2800) / 2);
+
+        // Calculate the maximum vertical offset based on the zoom level (prevent scrolling past the edges of the image)
+        const maxVerticalOffset = Math.min(
+          Math.max(0, newHeight * zoomValue - 1400),
+          maxOffsetLimit
+        );
+        const maxHorizontalOffset = Math.min(
+          Math.max(0, newWidth * zoomValue - 2800),
+          maxOffsetLimitX
+        );
+        const zoomSpeed = 100; // Adjust the zoom speed as needed
+        const deltaY = -event.deltaY; // Get the direction of the vertical scroll (negative to zoom in, positive to zoom out)
+        const deltaX = -event.deltaX; // Get the direction of the horizontal scroll (negative to pan left, positive to pan right)
+        const zoom = deltaY > 0 ? zoomSpeed : -zoomSpeed;
+        const zoomX = deltaX > 0 ? zoomSpeed : -zoomSpeed;
+        let newScaleFactor = fake;
+        let newScaleFactorX = fakeX;
+
+        if (deltaY !== 0) {
+          // Zoom vertically
+          if (zoom > 0) {
+            newScaleFactor = Math.min(
+              fake + zoom,
+              maxVerticalOffset !== 0
+                ? maxVerticalOffset + 100
+                : maxVerticalOffset
+            );
+          } else {
+            newScaleFactor = Math.max(
+              fake + zoom,
+              -maxVerticalOffset !== 0
+                ? -maxVerticalOffset - 100
+                : -maxVerticalOffset
+            );
+          }
+        } else if (deltaX !== 0) {
+          // Pan horizontally
+          if (zoomX > 0) {
+            newScaleFactorX = Math.min(
+              fakeX + zoomX,
+              maxHorizontalOffset !== 0
+                ? maxHorizontalOffset + 100
+                : maxHorizontalOffset
+            );
+          } else {
+            newScaleFactorX = Math.max(
+              fakeX + zoomX,
+              -maxHorizontalOffset !== 0
+                ? -maxHorizontalOffset - 100
+                : -maxHorizontalOffset
+            );
+          }
+        }
+
+        setFake(newScaleFactor);
+        setFakeX(newScaleFactorX);
+      }
+    };
+
     window.addEventListener("wheel", handleScroll, { passive: false });
 
     return () => {
       window.removeEventListener("wheel", handleScroll);
     };
-  }, [fake, fakeX, isZooming, zoomValue]);
+  }, [
+    fake,
+    fakeX,
+    isZooming,
+    zoomValue,
+    realNaturalHeight,
+    realNaturalWidth,
+    rotateValue,
+  ]);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -321,7 +329,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       canvasHeight / realNaturalHeight
     );
     setZoomValue(scale);
-  }, [imageData]);
+  }, [imageData, realNaturalWidth, realNaturalHeight]);
 
   useEffect(() => {
     if (previousZoom > zoomValue) {
@@ -333,7 +341,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       }
     }
     setPreviousZoom(zoomValue);
-  }, [zoomValue]);
+  }, [zoomValue, fake, fakeX, previousZoom]);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -487,9 +495,15 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     fake,
     fakeX,
     zoomValue,
+    firstRender,
+    realNaturalWidth,
+    realNaturalHeight,
+    isUndoable,
+    undoStack,
+    maxUndoStackSize,
   ]);
 
-  const undoAction = async () => {
+  const undoAction = useCallback(async () => {
     if (undoStack.length <= 1) {
       return; // No actions to undo
     }
@@ -524,9 +538,20 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         resolve();
       }, 0);
     });
-  };
+  }, [
+    undoStack,
+    setIsUndoable,
+    setRotateValue,
+    setSkewXValue,
+    setSkewYValue,
+    setScaleFactor,
+    setTranslateXValue,
+    setTranslateYValue,
+    setRedoStack,
+    redoStack,
+  ]);
 
-  const redoAction = async () => {
+  const redoAction = useCallback(async () => {
     if (redoStack.length === 0) {
       return; // No actions to redo
     }
@@ -557,7 +582,19 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         resolve();
       }, 0);
     });
-  };
+  }, [
+    redoStack,
+    setIsUndoable,
+    setRotateValue,
+    setSkewXValue,
+    setSkewYValue,
+    setScaleFactor,
+    setTranslateXValue,
+    setTranslateYValue,
+    setUndoStack,
+    setRedoStack,
+    undoStack,
+  ]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
