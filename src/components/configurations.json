@@ -36,9 +36,9 @@
     "fileType": "image/jpeg"
   },
   "godquality": {
-    "maxSizeMB": 5,
+    "maxSizeMB": 4,
     "maxWidthOrHeight": 7680,
     "useWebWorker": true,
-    "fileType": "image/png"
+    "fileType": "image/jpeg"
   }
 }

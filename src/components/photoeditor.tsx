@@ -349,6 +349,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     const ctx = canvas.getContext("2d")!;
 
     // const pica = require("pica")();
+
     const image = new Image();
 
     const canvasWidth = 2800;
@@ -369,8 +370,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       // offscreenCanvas.width = image.width;
       // offscreenCanvas.height = image.height;
       // await pica.resize(image, offscreenCanvas, {
-      //   unsharpAmount: 150,
-      //   unsharpRadius: 0.8,
+      //   unsharpAmount: 160,
+      //   unsharpRadius: 0.5,
       //   unsharpThreshold: 2,
       // });
 
@@ -422,6 +423,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         0
       );
 
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
       // Adjust the position based on the rotation (rotation matrix)
       const adjustedX =
         imageX +
@@ -465,7 +469,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
         image.src = imgSrc;
       }
-    }, 0);
+    }, 1);
 
     debouncedEffect();
 
