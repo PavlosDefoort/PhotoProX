@@ -60,7 +60,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
       useWebWorker: boolean;
       fileType: string;
       onProgress?: (progress: number) => void;
-      // Other properties
+      // Other propertiess
     };
   }
 
