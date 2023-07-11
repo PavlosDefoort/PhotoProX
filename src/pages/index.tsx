@@ -15,9 +15,9 @@ const poppins = Poppins({
 export default function Home() {
   return (
     <main
-      className={`z-0 bg-gradient-to-t from-[#f2709c] to-[#ff9472] flex flex-col min-h-screen items-center justify-center p-24 ${poppins.className}`}
+      className={`z-0 bg-gradient-to-t from-[#f2709c] to-[#ff9472] flex flex-col min-h-screen items-center justify-center  ${poppins.className}`}
     >
-      <div className="animate-jump absolute top-0 right-0 mt-4 mr-14 flex ">
+      <div className="animate-jump absolute top-0 right-0 mt-4 mr-14 flex">
         <a href="https://github.com/PavlosDefoort/PhotoProX" className="pr-4">
           <svg
             className="w-6 h-6  text-gray-800 dark:text-white hover:animate-bounce"
@@ -53,11 +53,14 @@ export default function Home() {
         </a>
       </div>
 
-      <div className="animate-fade relative flex flex-col items-center justify-center text-center ">
-        <h1 className=" text-7xl font-medium text-transparent bg-clip-text bg-gradient-to-t from-white to-teal-50 leading-tight">
+      <div className="animate-fade relative flex flex-col items-center justify-center text-center">
+        <h1
+          className="text-5xl md:text-7xl sm:text-5xl font-medium text-transparent bg-clip-text bg-gradient-to-t from-white to-teal-50 leading-tight"
+          style={{ lineHeight: "1.5" }}
+        >
           Introducing: PhotoProX
         </h1>
-        <p className="pt-2 text-3xl text-white font-light ">
+        <p className="pt-2 md:text-3xl sm:text-lg text-white font-light ">
           Make <span style={{ color: "white" }}>Ordinary</span> Photos Look{" "}
           <span style={{ color: "white" }}>Extraordinary</span>
         </p>
@@ -83,7 +86,7 @@ export default function Home() {
         />
       </div> */}
       <footer className="animate-fade rounded-lg shadow  fixed bottom-0 left-0 w-full dark:bg-gray-800">
-        <div className="w-full mx-auto max-w-screen-xl p-4 md:flex md:items-center md:justify-center">
+        <div className="w-full mx-auto max-w-screen-xl p-4 flex items-center justify-center ">
           <span className="text-sm text-gray-100 sm:text-center dark:text-gray-100">
             © 2023{" "}
             <Link href="/" className="hover:underline">
