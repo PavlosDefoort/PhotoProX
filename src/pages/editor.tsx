@@ -2,11 +2,7 @@ import React from "react";
 import PhotoEditor from "../components/photoeditor";
 import ImageSelector from "../components/imageselector";
 import { useState } from "react";
-import { Inter } from "next/font/google";
-import TextField from "@mui/material/TextField";
 import { Poppins } from "next/font/google";
-
-const inter = Inter({ subsets: ["latin"] });
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -41,44 +37,6 @@ export default function Editor({}) {
     setRealHeight(realHit);
     setFileName(fileName);
   };
-
-  // useEffect(() => {
-  //   const urlParams = new URLSearchParams(window.location.search);
-
-  //   if (urlParams.has("imageUrl")) {
-  //     const imageUrl = urlParams.get("imageUrl");
-  //     const imageTitle = urlParams.get("imageTitle");
-
-  //     const loadImageAndSetDataUrl = async () => {
-  //       const target = await createFileFromImageUrl(imageUrl, imageTitle);
-  //       // setCrop(undefined);
-  //       const reader = new FileReader();
-  //       reader.addEventListener("load", () =>
-  //         setImgSrc(reader.result ? reader.result.toString() : "")
-  //       );
-  //       reader.readAsDataURL(target);
-  //     };
-
-  //     loadImageAndSetDataUrl();
-  //   }
-  // }, []);
-
-  // const createFileFromImageUrl = async (imageUrl, imageTitle) => {
-  //   // Specify the desired file name here
-
-  //   // Create the API URL
-  //   const apiUrl = `/api/proxy?url=${encodeURIComponent(imageUrl)}`;
-  //   try {
-  //     const response = await fetch(apiUrl);
-  //     const blobData = await response.blob();
-  //     const lastModified = Date.now();
-  //     const file = new File([blobData], imageTitle, { lastModified });
-
-  //     return file;
-  //   } catch (e) {
-  //     console.log(e);
-  //   }
-  // }
 
   return (
     <main className={`${poppins.className}`}>
