@@ -804,7 +804,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                     onClick={() => handleModeChange("crop")}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                    sx={{ color: blue[100] }}
                   ></CropIcon>
                 </a>
               </li>
@@ -815,7 +814,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                     onClick={handleDownload}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                    sx={{ color: blue[100] }}
                   ></DownloadIcon>
                 </a>
               </li>
@@ -825,7 +823,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                     onClick={() => handleModeChange("transform")}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-300"
-                    sx={{ color: blue[200] }}
                   ></ControlCameraIcon>
                 </a>
               </li>
@@ -835,7 +832,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                     onClick={() => handleModeChange("adjust")}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                    sx={{ color: blue[100] }}
                   ></AutoAwesomeIcon>
                 </a>
               </li>
@@ -845,7 +841,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                     onClick={() => handleModeChange("none")}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                    sx={{ color: blue[100] }}
                   ></SettingsIcon>
                 </a>
               </li>
@@ -861,7 +856,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                   <RestartAltIcon
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                    sx={{ color: red[500] }}
                   />
                 </a>
               </li>
