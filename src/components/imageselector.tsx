@@ -1,4 +1,4 @@
-import React, { HtmlHTMLAttributes, use, useEffect } from "react";
+import React, { HtmlHTMLAttributes, use, useEffect, ChangeEvent } from "react";
 import imageCompression from "browser-image-compression";
 import { useState, useCallback } from "react";
 import { Slider } from "@mui/material";
@@ -6,7 +6,7 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material";
 import configurationsObject from "./configurations.json";
-import { set } from "lodash";
+
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -14,6 +14,10 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Button from "@mui/material/Button";
 import NextImage from "next/image";
+import TextField from "@mui/material/TextField";
+import { debounce, set } from "lodash";
+import { blue } from "@mui/material/colors";
+import CircularProgress from "@mui/material/CircularProgress";
 
 type ImageSelectHandler = (
   selectedImage: HTMLImageElement | string | ArrayBuffer | null,
@@ -37,7 +41,13 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   const [scaleOption, setScaleOption] = useState("all");
   const [compressImage, setCompressImage] = useState(true);
   const [currentPhoto, setCurrentPhoto] = useState<File | null>(null);
+  const [currentPhotoUrl, setCurrentPhotoUrl] = useState("");
+  const [tempPhoto, setTempPhoto] = useState<File | null>(null);
+  const [submitted, setSubmitted] = useState(false);
   const [open, setOpen] = useState(false);
+  const [openUrl, setOpenUrl] = useState(false);
+  const [urlString, setUrlString] = useState("");
+  const [searching, setSearching] = useState(false);
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -46,6 +56,14 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   const handleClose = () => {
     setOpen(false);
     setCompressImage(false);
+  };
+
+  const handleClickOpenUrl = () => {
+    setOpenUrl(true);
+  };
+
+  const handleCloseUrl = () => {
+    setOpenUrl(false);
   };
 
   const agreeCompression = () => {
@@ -108,7 +126,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   );
 
   const configurations: Configurations = configurationsObject;
-  console.log(configurations);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -221,6 +238,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
       } else {
         setCompressImage(false);
       }
+      console.log(imageFile);
       setCurrentPhoto(imageFile);
     }
   };
@@ -231,6 +249,90 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
   const handleScaleChanged = (e: SelectChangeEvent<string>) => {
     setScaleOption(e.target.value);
+  };
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setUrlString(event.target.value);
+  };
+
+  useEffect(() => {
+    setTempPhoto(null);
+    const createFileFromImageUrl = async (
+      imageUrl: string,
+      imageTitle: string
+    ) => {
+      const apiUrl = `/api/proxy?url=${encodeURIComponent(imageUrl)}`;
+      try {
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+          throw new Error("Proxy request failed");
+        }
+
+        const blobData = await response.blob();
+        const lastModified = Date.now();
+        const file = new File([blobData], imageTitle, {
+          lastModified,
+          type: "image",
+        });
+
+        return file;
+      } catch (e) {
+        console.log(e);
+        return undefined;
+      }
+    };
+
+    const loadImageAndSetDataUrl = async () => {
+      if (urlString.length > 0) {
+        const target = await createFileFromImageUrl(urlString, "image.png");
+        if (target) {
+          setLoadingImage(true);
+          const reader = new FileReader();
+          reader.addEventListener("load", () =>
+            setCurrentPhotoUrl(reader.result ? reader.result.toString() : "")
+          );
+          reader.readAsDataURL(target);
+          console.log(target);
+          if (target.size / 1024 / 1024 > 5) {
+            console.log("Image is larger than 5MB");
+            setCompressImage(true);
+            setOpen(true);
+          } else {
+            setCompressImage(false);
+          }
+          setCurrentPhoto(target);
+        }
+      }
+    };
+
+    if (submitted) {
+      loadImageAndSetDataUrl();
+    }
+
+    const debounceEffect = debounce(async () => {
+      setSearching(true);
+      const someFile = await createFileFromImageUrl(urlString, "image.png");
+      console.log(someFile);
+      if (someFile) {
+        console.log("Setting Temp Photo");
+        setTempPhoto(someFile);
+      } else {
+        setTempPhoto(null);
+      }
+      setSearching(false);
+    }, 1000);
+
+    debounceEffect();
+
+    return () => {
+      console.log("Unmounting");
+      debounceEffect.cancel();
+    };
+  }, [urlString, submitted]);
+
+  const handleUrlChange = () => {
+    setSubmitted(true);
   };
 
   return (
@@ -337,7 +439,75 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
             />
           </label>
           <div className="pt-8">
-            <div className="bg-white flex justify-center items-center ">
+            <div className=" flex flex-col  justify-center items-center h-40">
+              <h1 className="text-lg text-gray-100">Have a URL instead? </h1>
+              {/* <div className="flex flex-row">
+               
+                <Button
+                  variant="contained"
+                  onClick={handleUrlChange}
+                  disabled={tempPhoto ? false : true}
+                  sx={{ color: "white" }}
+                >
+                  Submit
+                </Button>
+              </div>
+              {tempPhoto && (
+                <NextImage
+                  src={URL.createObjectURL(tempPhoto)}
+                  className="w-20 h-20 pt-2"
+                  alt="Chosen image"
+                  width="0"
+                  height="0"
+                  sizes="100vw"
+                ></NextImage>
+              )} */}
+              <div>
+                <Button variant="outlined" onClick={handleClickOpenUrl}>
+                  Enter URL
+                </Button>
+                <Dialog open={openUrl} onClose={handleCloseUrl}>
+                  <DialogTitle>Enter Image URL</DialogTitle>
+                  <DialogContent className="flex flex-col justify-center items-center overflow-visible">
+                    <DialogContentText>
+                      Please enter a valid image URL. PhotoProX ensures the
+                      maximum quality of your image.
+                    </DialogContentText>
+                    <TextField
+                      autoFocus={true}
+                      margin="dense"
+                      id="name"
+                      label="Image Address"
+                      type="url"
+                      fullWidth
+                      variant="standard"
+                      value={urlString}
+                      onChange={handleChange}
+                    />
+                    {tempPhoto && (
+                      <NextImage
+                        src={URL.createObjectURL(tempPhoto)}
+                        className=" w-60 pt-2 "
+                        alt="Chosen image"
+                        width="0"
+                        height="0"
+                        sizes="100vw"
+                      ></NextImage>
+                    )}
+                    {searching && <CircularProgress className="pt-2" />}
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={handleCloseUrl}>Cancel</Button>
+                    <Button
+                      onClick={handleUrlChange}
+                      disabled={tempPhoto ? false : true}
+                    >
+                      Submit
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </div>
+
               {/* <Select value={currentConfig} onChange={handleConfigChanged}>
                 <MenuItem value={"potato"}>Very Low Quality</MenuItem>
                 <MenuItem value={"lowquality"}>Low-Quality</MenuItem>

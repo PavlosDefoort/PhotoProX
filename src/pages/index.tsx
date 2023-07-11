@@ -64,7 +64,7 @@ export default function Home() {
         <Link href="/editor">
           <button
             type="button"
-            className="mt-8  text-slate-200 hover:text-black border border-slate-200 hover:bg-slate-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800 hover:animate-jump"
+            className="mt-8  text-slate-100 hover:text-black border border-slate-100 hover:bg-slate-100 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800 hover:animate-jump"
           >
             Start Editing
           </button>

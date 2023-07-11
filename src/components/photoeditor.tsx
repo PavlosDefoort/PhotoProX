@@ -469,7 +469,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
         image.src = imgSrc;
       }
-    }, 1);
+    }, 0);
 
     debouncedEffect();
 

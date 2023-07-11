@@ -3,8 +3,15 @@ import PhotoEditor from "../components/photoeditor";
 import ImageSelector from "../components/imageselector";
 import { useState } from "react";
 import { Inter } from "next/font/google";
+import TextField from "@mui/material/TextField";
+import { Poppins } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"] });
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
 
 export default function Editor({}) {
   const [image, setImage] = useState("");
@@ -14,6 +21,7 @@ export default function Editor({}) {
   const [realHeight, setRealHeight] = useState(0);
   const [fileName, setFileName] = useState("");
   const [scaleOption, setScaleOption] = useState("none");
+  const [urlString, setUrlString] = useState("");
 
   const handleImageSet = (
     selectedImage: HTMLImageElement | string | ArrayBuffer | null,
@@ -34,49 +42,49 @@ export default function Editor({}) {
     setFileName(fileName);
   };
 
-  /* useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+  // useEffect(() => {
+  //   const urlParams = new URLSearchParams(window.location.search);
 
-    if (urlParams.has("imageUrl")) {
-      const imageUrl = urlParams.get("imageUrl");
-      const imageTitle = urlParams.get("imageTitle");
+  //   if (urlParams.has("imageUrl")) {
+  //     const imageUrl = urlParams.get("imageUrl");
+  //     const imageTitle = urlParams.get("imageTitle");
 
-      const loadImageAndSetDataUrl = async () => {
-        const target = await createFileFromImageUrl(imageUrl, imageTitle);
-        // setCrop(undefined);
-        const reader = new FileReader();
-        reader.addEventListener("load", () =>
-          setImgSrc(reader.result ? reader.result.toString() : "")
-        );
-        reader.readAsDataURL(target);
-      };
+  //     const loadImageAndSetDataUrl = async () => {
+  //       const target = await createFileFromImageUrl(imageUrl, imageTitle);
+  //       // setCrop(undefined);
+  //       const reader = new FileReader();
+  //       reader.addEventListener("load", () =>
+  //         setImgSrc(reader.result ? reader.result.toString() : "")
+  //       );
+  //       reader.readAsDataURL(target);
+  //     };
 
-      loadImageAndSetDataUrl();
-    }
-  }, []);
+  //     loadImageAndSetDataUrl();
+  //   }
+  // }, []);
 
-  / 
-  const createFileFromImageUrl = async (imageUrl, imageTitle) => {
-    // Specify the desired file name here
+  // const createFileFromImageUrl = async (imageUrl, imageTitle) => {
+  //   // Specify the desired file name here
 
-    // Create the API URL
-    const apiUrl = `/api/proxy?url=${encodeURIComponent(imageUrl)}`;
-    try {
-      const response = await fetch(apiUrl);
-      const blobData = await response.blob();
-      const lastModified = Date.now();
-      const file = new File([blobData], imageTitle, { lastModified });
+  //   // Create the API URL
+  //   const apiUrl = `/api/proxy?url=${encodeURIComponent(imageUrl)}`;
+  //   try {
+  //     const response = await fetch(apiUrl);
+  //     const blobData = await response.blob();
+  //     const lastModified = Date.now();
+  //     const file = new File([blobData], imageTitle, { lastModified });
 
-      return file;
-    } catch (e) {
-      console.log(e);
-    }
-  };*/
+  //     return file;
+  //   } catch (e) {
+  //     console.log(e);
+  //   }
+  // }
 
   return (
-    <main className={`${inter.className}`}>
+    <main className={`${poppins.className}`}>
       <div>
         {!image && <ImageSelector onImageSelect={handleImageSet} />}
+
         <PhotoEditor
           naturalWidth={width}
           naturalHeight={height}
