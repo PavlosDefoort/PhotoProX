@@ -19,6 +19,14 @@ import { debounce, set } from "lodash";
 import { blue } from "@mui/material/colors";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
+import { Poppins } from "next/font/google";
+import Typography from "@mui/material/Typography";
+import Tooltip from "@mui/material/Tooltip";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
 
 type ImageSelectHandler = (
   selectedImage: HTMLImageElement | string | ArrayBuffer | null,
@@ -338,7 +346,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
   return (
     <div
-      className="flex items-center justify-center w-64 z-10"
+      className={`flex items-center justify-center w-64 z-10 `}
       style={{
         position: "fixed",
         top: "50%",
@@ -370,27 +378,54 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
               aria-labelledby="alert-dialog-title"
               aria-describedby="alert-dialog-description"
             >
-              <DialogTitle id="alert-dialog-title">
+              <DialogTitle
+                id="alert-dialog-title"
+                className={`text-xl ${poppins.className}`}
+              >
                 {"Compress Image?"}
               </DialogTitle>
-              <DialogContent className="flex flex-col justify-center items-center overflow-visible">
-                <DialogContentText id="alert-dialog-description">
+              <DialogContent
+                className={`flex flex-col justify-center items-center overflow-visible `}
+              >
+                <DialogContentText
+                  id="alert-dialog-description"
+                  className={`text-sm ${poppins.className} text-black`}
+                >
                   This image ({(currentPhoto.size / 1024 / 1024).toFixed(2)}MB)
                   is larger than 5MB, which may cause some performance issues.
-                  Would you like to compress it?
+                  Would you like to compress it? (Recommended)
                 </DialogContentText>
 
                 <NextImage
-                  className="pt-2"
+                  className="pt-4"
                   alt="Chosen image"
                   src={URL.createObjectURL(currentPhoto)}
                   width={300} // Set the desired width here
                   height={100} // Set the desired height here
                 ></NextImage>
+                <p className={`pt-2 text-xs ${poppins.className}`}>
+                  Note: You will still be able to download the uncompressed
+                  result
+                </p>
+                {/* <p
+                  className={`text-xs ${poppins.className} items-center justify-center`}
+                >
+                  Note: This compression only applies to the canvas, you will
+                  still be able to download the uncompressed result
+                </p> */}
               </DialogContent>
               <DialogActions sx={{ justifyContent: "center" }}>
-                <Button onClick={handleClose}>Do not compress</Button>
-                <Button onClick={agreeCompression} autoFocus>
+                <Button
+                  onClick={handleClose}
+                  className={`text-sm ${poppins.className}`}
+                >
+                  Do not compress
+                </Button>
+                <Button
+                  onClick={agreeCompression}
+                  autoFocus
+                  className={`text-sm ${poppins.className}`}
+                >
                   Compress
                 </Button>
               </DialogActions>
@@ -439,8 +474,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
               accept=".png,.jpg,.jpeg,.gif,.svg"
             />
           </label>
-          <div className="pt-8">
-            <div className=" flex flex-col  justify-center items-center h-40">
+          <div className="">
+            <div className=" flex flex-row  justify-center items-center h-20">
               <h1 className="text-lg text-gray-100">Have a URL instead? </h1>
               {/* <div className="flex flex-row">
                
@@ -463,18 +498,29 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                   sizes="100vw"
                 ></NextImage>
               )} */}
-              <div>
-                <Button variant="outlined" onClick={handleClickOpenUrl}>
+              <div className="ml-2">
+                <Button
+                  variant="outlined"
+                  onClick={handleClickOpenUrl}
+                  className={`text-sm ${poppins.className}`}
+                >
                   Enter URL
                 </Button>
+              </div>
+              <div>
                 <Dialog open={openUrl} onClose={handleCloseUrl}>
-                  <DialogTitle>Enter Image URL</DialogTitle>
+                  <DialogTitle className={`text-xl ${poppins.className}`}>
+                    Enter Image URL
+                  </DialogTitle>
                   <DialogContent className="flex flex-col justify-center items-center overflow-visible">
-                    <DialogContentText>
+                    <DialogContentText
+                      className={`text-sm ${poppins.className}`}
+                    >
                       Please enter a valid image URL. PhotoProX ensures the
                       maximum quality of your image. Note: URLs that contain
                       images of 4.5MB or greater will be ignored.
                     </DialogContentText>
+
                     <TextField
                       autoFocus={true}
                       margin="dense"
@@ -486,6 +532,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                       value={urlString}
                       onChange={handleChange}
                     />
+
                     {tempPhoto && (
                       <NextImage
                         src={URL.createObjectURL(tempPhoto)}
@@ -502,14 +549,22 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                       </Box>
                     )}
                   </DialogContent>
-                  <DialogActions>
-                    <Button onClick={handleCloseUrl}>Cancel</Button>
+                  <DialogActions sx={{ justifyContent: "center" }}>
                     <Button
-                      onClick={handleUrlChange}
-                      disabled={tempPhoto ? false : true}
+                      onClick={handleCloseUrl}
+                      className={`text-sm ${poppins.className}`}
                     >
-                      Submit
+                      Cancel
                     </Button>
+                    <Tooltip title="Continue with image">
+                      <Button
+                        onClick={handleUrlChange}
+                        disabled={tempPhoto ? false : true}
+                        className={`text-sm ${poppins.className}`}
+                      >
+                        Submit
+                      </Button>
+                    </Tooltip>
                   </DialogActions>
                 </Dialog>
               </div>
