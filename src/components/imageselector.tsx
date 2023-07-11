@@ -285,7 +285,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                   height={100} // Set the desired height here
                 ></NextImage>
               </DialogContent>
-              <DialogActions className="flex flex-row justify-center items-center">
+              <DialogActions sx={{ justifyContent: "center" }}>
                 <Button onClick={handleClose}>Do not compress</Button>
                 <Button onClick={agreeCompression} autoFocus>
                   Compress
