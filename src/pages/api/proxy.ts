@@ -26,4 +26,10 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
+export const config = {
+  api: {
+    responseLimit: false,
+    // responseLimit: '8mb',
+  },
+};
 export default handleRequest;
