@@ -18,6 +18,7 @@ import TextField from "@mui/material/TextField";
 import { debounce, set } from "lodash";
 import { blue } from "@mui/material/colors";
 import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
 
 type ImageSelectHandler = (
   selectedImage: HTMLImageElement | string | ArrayBuffer | null,
@@ -471,7 +472,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                   <DialogContent className="flex flex-col justify-center items-center overflow-visible">
                     <DialogContentText>
                       Please enter a valid image URL. PhotoProX ensures the
-                      maximum quality of your image.
+                      maximum quality of your image. Note: URLs that contain
+                      images of 4.5MB or greater will be ignored.
                     </DialogContentText>
                     <TextField
                       autoFocus={true}
@@ -494,7 +496,11 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                         sizes="100vw"
                       ></NextImage>
                     )}
-                    {searching && <CircularProgress className="pt-2" />}
+                    {searching && (
+                      <Box sx={{ display: "flex" }} padding={2}>
+                        <CircularProgress />
+                      </Box>
+                    )}
                   </DialogContent>
                   <DialogActions>
                     <Button onClick={handleCloseUrl}>Cancel</Button>
