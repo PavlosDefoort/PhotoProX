@@ -520,7 +520,9 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
             </label>
             <div className="">
               <div className=" flex flex-row  justify-center items-center h-20">
-                <h1 className="text-lg text-gray-100">Have a URL instead? </h1>
+                <h1 className="text-base text-gray-100">
+                  Have a URL instead?{" "}
+                </h1>
                 {/* <div className="flex flex-row">
                
                 <Button
@@ -553,8 +555,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                     <DialogContent>
                       <DialogContentText>
                         Please enter a valid image URL. PhotoProX ensures the
-                        maximum quality of your image. Note: URLs that contain
-                        images of 4.5MB or greater will be ignored.
+                        maximum quality of your image.
                       </DialogContentText>
                       <Box sx={{ width: "100%", marginTop: "0.5rem" }}>
                         <TextField
@@ -579,7 +580,10 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                           }} // font size of input label
                         />
                       </Box>
-
+                      <p className="pt-2 text-xs ${poppins.className}">
+                        Note: URLs that contain images of 4.5MB or greater will
+                        be ignored
+                      </p>
                       {tempPhoto && (
                         <NextImage
                           src={URL.createObjectURL(tempPhoto)}
