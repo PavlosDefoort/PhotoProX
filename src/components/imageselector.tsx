@@ -29,59 +29,6 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-const theme = createTheme({
-  components: {
-    MuiDialogContentText: {
-      styleOverrides: {
-        root: {
-          fontFamily: `${poppins.style.fontFamily}`,
-          fontSize: "0.875rem",
-          lineHeight: "1.25rem",
-          color: "#282929",
-        },
-      },
-    },
-    MuiDialogTitle: {
-      styleOverrides: {
-        root: {
-          fontFamily: `${poppins.style.fontFamily}`,
-          fontSize: "1.25rem",
-          lineHeight: "1.75rem",
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          fontFamily: `${poppins.style.fontFamily}`,
-          fontSize: "0.875rem",
-          lineHeight: "1.25rem",
-        },
-      },
-    },
-    MuiDialogContent: {
-      styleOverrides: {
-        root: {
-          fontFamily: `${poppins.style.fontFamily}`,
-          justifyContent: "center",
-          alignItems: "center",
-          overflow: "visible",
-          display: "flex",
-          flexDirection: "column",
-        },
-      },
-    },
-    MuiDialogActions: {
-      styleOverrides: {
-        root: {
-          fontFamily: `${poppins.style.fontFamily}`,
-          justifyContent: "center",
-        },
-      },
-    },
-  },
-});
-
 type ImageSelectHandler = (
   selectedImage: HTMLImageElement | string | ArrayBuffer | null,
   natWidth: number,
@@ -155,7 +102,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
       reader.addEventListener("load", () => {
         const image = new Image();
         image.addEventListener("load", () => {
-          console.log("Loading Image");
           const { naturalWidth, naturalHeight } = image;
           result = reader.result;
 
@@ -197,7 +143,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   useEffect(() => {
     async function compressAndSetPhoto(imageFile: File) {
       if (compressImage) {
-        console.log("Compressing Image");
         let options: {
           maxSizeMB?: number;
           maxWidthOrHeight?: number;
@@ -229,23 +174,19 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
           console.log(
             `compressedFile size ${compressedFile.size / 1024 / 1024} MB`
           ); // smaller than maxSizeMB
-          console.log(compressedFile);
+
           await setPhoto(compressedFile); // write your own logic
         } catch (error) {
           console.log(error);
         }
       } else {
-        console.log("No Compression");
-        console.log(imageFile.size / 1024 / 1024);
         await setPhoto(imageFile); // Load the image without compression
       }
     }
     if (!open) {
       if (currentPhoto && compressImage) {
-        console.log("Compressing Image");
         compressAndSetPhoto(currentPhoto);
       } else if (currentPhoto && !compressImage) {
-        console.log("No Compression");
         setPhoto(currentPhoto);
       }
     }
@@ -272,7 +213,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
       setProgressString("Compressing Image Size...");
       setProgress(progress);
     } else if (progress === 100) {
-      console.log("Done!");
       setProgressString("Done!");
       setProgress(100);
     }
@@ -287,7 +227,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
       (e.target.files && e.target.files.length > 0) ||
       (e.dataTransfer.files && e.dataTransfer.files.length > 0)
     ) {
-      console.log("Loading Image");
       setLoadingImage(true);
 
       const imageFile = e.target?.files?.[0] ?? e.dataTransfer?.files?.[0];
@@ -295,13 +234,12 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
       console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
 
       if (imageFile.size / 1024 / 1024 > 5) {
-        console.log("Image is larger than 5MB");
         setCompressImage(true);
         setOpen(true);
       } else {
         setCompressImage(false);
       }
-      console.log(imageFile);
+
       setCurrentPhoto(imageFile);
     }
   };
@@ -356,9 +294,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
             setCurrentPhotoUrl(reader.result ? reader.result.toString() : "")
           );
           reader.readAsDataURL(target);
-          console.log(target);
+
           if (target.size / 1024 / 1024 > 5) {
-            console.log("Image is larger than 5MB");
             setCompressImage(true);
             setOpen(true);
           } else {
@@ -376,9 +313,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
     const debounceEffect = debounce(async () => {
       setSearching(true);
       const someFile = await createFileFromImageUrl(urlString, "image.png");
-      console.log(someFile);
+
       if (someFile) {
-        console.log("Setting Temp Photo");
         setTempPhoto(someFile);
       } else {
         setTempPhoto(null);
@@ -389,7 +325,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
     debounceEffect();
 
     return () => {
-      console.log("Unmounting");
       debounceEffect.cancel();
     };
   }, [urlString, submitted]);
@@ -399,131 +334,128 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <div
-        className={`flex items-center justify-center w-64 z-10 `}
-        style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
-      >
-        {loadingImage ? (
-          <div>
-            {" "}
-            <div className="flex justify-between mb-2">
-              <span className="text-base  text-white font-bold dark:text-white">
-                {progressString}
-              </span>
-              <span className="text-sm font-bold text-white dark:text-white">
-                {progressValue}%
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-              <div
-                className="bg-blue-600 h-2.5 rounded-full"
-                style={{ width: `${progressValue}%` }}
-              ></div>
-            </div>
-            {currentPhoto && (
-              <Dialog
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-              >
-                <DialogTitle id="alert-dialog-title">
-                  {"Compress Image?"}
-                </DialogTitle>
-                <DialogContent>
-                  <DialogContentText id="alert-dialog-description">
-                    This image ({(currentPhoto.size / 1024 / 1024).toFixed(2)}
-                    MB) is larger than 5MB, which may cause some performance
-                    issues. Would you like to compress it? (Recommended)
-                  </DialogContentText>
+    <div
+      className={`flex items-center justify-center w-64 z-10 `}
+      style={{
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+      }}
+    >
+      {loadingImage ? (
+        <div>
+          {" "}
+          <div className="flex justify-between mb-2">
+            <span className="text-base  text-white font-bold dark:text-white">
+              {progressString}
+            </span>
+            <span className="text-sm font-bold text-white dark:text-white">
+              {progressValue}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full"
+              style={{ width: `${progressValue}%` }}
+            ></div>
+          </div>
+          {currentPhoto && (
+            <Dialog
+              open={open}
+              onClose={handleClose}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+            >
+              <DialogTitle id="alert-dialog-title">
+                {"Compress Image?"}
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                  This image ({(currentPhoto.size / 1024 / 1024).toFixed(2)}
+                  MB) is larger than 5MB, which may cause some performance
+                  issues. Would you like to compress it? (Recommended)
+                </DialogContentText>
 
-                  <NextImage
-                    className="pt-4"
-                    alt="Chosen image"
-                    src={URL.createObjectURL(currentPhoto)}
-                    width={300} // Set the desired width here
-                    height={100} // Set the desired height here
-                  ></NextImage>
-                  <p className={`pt-2 text-xs ${poppins.className}`}>
-                    Note: You will still be able to download the uncompressed
-                    result
-                  </p>
-                  {/* <p
+                <NextImage
+                  className="pt-4"
+                  alt="Chosen image"
+                  src={URL.createObjectURL(currentPhoto)}
+                  width={300} // Set the desired width here
+                  height={100} // Set the desired height here
+                ></NextImage>
+                <p className={`pt-2 text-xs ${poppins.className}`}>
+                  Note: You will still be able to download the uncompressed
+                  result
+                </p>
+                {/* <p
                   className={`text-xs ${poppins.className} items-center justify-center`}
                 >
                   Note: This compression only applies to the canvas, you will
                   still be able to download the uncompressed result
                 </p> */}
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={handleClose} sx={{ color: red[400] }}>
-                    Do not compress
-                  </Button>
-                  <Button
-                    onClick={agreeCompression}
-                    autoFocus
-                    sx={{ color: blue[400] }}
-                  >
-                    Compress
-                  </Button>
-                </DialogActions>
-              </Dialog>
-            )}
-          </div>
-        ) : (
-          <div
-            onDragOver={handleDragOver}
-            onDrop={handleImageChange}
-            className=""
-          >
-            <label
-              htmlFor="dropzone-file"
-              className="hover:animate-jump flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-[#666666] dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-[#7c7c7c] dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
-            >
-              <div className="w-96 flex flex-col items-center justify-center pt-5 pb-6">
-                <svg
-                  aria-hidden="true"
-                  className="w-10 h-10 mb-3 text-gray-100"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleClose} sx={{ color: red[400] }}>
+                  Do not compress
+                </Button>
+                <Button
+                  onClick={agreeCompression}
+                  autoFocus
+                  sx={{ color: blue[400] }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  ></path>
-                </svg>
-                <p className="mb-2 text-sm text-gray-100 dark:text-gray-400">
-                  <span className="font-semibold">Click to upload</span> or drag
-                  and drop
-                </p>
-                <p className="text-xs text-gray-100 dark:text-gray-400">
-                  SVG, PNG, JPG or GIF (MAX. 5MB)
-                </p>
-              </div>
-              <input
-                id="dropzone-file"
-                type="file"
-                className="hidden"
-                onChange={handleImageChange}
-                accept=".png,.jpg,.jpeg,.gif,.svg"
-              />
-            </label>
-            <div className="">
-              <div className=" flex flex-row  justify-center items-center h-20">
-                <h1 className="text-base text-gray-100">
-                  Have a URL instead?{" "}
-                </h1>
-                {/* <div className="flex flex-row">
+                  Compress
+                </Button>
+              </DialogActions>
+            </Dialog>
+          )}
+        </div>
+      ) : (
+        <div
+          onDragOver={handleDragOver}
+          onDrop={handleImageChange}
+          className=""
+        >
+          <label
+            htmlFor="dropzone-file"
+            className="hover:animate-jump flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-[#666666] dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-[#7c7c7c] dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+          >
+            <div className="w-96 flex flex-col items-center justify-center pt-5 pb-6">
+              <svg
+                aria-hidden="true"
+                className="w-10 h-10 mb-3 text-gray-100"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                ></path>
+              </svg>
+              <p className="mb-2 text-sm text-gray-100 dark:text-gray-400">
+                <span className="font-semibold">Click to upload</span> or drag
+                and drop
+              </p>
+              <p className="text-xs text-gray-100 dark:text-gray-400">
+                SVG, PNG, JPG or GIF (MAX. 5MB)
+              </p>
+            </div>
+            <input
+              id="dropzone-file"
+              type="file"
+              className="hidden"
+              onChange={handleImageChange}
+              accept=".png,.jpg,.jpeg,.gif,.svg"
+            />
+          </label>
+          <div className="">
+            <div className=" flex flex-row  justify-center items-center h-20">
+              <h1 className="text-base text-gray-100">Have a URL instead? </h1>
+              {/* <div className="flex flex-row">
                
                 <Button
                   variant="contained"
@@ -544,80 +476,80 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                   sizes="100vw"
                 ></NextImage>
               )} */}
-                <div className="ml-2">
-                  <Button variant="outlined" onClick={handleClickOpenUrl}>
-                    Enter URL
-                  </Button>
-                </div>
-                <div>
-                  <Dialog open={openUrl} onClose={handleCloseUrl}>
-                    <DialogTitle>Enter Image URL</DialogTitle>
-                    <DialogContent>
-                      <DialogContentText>
-                        Please enter a valid image URL. PhotoProX ensures the
-                        maximum quality of your image.
-                      </DialogContentText>
-                      <Box sx={{ width: "100%", marginTop: "0.5rem" }}>
-                        <TextField
-                          autoFocus={true}
-                          margin="dense"
-                          id="name"
-                          label="Image Address"
-                          type="url"
-                          fullWidth
-                          variant="standard"
-                          value={urlString}
-                          onChange={handleChange}
-                          inputProps={{
-                            style: {
-                              fontFamily: `${poppins.style.fontFamily}`,
-                            },
-                          }} // font size of input text
-                          InputLabelProps={{
-                            style: {
-                              fontFamily: `${poppins.style.fontFamily}`,
-                            },
-                          }} // font size of input label
-                        />
+              <div className="ml-2">
+                <Button variant="outlined" onClick={handleClickOpenUrl}>
+                  Enter URL
+                </Button>
+              </div>
+              <div>
+                <Dialog open={openUrl} onClose={handleCloseUrl}>
+                  <DialogTitle>Enter Image URL</DialogTitle>
+                  <DialogContent>
+                    <DialogContentText>
+                      Please enter a valid image URL. PhotoProX ensures the
+                      maximum quality of your image.
+                    </DialogContentText>
+                    <Box sx={{ width: "100%", marginTop: "0.5rem" }}>
+                      <TextField
+                        autoFocus={true}
+                        margin="dense"
+                        id="name"
+                        label="Image Address"
+                        type="url"
+                        fullWidth
+                        variant="standard"
+                        value={urlString}
+                        onChange={handleChange}
+                        inputProps={{
+                          style: {
+                            fontFamily: `${poppins.style.fontFamily}`,
+                          },
+                        }} // font size of input text
+                        InputLabelProps={{
+                          style: {
+                            fontFamily: `${poppins.style.fontFamily}`,
+                          },
+                        }} // font size of input label
+                      />
+                    </Box>
+                    <p className="pt-2 text-xs ${poppins.className}">
+                      Note: URLs that contain images of 4.5MB or greater will be
+                      ignored
+                    </p>
+                    {tempPhoto && (
+                      <NextImage
+                        src={URL.createObjectURL(tempPhoto)}
+                        className=" w-60 pt-2 "
+                        alt="Chosen image"
+                        width="0"
+                        height="0"
+                        sizes="100vw"
+                      ></NextImage>
+                    )}
+                    {searching && (
+                      <Box sx={{ display: "flex" }} padding={2}>
+                        <CircularProgress />
                       </Box>
-                      <p className="pt-2 text-xs ${poppins.className}">
-                        Note: URLs that contain images of 4.5MB or greater will
-                        be ignored
-                      </p>
-                      {tempPhoto && (
-                        <NextImage
-                          src={URL.createObjectURL(tempPhoto)}
-                          className=" w-60 pt-2 "
-                          alt="Chosen image"
-                          width="0"
-                          height="0"
-                          sizes="100vw"
-                        ></NextImage>
-                      )}
-                      {searching && (
-                        <Box sx={{ display: "flex" }} padding={2}>
-                          <CircularProgress />
-                        </Box>
-                      )}
-                    </DialogContent>
-                    <DialogActions>
-                      <Button onClick={handleCloseUrl} sx={{ color: red[400] }}>
-                        Cancel
+                    )}
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={handleCloseUrl} sx={{ color: red[400] }}>
+                      Cancel
+                    </Button>
+                    <Tooltip title="Continue with image">
+                      <Button
+                        onClick={handleUrlChange}
+                        disabled={tempPhoto ? false : true}
+                        sx={{ color: blue[400] }}
+                      >
+                        Submit
                       </Button>
-                      <Tooltip title="Continue with image">
-                        <Button
-                          onClick={handleUrlChange}
-                          disabled={tempPhoto ? false : true}
-                          sx={{ color: blue[400] }}
-                        >
-                          Submit
-                        </Button>
-                      </Tooltip>
-                    </DialogActions>
-                  </Dialog>
-                </div>
+                    </Tooltip>
+                  </DialogActions>
+                </Dialog>
+              </div>
 
-                {/* <Select value={currentConfig} onChange={handleConfigChanged}>
+              {/* <Select value={currentConfig} onChange={handleConfigChanged}>
                 <MenuItem value={"potato"}>Very Low Quality</MenuItem>
                 <MenuItem value={"lowquality"}>Low-Quality</MenuItem>
                 <MenuItem value={"performance"}>HD Quality</MenuItem>
@@ -632,7 +564,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                 <MenuItem value={"some"}>Scale if too big</MenuItem> 
                 <MenuItem value={"all"}>Scale Anyways</MenuItem>
               </Select> */}
-                {/*  
+              {/*  
             <Slider
               defaultValue={2}
               aria-label="Default"
@@ -642,12 +574,11 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
               step={0.1}
               onChange={handlemaxConfiguredSizeChange}
             ></Slider>*/}
-              </div>
             </div>
           </div>
-        )}
-      </div>
-    </ThemeProvider>
+        </div>
+      )}
+    </div>
   );
 };
 export default ImageSelector;

@@ -30,8 +30,6 @@ import { usePinch } from "@use-gesture/react";
 import { Slider } from "@mui/material";
 
 interface PhotoEditorProps {
-  naturalWidth: number;
-  naturalHeight: number;
   imageData: string;
   realNaturalWidth: number;
   realNaturalHeight: number;
@@ -39,8 +37,6 @@ interface PhotoEditorProps {
 }
 
 const PhotoEditor: React.FC<PhotoEditorProps> = ({
-  naturalWidth,
-  naturalHeight,
   imageData,
   realNaturalWidth,
   realNaturalHeight,
@@ -320,7 +316,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   useEffect(() => {
     // set the image source to the imageData prop
-    console.log("imageData", imageData);
+
     setImgSrc(imageData);
     const canvasWidth = 2800;
     const canvasHeight = 1400;
@@ -329,7 +325,18 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       canvasHeight / realNaturalHeight
     );
     setZoomValue(scale);
-  }, [imageData, realNaturalWidth, realNaturalHeight]);
+    if (
+      imageData.length > 0 &&
+      realNaturalWidth > 0 &&
+      realNaturalHeight > 0 &&
+      fileName.length > 0
+    ) {
+      localStorage.setItem("imageData", imageData);
+      localStorage.setItem("realNaturalWidth", realNaturalWidth.toString());
+      localStorage.setItem("realNaturalHeight", realNaturalHeight.toString());
+      localStorage.setItem("imageName", fileName);
+    }
+  }, [imageData, realNaturalWidth, realNaturalHeight, fileName]);
 
   useEffect(() => {
     if (previousZoom > zoomValue) {
@@ -914,8 +921,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               style={{
                 display: "block",
                 position: "absolute",
-                width: naturalWidth ? `${1540}px` : "100%",
-                height: naturalHeight ? `${770}px` : "100%",
+                width: realNaturalWidth ? `${1540}px` : "100%",
+                height: realNaturalHeight ? `${770}px` : "100%",
 
                 // backgroundImage:
                 //   "linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%)",
