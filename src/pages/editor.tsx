@@ -4,7 +4,7 @@ import ImageSelector from "../components/imageselector";
 import PreviousImage from "../components/previousImage";
 import { useState, useEffect } from "react";
 import { Poppins } from "next/font/google";
-import { set } from "lodash";
+import { set, toNumber } from "lodash";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 const poppins = Poppins({
@@ -77,6 +77,7 @@ export default function Editor({}) {
   const [urlString, setUrlString] = useState("");
   const [agree, setAgree] = useState(false);
   const [open, setOpen] = useState(false);
+  const [fileSize, setFileSize] = useState(0);
 
   useEffect(() => {
     const storedImage = localStorage.getItem("imageData");
@@ -103,7 +104,8 @@ export default function Editor({}) {
     natHeight: number,
     realWit: number,
     realHit: number,
-    fileName: string
+    fileName: string,
+    fileSize: number
   ) => {
     if (typeof selectedImage === "string") {
       setImage(selectedImage);
@@ -113,6 +115,8 @@ export default function Editor({}) {
     setRealWidth(realWit);
     setRealHeight(realHit);
     setFileName(fileName);
+    console.log("fileSize");
+    setFileSize(toNumber((fileSize / 1024 / 1024).toFixed(2)));
   };
 
   const previousAgreement = () => {
@@ -141,6 +145,7 @@ export default function Editor({}) {
           realNaturalWidth={realWidth}
           realNaturalHeight={realHeight}
           fileName={fileName}
+          fileSize={fileSize}
         />
       </ThemeProvider>
     </main>

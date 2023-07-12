@@ -35,6 +35,7 @@ interface PhotoEditorProps {
   realNaturalWidth: number;
   realNaturalHeight: number;
   fileName: string;
+  fileSize: number;
 }
 
 const PhotoEditor: React.FC<PhotoEditorProps> = ({
@@ -42,6 +43,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   realNaturalWidth,
   realNaturalHeight,
   fileName,
+  fileSize,
 }) => {
   const [editingMode, setEditingMode] = useState("none");
   const [imgSrc, setImgSrc] = useState("");
@@ -325,19 +327,21 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       canvasWidth / realNaturalWidth,
       canvasHeight / realNaturalHeight
     );
+
     setZoomValue(scale);
     if (
       imageData.length > 0 &&
       realNaturalWidth > 0 &&
       realNaturalHeight > 0 &&
-      fileName.length > 0
+      fileName.length > 0 &&
+      fileSize < 5
     ) {
       localStorage.setItem("imageData", imageData);
       localStorage.setItem("realNaturalWidth", realNaturalWidth.toString());
       localStorage.setItem("realNaturalHeight", realNaturalHeight.toString());
       localStorage.setItem("imageName", fileName);
     }
-  }, [imageData, realNaturalWidth, realNaturalHeight, fileName]);
+  }, [imageData, realNaturalWidth, realNaturalHeight, fileName, fileSize]);
 
   useEffect(() => {
     if (previousZoom > zoomValue) {

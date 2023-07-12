@@ -35,7 +35,8 @@ type ImageSelectHandler = (
   natHeight: number,
   realWit: number,
   realHit: number,
-  fileName: string
+  fileName: string,
+  fileSize: number
 ) => void;
 
 interface ImageSelectorProps {
@@ -121,7 +122,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
             heightScalar,
             naturalWidth,
             naturalHeight,
-            target.name
+            target.name,
+            target.size
           );
         });
 
@@ -139,7 +141,11 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (e.dataTransfer.types.includes("Files")) {
+    // Check if file and is image
+    if (
+      e.dataTransfer.types.includes("Files") &&
+      e.dataTransfer.items[0].type.includes("image")
+    ) {
       setDragging(true);
     }
   };
@@ -225,6 +231,19 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
       setProgress(100);
     }
   }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    // Check if dropped file is an image
+    if (
+      e.dataTransfer.types.includes("Files") &&
+      e.dataTransfer.items[0].type.includes("image")
+    ) {
+      // Handle the dropped image file
+      handleImageChange(e);
+    }
+    setDragging(false);
+  };
 
   const handleImageChange = async (
     e: React.ChangeEvent<HTMLInputElement> | any
@@ -353,7 +372,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
         transform: "translate(-50%, -50%)",
       }}
       onDragOver={handleDragOver}
-      onDrop={handleImageChange}
+      onDrop={handleDrop}
       onDragLeave={handleDragLeave}
     >
       {loadingImage ? (
