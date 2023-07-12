@@ -34,6 +34,7 @@ const PreviousImage: React.FC<PreviousImageProps> = ({
     localStorage.removeItem("imageData");
     localStorage.removeItem("realNaturalWidth");
     localStorage.removeItem("realNaturalHeight");
+    localStorage.removeItem("imageName");
     setPreviousOpen();
   };
 
@@ -81,7 +82,7 @@ const PreviousImage: React.FC<PreviousImageProps> = ({
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose} sx={{ color: red[400] }}>
-              New Image
+              New Project
             </Button>
             <Button onClick={setAgreement} autoFocus sx={{ color: blue[400] }}>
               Continue

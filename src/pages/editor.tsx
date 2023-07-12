@@ -106,7 +106,6 @@ export default function Editor({}) {
     fileName: string
   ) => {
     if (typeof selectedImage === "string") {
-      console.log(selectedImage);
       setImage(selectedImage);
     }
     setWidth(natWidth);
@@ -126,26 +125,23 @@ export default function Editor({}) {
   };
 
   return (
-    <main className={`${poppins.className}`}>
+    <main className={`bg-[#252525] min-h-screen ${poppins.className}`}>
       <ThemeProvider theme={theme}>
-        <div>
-          {!agree && possibleImage && open && (
-            <PreviousImage
-              image={possibleImage}
-              setAgreement={previousAgreement}
-              setPreviousOpen={setPreviousOpening}
-            />
-          )}
-          <div>
-            {!image && <ImageSelector onImageSelect={handleImageSet} />}
-            <PhotoEditor
-              imageData={image}
-              realNaturalWidth={realWidth}
-              realNaturalHeight={realHeight}
-              fileName={fileName}
-            />{" "}
-          </div>
-        </div>
+        {!agree && possibleImage && open && (
+          <PreviousImage
+            image={possibleImage}
+            setAgreement={previousAgreement}
+            setPreviousOpen={setPreviousOpening}
+          />
+        )}
+
+        {!image && <ImageSelector onImageSelect={handleImageSet} />}
+        <PhotoEditor
+          imageData={image}
+          realNaturalWidth={realWidth}
+          realNaturalHeight={realHeight}
+          fileName={fileName}
+        />
       </ThemeProvider>
     </main>
   );

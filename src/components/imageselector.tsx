@@ -58,6 +58,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   const [openUrl, setOpenUrl] = useState(false);
   const [urlString, setUrlString] = useState("");
   const [searching, setSearching] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -138,6 +139,13 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    if (e.dataTransfer.types.includes("Files")) {
+      setDragging(true);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragging(false);
   };
 
   useEffect(() => {
@@ -335,13 +343,18 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
   return (
     <div
-      className={`flex items-center justify-center w-64 z-10 `}
+      className={`flex items-center justify-center w-full h-full z-10 ${
+        dragging ? " bg-[#515151]" : ""
+      }`}
       style={{
         position: "fixed",
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
       }}
+      onDragOver={handleDragOver}
+      onDrop={handleImageChange}
+      onDragLeave={handleDragLeave}
     >
       {loadingImage ? (
         <div>
@@ -411,11 +424,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
           )}
         </div>
       ) : (
-        <div
-          onDragOver={handleDragOver}
-          onDrop={handleImageChange}
-          className=""
-        >
+        <div className="">
           <label
             htmlFor="dropzone-file"
             className="hover:animate-jump flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-[#666666] dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-[#7c7c7c] dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
