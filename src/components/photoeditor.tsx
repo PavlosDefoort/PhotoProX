@@ -28,6 +28,7 @@ import RedoIcon from "@mui/icons-material/Redo";
 // import { file } from "jszip";
 import { usePinch } from "@use-gesture/react";
 import { Slider } from "@mui/material";
+import Link from "next/link";
 
 interface PhotoEditorProps {
   imageData: string;
@@ -692,16 +693,16 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         <div className="px-3 py-2 lg:px-5 lg:pl-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-start">
-              <a href="https://flowbite.com" className="flex  md:mr-24">
+              <Link href="/" className="flex  md:mr-24">
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
                   className="h-8 mr-3"
-                  alt="FlowBite Logo"
+                  alt="PhotoProX Logo"
                 />
                 <span className="self-center text-white text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">
                   PhotoProX
                 </span>
-              </a>
+              </Link>
               <div className="w-96 ">
                 {/* <span className=" text-white text-lg font-semibold sm:text-sm whitespace-nowrap dark:text-white">
                   Workspace: {fileName}
@@ -794,21 +795,17 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       >
         <div className="h-full px-3 py-4 overflow-y-auto bg-[#3b3b3b] dark:bg-gray-800">
           <div>
-            <a
-              href="https://flowbite.com/"
-              className="flex items-center pl-2.5 mb-5"
-            >
+            <Link href="/" className="flex items-center pl-2.5 mb-5">
               <img
                 src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
                 className="h-6 mr-3 sm:h-7"
                 alt="Flowbite Logo"
               />
-            </a>
+            </Link>
             <ul className="space-y-6 font-medium ">
               <li>
                 <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
                   <CropIcon
-                    onClick={() => handleModeChange("crop")}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                   ></CropIcon>
@@ -818,7 +815,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               <li>
                 <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
                   <DownloadIcon
-                    onClick={handleDownload}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                   ></DownloadIcon>
@@ -827,7 +823,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               <li>
                 <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
                   <ControlCameraIcon
-                    onClick={() => handleModeChange("transform")}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-300"
                   ></ControlCameraIcon>
@@ -836,7 +831,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               <li>
                 <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
                   <AutoAwesomeIcon
-                    onClick={() => handleModeChange("adjust")}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                   ></AutoAwesomeIcon>
@@ -845,7 +839,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               <li>
                 <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
                   <SettingsIcon
-                    onClick={() => handleModeChange("none")}
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                   ></SettingsIcon>
@@ -856,10 +849,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           <div className="mt-6">
             <ul className="space-y-6 font-medium ">
               <li>
-                <a
-                  className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700"
-                  onClick={handleReset}
-                >
+                <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
                   <RestartAltIcon
                     aria-hidden="true"
                     className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"

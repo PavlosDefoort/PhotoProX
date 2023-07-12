@@ -343,8 +343,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
   return (
     <div
-      className={`flex items-center justify-center w-full h-full z-10 ${
-        dragging ? " bg-[#515151]" : ""
+      className={`flex items-center justify-center w-full h-full z-10 transition duration-500 ${
+        dragging ? " bg-[#515151] " : ""
       }`}
       style={{
         position: "fixed",
