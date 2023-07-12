@@ -251,12 +251,15 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
     e.preventDefault();
 
     if (
-      (e.target.files && e.target.files.length > 0) ||
-      (e.dataTransfer.files && e.dataTransfer.files.length > 0)
+      (e.target.files?.length > 0 &&
+        e.target.files[0].type.includes("image")) ||
+      (e.dataTransfer?.files?.length > 0 &&
+        e.dataTransfer.files[0].type.includes("image"))
     ) {
       setLoadingImage(true);
 
       const imageFile = e.target?.files?.[0] ?? e.dataTransfer?.files?.[0];
+
       console.log("originalFile instanceof Blob", imageFile instanceof Blob); // true
       console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
 

@@ -147,7 +147,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     },
     {
       target,
-      scaleBounds: { min: 0.09, max: 3.9 },
+      scaleBounds: { min: 0.09, max: 3.99 },
       pointer: { touch: true },
       eventOptions: { passive: false },
     }
