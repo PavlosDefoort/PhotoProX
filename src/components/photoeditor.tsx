@@ -24,11 +24,13 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import UndoIcon from "@mui/icons-material/Undo";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import AspectRatioIcon from "@mui/icons-material/AspectRatio";
 import RedoIcon from "@mui/icons-material/Redo";
 // import { file } from "jszip";
 import { usePinch } from "@use-gesture/react";
 import { Slider } from "@mui/material";
 import Link from "next/link";
+import { Application, Sprite, BlurFilter } from "pixi.js";
 
 interface PhotoEditorProps {
   imageData: string;
@@ -46,6 +48,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   fileSize,
 }) => {
   const [editingMode, setEditingMode] = useState("none");
+  const [windowWidth, setWindowWidth] = useState(0);
+  const [deltaWidth, setDeltaWidth] = useState(0);
+  const [fitToScreen, setFitToScreen] = useState(0);
   const [imgSrc, setImgSrc] = useState("");
   const [newImgSrc, setNewImgSrc] = useState("");
   const [firstRender, setFirstRender] = useState(true);
@@ -56,6 +61,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [scaleFactor, setScaleFactor] = useState(1);
   const [displayXValue, setDisplayXValue] = useState(0);
   const [displayYValue, setDisplayYValue] = useState(0);
+  // Add a canvasWidth and height global state to optimize resolution
+  const [canvasWidth, setCanvasWidth] = useState(5120);
+  const [canvasHeight, setCanvasHeight] = useState(2560);
   const [undoStack, setUndoStack] = useState<
     Array<{
       rotate: number;
@@ -111,12 +119,34 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [someWidth, setSomeWidth] = useState(0);
   const [someHeight, setSomeHeight] = useState(0);
 
-  // Next task: Zoom to use scale generated value
-  // Next task: Fix zoom usability
-
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const appRef = useRef<Application | null>(null);
   const imgRef = useRef(null);
   const target = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const calculateDeltaWidth = () => {
+      const x = (windowWidth - 592) / 2;
+      const delta = windowWidth / 2 - 148;
+      const changeInWidth = delta - x;
+      setDeltaWidth(changeInWidth);
+    };
+
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+    calculateDeltaWidth();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [windowWidth]);
+
+  const handleFitToScreen = () => {
+    setZoomValue(fitToScreen);
+    setSliderValue(fitToScreen);
+  };
 
   useEffect(() => {
     // See https://use-gesture.netlify.app/docs/hooks/#about-the-pinch-gesture
@@ -236,16 +266,20 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           Math.abs(realNaturalWidth * Math.sin((rotateValue * Math.PI) / 180)) +
           Math.abs(realNaturalHeight * Math.cos((rotateValue * Math.PI) / 180));
 
-        const maxOffsetLimit = Math.abs((newHeight * zoomValue - 1400) / 2);
-        const maxOffsetLimitX = Math.abs((newWidth * zoomValue - 2800) / 2);
+        const maxOffsetLimit = Math.abs(
+          (newHeight * zoomValue - canvasHeight) / 2
+        );
+        const maxOffsetLimitX = Math.abs(
+          (newWidth * zoomValue - canvasWidth) / 2
+        );
 
         // Calculate the maximum vertical offset based on the zoom level (prevent scrolling past the edges of the image)
         const maxVerticalOffset = Math.min(
-          Math.max(0, newHeight * zoomValue - 1400),
+          Math.max(0, newHeight * zoomValue - canvasHeight),
           maxOffsetLimit
         );
         const maxHorizontalOffset = Math.min(
-          Math.max(0, newWidth * zoomValue - 2800),
+          Math.max(0, newWidth * zoomValue - canvasWidth),
           maxOffsetLimitX
         );
         const zoomSpeed = 100; // Adjust the zoom speed as needed
@@ -310,6 +344,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     realNaturalHeight,
     realNaturalWidth,
     rotateValue,
+    canvasWidth,
+    canvasHeight,
   ]);
 
   useEffect(() => {
@@ -321,27 +357,56 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     // set the image source to the imageData prop
 
     setImgSrc(imageData);
-    const canvasWidth = 2800;
-    const canvasHeight = 1400;
+
     const scale = Math.min(
       canvasWidth / realNaturalWidth,
       canvasHeight / realNaturalHeight
     );
 
     setZoomValue(scale);
+    setFitToScreen(scale);
     if (
       imageData.length > 0 &&
       realNaturalWidth > 0 &&
       realNaturalHeight > 0 &&
       fileName.length > 0 &&
-      fileSize < 5
+      (fileSize / 3) * 4 < 4
     ) {
       localStorage.setItem("imageData", imageData);
       localStorage.setItem("realNaturalWidth", realNaturalWidth.toString());
       localStorage.setItem("realNaturalHeight", realNaturalHeight.toString());
       localStorage.setItem("imageName", fileName);
     }
-  }, [imageData, realNaturalWidth, realNaturalHeight, fileName, fileSize]);
+  }, [
+    imageData,
+    realNaturalWidth,
+    realNaturalHeight,
+    fileName,
+    fileSize,
+    canvasWidth,
+    canvasHeight,
+  ]);
+  useEffect(() => {
+    const calculateAspectRatioFit = () => {
+      const targetRatio = realNaturalWidth / realNaturalHeight;
+      let newWidth, newHeight;
+
+      if (realNaturalWidth / realNaturalHeight > targetRatio) {
+        newWidth = realNaturalHeight * targetRatio;
+        newHeight = realNaturalHeight;
+      } else {
+        newWidth = realNaturalWidth;
+        newHeight = realNaturalWidth / targetRatio;
+      }
+
+      // setCanvasWidth(newWidth);
+      // setCanvasHeight(newHeight);
+      // const app = appRef.current!;
+      // console.log(newWidth, newHeight);
+      // if (app) app.renderer.resize(newWidth, newHeight);
+    };
+    calculateAspectRatioFit();
+  }, [realNaturalWidth, realNaturalHeight]);
 
   useEffect(() => {
     if (previousZoom > zoomValue) {
@@ -356,167 +421,93 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   }, [zoomValue, fake, fakeX, previousZoom]);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
+    if (!canvasRef.current) return;
 
-    const ctx = canvas.getContext("2d")!;
+    if (!appRef.current) {
+      // If the app doesn't exist, create it
+      appRef.current = new Application({
+        view: canvasRef.current,
+        width: canvasWidth,
+        height: canvasHeight,
+        antialias: true,
+        preserveDrawingBuffer: true,
+        resolution: 1,
+        powerPreference: "high-performance",
+        clearBeforeRender: true,
+        backgroundColor: 0x252525,
+      });
+    }
 
-    // const pica = require("pica")();
+    const app = appRef.current; // Use the existing app instance
 
-    const image = new Image();
+    if (imgSrc) {
+      const imageWidth = realNaturalWidth;
+      const imageHeight = realNaturalHeight;
+      app.stage.removeChildren();
+      const blurFilter = new BlurFilter();
+      // Load image with PIXI
 
-    const canvasWidth = 2800;
-    const canvasHeight = 1400;
-
-    // Calculate the new dimensions of the image
-    const newWidth = realNaturalWidth * zoomValue;
-    const newHeight = realNaturalHeight * zoomValue;
-
-    // Calculate the coordinates to position the image at the center of the canvas
-    const imageX = (canvasWidth - newWidth) / 2;
-    const imageY = (canvasHeight - newHeight) / 2;
-
-    const drawImageOnCanvas = async () => {
-      // Set the dimensions of the offscreen canvas
-      // const offscreenCanvas = document.createElement("canvas");
-      // const offscreenCtx = offscreenCanvas.getContext("2d");
-      // offscreenCanvas.width = image.width;
-      // offscreenCanvas.height = image.height;
-      // await pica.resize(image, offscreenCanvas, {
-      //   unsharpAmount: 160,
-      //   unsharpRadius: 0.5,
-      //   unsharpThreshold: 2,
-      // });
-
-      // Perform interpolation using pica
-
-      canvas.width = canvasWidth;
-
-      canvas.height = canvasHeight;
-
-      const currentState = {
-        rotate: rotateValue,
-        translateX: translateXValue,
-        translateY: translateYValue,
-        scaleFactor: scaleFactor,
-        skewX: skewXValue,
-        skewY: skewYValue,
-        saturation: saturationValue,
-        brightness: brightnessValue,
-        opacity: opacityValue,
-      };
-
-      const filterValue = `
-      saturate(${saturationValue})
-      brightness(${brightnessValue})
-      opacity(${opacityValue})
-      contrast(${contrastValue})
-      blur(${blurValue}px)
-      sepia(${sepiaValue})
-      drop-shadow(${dropShadowValue}px ${dropShadowValue}px 0 #000000)
-      grayscale(${grayscaleValue})
-      hue-rotate(${hueRotateValue}deg)
-      invert(${invertValue})`;
-      ctx.filter = filterValue;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before drawing
-
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-
-      ctx.rotate((rotateValue * Math.PI) / 180);
-      ctx.scale(scaleFactor, scaleFactor);
-      ctx.translate(-canvas.width / 2, -canvas.height / 2);
-
-      ctx.transform(
-        1,
-        Math.tan((skewYValue * Math.PI) / 180),
-        Math.tan((skewXValue * Math.PI) / 180),
-        1,
-        0,
-        0
+      const scaleFactor = Math.min(
+        app.screen.width / imageWidth,
+        app.screen.height / imageHeight
       );
+      const offsetX = 0;
 
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
+      // Calculate the new dimensions of the image
+      const newWidth = imageWidth * zoomValue;
+      const newHeight = imageHeight * zoomValue;
 
-      // Adjust the position based on the rotation (rotation matrix)
+      // Calculate the coordinates to position the image at the center of the canvas
+      const imageX = (canvasWidth - newWidth) / 2 + offsetX;
+      console.log(imageX);
+      const imageY = (canvasHeight - newHeight) / 2;
+
       const adjustedX =
         imageX +
-        fakeX * Math.cos((rotateValue * Math.PI) / 180) +
+        fakeX * Math.cos((rotateValue * Math.PI) / 180) -
         fake * Math.sin((rotateValue * Math.PI) / 180);
       const adjustedY =
         imageY +
-        fake * Math.cos((rotateValue * Math.PI) / 180) -
+        fake * Math.cos((rotateValue * Math.PI) / 180) +
         fakeX * Math.sin((rotateValue * Math.PI) / 180);
 
-      if (firstRender) {
-        const strings = ["jump-in", "spin", "rotate-y", "rotate-x"];
-        const randomIndex = Math.floor(Math.random() * strings.length);
-        const randomString = strings[randomIndex];
+      const image = Sprite.from(imgSrc);
 
-        ctx.drawImage(image, adjustedX, adjustedY, newWidth, newHeight);
-        // canvas.className = `animate-${randomString} animate-once animate-ease-out bg-///border-solid border-2 bg-opacity-10 rounded-lg`;
-        setFirstRender(false);
-      } else {
-        setSomeWidth(newWidth);
-        setSomeHeight(newHeight);
-        ctx.drawImage(image, adjustedX, adjustedY, newWidth, newHeight);
-      }
-      if (isUndoable) {
-        if (undoStack.length === maxUndoStackSize) {
-          const updatedUndoStack = undoStack.slice(1);
-          setUndoStack([...updatedUndoStack, currentState]);
-        } else {
-          //Configure stack size?
-          setUndoStack([...undoStack, currentState]);
-          // Configure stack?
-          setRedoStack([]);
-        }
-      }
-    };
+      // Calculate the scale factor
 
-    // Debounce the drawImageOnCanvas function to prevent it from being called too often
-    const debouncedEffect = debounce(() => {
-      if (imgSrc) {
-        image.onload = drawImageOnCanvas;
+      image.width = imageWidth;
+      image.height = imageHeight;
 
-        image.src = imgSrc;
-      }
-    }, 0);
+      image.roundPixels = true;
 
-    debouncedEffect();
+      // image.position.set(canvasWidth / 2, canvasHeight / 2);
+      // image.rotation = (rotateValue * Math.PI) / 180;
+      // image.position.set(-canvasWidth / 2, -canvasHeight / 2);
+
+      console.log(offsetX, imageWidth / 2);
+      image.scale.set(zoomValue, zoomValue);
+      console.log(adjustedX);
+      image.position.set(adjustedX, adjustedY);
+
+      app.stage.addChild(image);
+    }
+
+    app.start(); // Start the app
 
     return () => {
-      debouncedEffect.cancel();
+      // The cleanup function will be called when the component unmounts
+      // No need to destroy the app here, as we want to reuse it if the component mounts again
     };
   }, [
     imgSrc,
-    rotateValue,
-    skewXValue,
-    skewYValue,
-    scaleXValue,
-    scaleYValue,
-    translateXValue,
-    translateYValue,
-    saturationValue,
-    brightnessValue,
-    opacityValue,
-    contrastValue,
-    blurValue,
-    sepiaValue,
-    dropShadowValue,
-    grayscaleValue,
-    hueRotateValue,
-    invertValue,
-    scaleFactor,
+    zoomValue,
     fake,
     fakeX,
-    zoomValue,
-    firstRender,
+    rotateValue,
     realNaturalWidth,
     realNaturalHeight,
-    isUndoable,
-    undoStack,
-    maxUndoStackSize,
+    canvasHeight,
+    canvasWidth,
   ]);
 
   const undoAction = useCallback(async () => {
@@ -693,8 +684,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   return (
     <div className="">
-      <nav className="fixed top-0 z-50 w-full bg-[#3b3b3b] border-b border-[#3b3b3b] dark:bg-gray-800 dark:border-gray-700">
-        <div className="px-3 py-2 lg:px-5 lg:pl-2">
+      <nav className="fixed top-0 z-50 w-full bg-[#3b3b3b]  dark:bg-gray-800 dark:border-gray-700 border-b border-gray-500">
+        <div className="px-3 py-3 lg:px-5 lg:pl-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-start">
               <Link href="/" className="flex  md:mr-24">
@@ -704,42 +695,13 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                   alt="PhotoProX Logo"
                 />
                 <span className="self-center text-white text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">
-                  PhotoProX
+                  PhotoProx
                 </span>
               </Link>
               <div className="w-96 ">
                 {/* <span className=" text-white text-lg font-semibold sm:text-sm whitespace-nowrap dark:text-white">
                   Workspace: {fileName}
                 </span> */}
-                {imgSrc && (
-                  <div className="flex">
-                    <span className="pr-4 self-center text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
-                      <RemoveCircleOutlineIcon onClick={handleZoomOut} />
-                    </span>
-                    <Slider
-                      value={zoomValue}
-                      min={0.1}
-                      max={4}
-                      step={0.1}
-                      onChange={(event, newValue) => {
-                        const newZoomValue = Array.isArray(newValue)
-                          ? newValue[0]
-                          : newValue;
-                        setZoomValue(newZoomValue);
-                        setSliderValue(newZoomValue); // Update the slider value
-                      }}
-                    ></Slider>
-                    <span className="pl-2 self-center text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
-                      <AddCircleOutlineIcon onClick={handleZoomIn} />
-                    </span>
-                    <span
-                      className="pl-4 self-center text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700"
-                      style={{ width: "4rem" }}
-                    >
-                      {(zoomValue * 100).toFixed(2) + "%"}
-                    </span>
-                  </div>
-                )}
 
                 {/* <span className="p-2 self-center text-white text-lg font-semibold sm:text-sm whitespace-nowrap dark:text-white">
                   {fake.toFixed(2)}
@@ -794,76 +756,89 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
       <aside
         id="logo-sidebar"
-        className="fixed top-0 left-0 z-40 w-12 h-screen transition-transform -translate-x-full sm:translate-x-0"
+        className="fixed top-0 left-0 z-40 w-[56px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 py-4 overflow-y-auto bg-[#3b3b3b] dark:bg-gray-800">
-          <div>
-            <Link href="/" className="flex items-center pl-2.5 mb-5">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
-                className="h-6 mr-3 sm:h-7"
-                alt="Flowbite Logo"
-              />
-            </Link>
-            <ul className="space-y-6 font-medium ">
-              <li>
-                <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
-                  <CropIcon
-                    aria-hidden="true"
-                    className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                  ></CropIcon>
-                </a>
-              </li>
-
-              <li>
-                <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
-                  <DownloadIcon
-                    aria-hidden="true"
-                    className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                  ></DownloadIcon>
-                </a>
-              </li>
-              <li>
-                <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
-                  <ControlCameraIcon
-                    aria-hidden="true"
-                    className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-300"
-                  ></ControlCameraIcon>
-                </a>
-              </li>
-              <li>
-                <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
-                  <AutoAwesomeIcon
-                    aria-hidden="true"
-                    className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                  ></AutoAwesomeIcon>
-                </a>
-              </li>
-              <li>
-                <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
-                  <SettingsIcon
-                    aria-hidden="true"
-                    className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                  ></SettingsIcon>
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div className="mt-6">
-            <ul className="space-y-6 font-medium ">
-              <li>
-                <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
-                  <RestartAltIcon
-                    aria-hidden="true"
-                    className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+        <div className="h-full px-3 py-6 overflow-y-auto bg-[#3b3b3b] dark:bg-gray-800">
+          {imgSrc && (
+            <div className="animate-fade animate-once animate-ease-linear">
+              <div>
+                <Link href="/" className="flex items-center pl-2.5 mb-5">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
+                    className="h-6 mr-3 sm:h-7"
+                    alt="Flowbite Logo"
                   />
-                </a>
-              </li>
-            </ul>
-          </div>
+                </Link>
+                <ul className="space-y-6 font-medium ">
+                  <li>
+                    <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
+                      <CropIcon
+                        aria-hidden="true"
+                        className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                      ></CropIcon>
+                    </a>
+                  </li>
+
+                  <li>
+                    <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
+                      <DownloadIcon
+                        aria-hidden="true"
+                        className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                      ></DownloadIcon>
+                    </a>
+                  </li>
+                  <li>
+                    <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
+                      <ControlCameraIcon
+                        aria-hidden="true"
+                        className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-300"
+                      ></ControlCameraIcon>
+                    </a>
+                  </li>
+                  <li>
+                    <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
+                      <AutoAwesomeIcon
+                        aria-hidden="true"
+                        className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                      ></AutoAwesomeIcon>
+                    </a>
+                  </li>
+                  <li>
+                    <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
+                      <SettingsIcon
+                        aria-hidden="true"
+                        className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                      ></SettingsIcon>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-6">
+                <ul className="space-y-6 font-medium ">
+                  <li>
+                    <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
+                      <RestartAltIcon
+                        aria-hidden="true"
+                        className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                      />
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
+      {imgSrc && (
+        <aside
+          id="logo-sidebar"
+          className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-40 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
+          aria-label="Sidebar"
+        >
+          <div className="h-full px-3 py-4 overflow-y-auto bg-[#3b3b3b] dark:bg-gray-800"></div>
+        </aside>
+      )}
 
       {/* <aside
         id="logo-sidebar"
@@ -896,27 +871,91 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         </div>
       </aside> */}
 
-      <div className="p-4 sm:ml-64 ">
+      <nav
+        className="fixed bottom-0 z-10 w-full bg-[#3b3b3b]  dark:bg-gray-800 dark:border-gray-700 border-t border-gray-500"
+        style={{ height: "54px" }}
+      >
+        <div className="px-3 py-3.5 lg:px-5 lg:pl-2 ">
+          <div className="flex items-center justify-between">
+            {imgSrc && (
+              <div className="animate-fade animate-once animate-ease-linear flex items-center justify-center w-full ">
+                <div className="flex flex-row w-80 ml-[330px]  ">
+                  <span className="pr-2  text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white ">
+                    <Tooltip title="Fit to screen">
+                      <AspectRatioIcon
+                        onClick={handleFitToScreen}
+                        className="w-5 text-gray-500 rounded-full transition-all duration-100 ease-in-out hover:bg-gray-800 dark:hover:bg-gray-700 "
+                      />
+                    </Tooltip>
+                  </span>
+                  <span className="pr-2  text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white ">
+                    <Tooltip title="Zoom out">
+                      <RemoveCircleOutlineIcon
+                        onClick={handleZoomOut}
+                        className="w-5 text-gray-500 rounded-full transition-all duration-100 ease-in-out hover:bg-gray-800 dark:hover:bg-gray-700 "
+                      />
+                    </Tooltip>
+                  </span>
+                  <Slider
+                    size="small"
+                    value={zoomValue}
+                    min={0.1}
+                    max={4}
+                    step={0.1}
+                    onChange={(event, newValue) => {
+                      const newZoomValue = Array.isArray(newValue)
+                        ? newValue[0]
+                        : newValue;
+                      setZoomValue(newZoomValue);
+                      setSliderValue(newZoomValue); // Update the slider value
+                    }}
+                  ></Slider>
+                  <span className="pl-2  text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white ">
+                    <Tooltip title="Zoom in">
+                      <AddCircleOutlineIcon
+                        onClick={handleZoomIn}
+                        className="w-5 text-gray-500 rounded-full transition-all duration-100 ease-in-out hover:bg-gray-800 dark:hover:bg-gray-700 "
+                      />
+                    </Tooltip>
+                  </span>
+                  <span
+                    className="pl-4 flex items-center pt-[1px] text-white text-sm font-semibold sm:text-md  dark:text-white "
+                    style={{ width: "4rem" }}
+                  >
+                    {(zoomValue * 100).toFixed(2) + "%"}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      <div className="p-20 sm:ml-64 ">
         <div className="">
           <div
             ref={target}
-            className="flex items-center justify-center"
+            className="flex items-center justify-center "
             style={{
               position: "fixed",
-              top: "50%",
+              top: "49%",
               left: "50%",
               transform: `translate(-50%, -50%)`,
-              marginTop: "1.75rem",
+              marginTop: "0.6rem",
+              marginLeft: `${deltaWidth}px`,
+              width: realNaturalWidth ? `${1410}px` : "100%",
+              height: realNaturalHeight ? `${705}px` : "100%",
             }}
           >
             <canvas
               id="canvas"
               ref={canvasRef}
+              className=""
               style={{
                 display: "block",
                 position: "absolute",
-                width: realNaturalWidth ? `${1540}px` : "100%",
-                height: realNaturalHeight ? `${770}px` : "100%",
+                width: realNaturalWidth ? `${1410}px` : "100%",
+                height: realNaturalHeight ? `${705}px` : "100%",
 
                 // backgroundImage:
                 //   "linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%)",
@@ -924,6 +963,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 // backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
               }}
             ></canvas>
+
             <img style={{ display: "none" }} src={imgSrc} ref={imgRef}></img>
 
             {/* {imgSrc && (

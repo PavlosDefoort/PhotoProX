@@ -1,4 +1,4 @@
-import React, { use } from "react";
+import React, { useRef } from "react";
 import PhotoEditor from "../components/photoeditor";
 import ImageSelector from "../components/imageselector";
 import PreviousImage from "../components/previousImage";
@@ -62,6 +62,13 @@ const theme = createTheme({
         },
       },
     },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          fontFamily: `${poppins.style.fontFamily}`,
+        },
+      },
+    },
   },
 });
 
@@ -115,7 +122,7 @@ export default function Editor({}) {
     setRealWidth(realWit);
     setRealHeight(realHit);
     setFileName(fileName);
-    console.log("fileSize");
+
     setFileSize(toNumber((fileSize / 1024 / 1024).toFixed(2)));
   };
 

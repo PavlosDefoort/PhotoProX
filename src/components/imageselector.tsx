@@ -6,7 +6,6 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material";
 import configurationsObject from "./configurations.json";
-
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -15,15 +14,14 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Button from "@mui/material/Button";
 import NextImage from "next/image";
 import TextField from "@mui/material/TextField";
-import { debounce, set } from "lodash";
+import { debounce } from "lodash";
 import { blue, green, red } from "@mui/material/colors";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import { Poppins } from "next/font/google";
-import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
 
+// Initialize Poppins font
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -61,10 +59,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   const [searching, setSearching] = useState(false);
   const [dragging, setDragging] = useState(false);
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
   const handleClose = () => {
     setOpen(false);
     setCompressImage(false);
@@ -90,7 +84,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
       useWebWorker: boolean;
       fileType: string;
       onProgress?: (progress: number) => void;
-      // Other propertiess
     };
   }
 
@@ -263,12 +256,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
       console.log("originalFile instanceof Blob", imageFile instanceof Blob); // true
       console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
 
-      if (imageFile.size / 1024 / 1024 > 5) {
-        setCompressImage(true);
-        setOpen(true);
-      } else {
-        setCompressImage(false);
-      }
+      setCompressImage(false);
 
       setCurrentPhoto(imageFile);
     }
@@ -325,8 +313,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
           );
           reader.readAsDataURL(target);
 
-          if (target.size / 1024 / 1024 > 5) {
-            setCompressImage(true);
+          if (target.size / 1024 / 1024 > 4) {
             setOpen(true);
           } else {
             setCompressImage(false);
@@ -408,7 +395,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
               <DialogContent>
                 <DialogContentText id="alert-dialog-description">
                   This image ({(currentPhoto.size / 1024 / 1024).toFixed(2)}
-                  MB) is larger than 5MB, which may cause some performance
+                  MB) is larger than 4MB, which may cause some performance
                   issues. Would you like to compress it? (Recommended)
                 </DialogContentText>
 
@@ -472,7 +459,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                 and drop
               </p>
               <p className="text-xs text-gray-100 dark:text-gray-400">
-                SVG, PNG, JPG or GIF (MAX. 5MB)
+                SVG, PNG, JPG or GIF (MAX. 4MB)
               </p>
             </div>
             <input

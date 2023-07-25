@@ -31,10 +31,7 @@ const PreviousImage: React.FC<PreviousImageProps> = ({
 
   const handleClose = () => {
     setOpen(false);
-    localStorage.removeItem("imageData");
-    localStorage.removeItem("realNaturalWidth");
-    localStorage.removeItem("realNaturalHeight");
-    localStorage.removeItem("imageName");
+    localStorage.clear();
     setPreviousOpen();
   };
 
