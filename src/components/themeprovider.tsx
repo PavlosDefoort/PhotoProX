@@ -19,12 +19,34 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Check if dark mode is enabled in the user's system preference
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 
-    setDarkMode(prefersDark);
+    // Function to handle changes in the system preference
+    const handleSystemPreferenceChange = (event: MediaQueryListEvent) => {
+      setDarkMode(event.matches);
+    };
+
+    // Listen for changes in the system preference and call the handler function
+    prefersDark.addEventListener("change", handleSystemPreferenceChange);
+
+    // Initial check of the user's system preference
+    setDarkMode(prefersDark.matches);
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      prefersDark.removeEventListener("change", handleSystemPreferenceChange);
+    };
   }, []);
+
+  function updateTheme(newColorScheme: string) {
+    if (newColorScheme === "dark") {
+      // Apply dark mode styles or logic
+      setDarkMode(true);
+    } else {
+      // Apply light mode styles or logic
+      setDarkMode(false);
+    }
+  }
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
