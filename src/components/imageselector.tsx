@@ -376,7 +376,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
               {progressValue}%
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+          <div className="w-full bg-gray-200 rounded-full h-2.5 ">
             <div
               className="bg-blue-600 h-2.5 rounded-full"
               style={{ width: `${progressValue}%` }}
@@ -436,12 +436,12 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
         <div className="">
           <label
             htmlFor="dropzone-file"
-            className="hover:animate-jump flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-[#666666] dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-[#7c7c7c] dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+            className="hover:animate-jump flex flex-col items-center justify-center w-full h-64 border-2 border-black  dark:border-gray-300 border-dashed rounded-lg cursor-pointer bg-[#fef2e7] dark:bg-[#666666]  hover:bg-[#feead8] dark:hover:bg-[#7c7c7c] "
           >
             <div className="w-96 flex flex-col items-center justify-center pt-5 pb-6">
               <svg
                 aria-hidden="true"
-                className="w-10 h-10 mb-3 text-gray-100"
+                className="w-10 h-10 mb-3 text-black dark:text-gray-100"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -454,11 +454,11 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 ></path>
               </svg>
-              <p className="mb-2 text-sm text-gray-100 dark:text-gray-400">
+              <p className="mb-2 text-sm text-black dark:text-gray-100 ">
                 <span className="font-semibold">Click to upload</span> or drag
                 and drop
               </p>
-              <p className="text-xs text-gray-100 dark:text-gray-400">
+              <p className="text-xs text-black dark:text-gray-100 ">
                 SVG, PNG, JPG or GIF (MAX. 4MB)
               </p>
             </div>
@@ -472,7 +472,9 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
           </label>
           <div className="">
             <div className=" flex flex-row  justify-center items-center h-20">
-              <h1 className="text-base text-gray-100">Have a URL instead? </h1>
+              <h1 className="text-base text-black dark:text-gray-100">
+                Have a URL instead?{" "}
+              </h1>
               {/* <div className="flex flex-row">
                
                 <Button

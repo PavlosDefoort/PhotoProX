@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useCallback,
   ChangeEvent,
+  useContext,
 } from "react";
 
 // import Cropping from "./cropping";
@@ -31,6 +32,9 @@ import { usePinch } from "@use-gesture/react";
 import { Slider } from "@mui/material";
 import Link from "next/link";
 import { Application, Sprite, BlurFilter } from "pixi.js";
+import { ThemeContext } from "../components/themeprovider";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 
 interface PhotoEditorProps {
   imageData: string;
@@ -64,6 +68,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   // Add a canvasWidth and height global state to optimize resolution
   const [canvasWidth, setCanvasWidth] = useState(5120);
   const [canvasHeight, setCanvasHeight] = useState(2560);
+  const { darkMode, toggleDarkMode } = useContext(ThemeContext);
   const [undoStack, setUndoStack] = useState<
     Array<{
       rotate: number;
@@ -421,6 +426,17 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   }, [zoomValue, fake, fakeX, previousZoom]);
 
   useEffect(() => {
+    const app = appRef.current!;
+    if (app) {
+      if (darkMode) {
+        app.renderer.background.color = 0x252525;
+      } else {
+        app.renderer.background.color = 0xd4d4d4;
+      }
+    }
+  }, [darkMode]);
+
+  useEffect(() => {
     if (!canvasRef.current) return;
 
     if (!appRef.current) {
@@ -459,9 +475,10 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
       // Calculate the coordinates to position the image at the center of the canvas
       const imageX = (canvasWidth - newWidth) / 2 + offsetX;
-      console.log(imageX);
+
       const imageY = (canvasHeight - newHeight) / 2;
 
+      // Calculate the adjusted coordinates to position the image at the center of the canvas using rotation matrix
       const adjustedX =
         imageX +
         fakeX * Math.cos((rotateValue * Math.PI) / 180) -
@@ -484,9 +501,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       // image.rotation = (rotateValue * Math.PI) / 180;
       // image.position.set(-canvasWidth / 2, -canvasHeight / 2);
 
-      console.log(offsetX, imageWidth / 2);
       image.scale.set(zoomValue, zoomValue);
-      console.log(adjustedX);
+
       image.position.set(adjustedX, adjustedY);
 
       app.stage.addChild(image);
@@ -684,71 +700,34 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   return (
     <div className="">
-      <nav className="fixed top-0 z-50 w-full bg-[#3b3b3b]  dark:bg-gray-800 dark:border-gray-700 border-b border-gray-500">
+      <nav className="fixed top-0 z-50 w-full bg-[#ebebeb] dark:bg-[#3b3b3b] border-b border-gray-500">
         <div className="px-3 py-3 lg:px-5 lg:pl-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center justify-start">
-              <Link href="/" className="flex  md:mr-24">
+            <div className="flex items-center">
+              <Link href="/" className="flex md:mr-24">
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
                   className="h-8 mr-3"
                   alt="PhotoProX Logo"
                 />
-                <span className="self-center text-white text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">
+                <span className="self-center text-black dark:text-white text-xl font-semibold sm:text-2xl whitespace-nowrap ">
                   PhotoProx
                 </span>
               </Link>
-              <div className="w-96 ">
-                {/* <span className=" text-white text-lg font-semibold sm:text-sm whitespace-nowrap dark:text-white">
-                  Workspace: {fileName}
-                </span> */}
-
-                {/* <span className="p-2 self-center text-white text-lg font-semibold sm:text-sm whitespace-nowrap dark:text-white">
-                  {fake.toFixed(2)}
-                </span> */}
-              </div>
-              {/* <img src={imgSrc} className="w-12 h-12"></img> */}
-
-              {/* 
-              <span class="self-center text-white text-lg font-semibold sm:text-sm whitespace-nowrap dark:text-white">
-                <img src={imgSrc} className="w-4"></img>
-              </span> */}
-              {/* <span className="pl-8 self-center text-white text-lg font-semibold sm:text-lg whitespace-nowrap dark:text-white">
-                {rotateValue + "\u00B0"}
-              </span>
-              <span className="pl-8 self-center text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white">
-                {scaleFactor.toFixed(2)}
-              </span>
-              <span className="pl-8 self-center text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white">
-                X: {Math.round(displayXValue * 100) / 100}
-              </span>
-              <span className="pl-8 self-center text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white">
-                Y: {Math.round(displayYValue * 100) / 100}
-              </span>
-
-            
-              <span className="pl-8 self-center text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
-                <RedoIcon onClick={redoAction} />
-              </span> */}
             </div>
-            <div className="flex items-center">
-              {/* <div className="flex items-center ml-3">
-                <div>
-                  <button
-                    type="button"
-                    className="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
-                    aria-expanded="false"
-                    data-dropdown-toggle="dropdown-user"
-                  >
-                    <span className="sr-only">Open user menu</span>
-                    <img
-                      className="w-8 h-8 rounded-full"
-                      src="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
-                      alt="user photo"
-                    />
-                  </button>
-                </div>
-              </div> */}
+            <div className="mr-7">
+              {darkMode ? (
+                <Tooltip title="See the Sun rise" placement="bottom">
+                  <DarkModeIcon
+                    onClick={toggleDarkMode}
+                    className="text-white"
+                  />
+                </Tooltip>
+              ) : (
+                <Tooltip title="Let the Moon fall" placement="bottom">
+                  <LightModeIcon onClick={toggleDarkMode} />
+                </Tooltip>
+              )}
             </div>
           </div>
         </div>
@@ -759,7 +738,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         className="fixed top-0 left-0 z-40 w-[56px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 py-6 overflow-y-auto bg-[#3b3b3b] dark:bg-gray-800">
+        <div className="h-full px-3 py-6 overflow-y-auto bg-[#ebebeb] dark:bg-[#3b3b3b] ">
           {imgSrc && (
             <div className="animate-fade animate-once animate-ease-linear">
               <div>
@@ -836,7 +815,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-40 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
           aria-label="Sidebar"
         >
-          <div className="h-full px-3 py-4 overflow-y-auto bg-[#3b3b3b] dark:bg-gray-800"></div>
+          <div className="h-full px-3 py-4 overflow-y-auto bg-[#ebebeb] dark:bg-[#3b3b3b] "></div>
         </aside>
       )}
 
@@ -872,7 +851,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       </aside> */}
 
       <nav
-        className="fixed bottom-0 z-10 w-full bg-[#3b3b3b]  dark:bg-gray-800 dark:border-gray-700 border-t border-gray-500"
+        className="fixed bottom-0 z-10 w-full bg-[#ebebeb] dark:bg-[#3b3b3b]  dark:border-gray-700 border-t border-gray-500"
         style={{ height: "54px" }}
       >
         <div className="px-3 py-3.5 lg:px-5 lg:pl-2 ">
@@ -919,7 +898,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                     </Tooltip>
                   </span>
                   <span
-                    className="pl-4 flex items-center pt-[1px] text-white text-sm font-semibold sm:text-md  dark:text-white "
+                    className="pl-4 flex items-center pt-[1px] text-black text-sm font-semibold sm:text-md  dark:text-white "
                     style={{ width: "4rem" }}
                   >
                     {(zoomValue * 100).toFixed(2) + "%"}

@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import PhotoEditor from "../components/photoeditor";
 import ImageSelector from "../components/imageselector";
 import PreviousImage from "../components/previousImage";
@@ -136,7 +136,9 @@ export default function Editor({}) {
   };
 
   return (
-    <main className={`bg-[#252525] min-h-screen ${poppins.className}`}>
+    <main
+      className={` bg-[#d4d4d4] dark:bg-[#252525] min-h-screen ${poppins.className}`}
+    >
       <ThemeProvider theme={theme}>
         {!agree && possibleImage && open && (
           <PreviousImage
