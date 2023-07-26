@@ -523,6 +523,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   }, [
     imgSrc,
     zoomValue,
+    darkMode,
     fake,
     fakeX,
     rotateValue,
@@ -717,7 +718,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                   alt="PhotoProX Logo"
                 />
                 <span className="self-center text-black dark:text-white text-xl font-semibold sm:text-2xl whitespace-nowrap ">
-                  PhotoProx
+                  PhotoProX
                 </span>
               </Link>
             </div>
