@@ -441,6 +441,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
     if (!appRef.current) {
       // If the app doesn't exist, create it
+      let backgroundColor;
+      if (darkMode) {
+        backgroundColor = 0x252525;
+      } else {
+        backgroundColor = 0xd4d4d4;
+      }
       appRef.current = new Application({
         view: canvasRef.current,
         width: canvasWidth,
@@ -450,7 +456,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         resolution: 1,
         powerPreference: "high-performance",
         clearBeforeRender: true,
-        backgroundColor: 0x252525,
+        backgroundColor: backgroundColor,
       });
     }
 
@@ -725,7 +731,10 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 </Tooltip>
               ) : (
                 <Tooltip title="Let the Moon fall" placement="bottom">
-                  <LightModeIcon onClick={toggleDarkMode} />
+                  <LightModeIcon
+                    onClick={toggleDarkMode}
+                    className="text-black"
+                  />
                 </Tooltip>
               )}
             </div>

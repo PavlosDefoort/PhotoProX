@@ -6,7 +6,7 @@ interface ThemeContextType {
 }
 
 export const ThemeContext = createContext<ThemeContextType>({
-  darkMode: false,
+  darkMode: true,
   toggleDarkMode: () => {},
 });
 
@@ -22,13 +22,18 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const prefersDark = window.matchMedia(
       "(prefers-color-scheme: dark)"
     ).matches;
+
     setDarkMode(prefersDark);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+  }, [darkMode]);
+
   const toggleDarkMode = () => {
     setDarkMode((prevDarkMode) => !prevDarkMode);
-    // Add or remove the 'dark' class to the <html> element
     document.documentElement.classList.toggle("dark");
+    // Add or remove the 'dark' class to the <html> element
   };
 
   return (
