@@ -21,6 +21,7 @@
     "autoprefixer": "10.4.14",
     "axios": "^1.4.0",
     "browser-image-compression": "^2.0.2",
+    "detect-gpu": "^5.0.34",
     "eslint": "8.44.0",
     "eslint-config-next": "13.4.9",
     "flowbite": "^1.7.0",

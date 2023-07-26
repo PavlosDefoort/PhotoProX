@@ -22,7 +22,7 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
     });
     res.end(response.data);
   } else {
-    res.status(400).send("Invalid URL");
+    // res.status(400).send("Invalid URL");
   }
 };
 

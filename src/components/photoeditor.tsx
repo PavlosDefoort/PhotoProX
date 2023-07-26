@@ -132,8 +132,11 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   useEffect(() => {
     const calculateDeltaWidth = () => {
       const x = (windowWidth - 592) / 2;
+
       const delta = windowWidth / 2 - 148;
+
       const changeInWidth = delta - x;
+
       setDeltaWidth(changeInWidth);
     };
 
@@ -150,7 +153,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   const handleFitToScreen = () => {
     setZoomValue(fitToScreen);
-    setSliderValue(fitToScreen);
   };
 
   useEffect(() => {
@@ -427,6 +429,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   useEffect(() => {
     const app = appRef.current!;
+
     if (app) {
       if (darkMode) {
         app.renderer.background.color = 0x252525;
@@ -457,6 +460,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         powerPreference: "high-performance",
         clearBeforeRender: true,
         backgroundColor: backgroundColor,
+        hello: true,
       });
     }
 
@@ -469,10 +473,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       const blurFilter = new BlurFilter();
       // Load image with PIXI
 
-      const scaleFactor = Math.min(
-        app.screen.width / imageWidth,
-        app.screen.height / imageHeight
-      );
       const offsetX = 0;
 
       // Calculate the new dimensions of the image
@@ -699,14 +699,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     setZoomValue(newZoomValue);
   };
 
-  const [sliderValue, setSliderValue] = useState(zoomValue);
-
-  useEffect(() => {
-    setSliderValue(zoomValue);
-  }, [zoomValue]);
-
   return (
-    <div className="">
+    <div>
       <nav className="fixed top-0 z-50 w-full bg-[#ebebeb] dark:bg-[#3b3b3b] border-b border-gray-500">
         <div className="px-3 py-3 lg:px-5 lg:pl-2">
           <div className="flex items-center justify-between">
@@ -829,37 +823,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         </aside>
       )}
 
-      {/* <aside
-        id="logo-sidebar"
-        className="fixed top-0 right-0 z-40 w-80 h-screen transition-transform -translate-x-full sm:translate-x-0"
-        aria-label="Sidebar"
-      >
-        <div className="h-full px-3 py-4 overflow-y-auto bg-[#3b3b3b] dark:bg-gray-800">
-          <ul className="space-y-4 font-medium">
-            <li>
-              <input
-                className="relative z-10"
-                type="range"
-                min="0"
-                max="360"
-                step={15}
-                value={rotateValue}
-                onChange={handleRotateChange}
-              />
-              <input
-                className="relative z-10"
-                type="range"
-                min="-90"
-                max="90"
-                step={1}
-                value={skewXValue}
-                onChange={handleSkewXChange}
-              />
-            </li>
-          </ul>
-        </div>
-      </aside> */}
-
       <nav
         className="fixed bottom-0 z-10 w-full bg-[#ebebeb] dark:bg-[#3b3b3b]  dark:border-gray-700 border-t border-gray-500"
         style={{ height: "54px" }}
@@ -896,7 +859,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                         ? newValue[0]
                         : newValue;
                       setZoomValue(newZoomValue);
-                      setSliderValue(newZoomValue); // Update the slider value
                     }}
                   ></Slider>
                   <span className="pl-2  text-white text-xl font-semibold sm:text-lg whitespace-nowrap dark:text-white ">
@@ -955,18 +917,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
             <img style={{ display: "none" }} src={imgSrc} ref={imgRef}></img>
 
-            {/* {imgSrc && (
-              <img
-                src={imgSrc}
-                style={{
-                  display: "none",
-
-                  width: naturalWidth ? `${naturalWidth}px` : "100%",
-                  height: naturalHeight ? `${naturalHeight}px` : "100%",
-                }}
-              ></img>
-            )} */}
-
             {editingMode === "crop" && (
               <div>Hello</div>
               //   <Cropping
@@ -975,18 +925,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               //     scaledHeight={naturalHeight}
               //   />
             )}
-
-            {/* <img 
-              src={imgSrc}
-              alt="img"
-              style={{
-                width: naturalWidth ? naturalWidth : "100%",
-                height: naturalHeight ? naturalHeight : "100%",
-                display: "none",
-                maxWidth: "100vw",
-                maxHeight: "92vh",
-              }}
-            />*/}
           </div>
         </div>
       </div>

@@ -184,7 +184,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
           await setPhoto(compressedFile); // write your own logic
         } catch (error) {
-          console.log(error);
+          // console.log(error);
         }
       } else {
         await setPhoto(imageFile); // Load the image without compression
@@ -253,8 +253,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
       const imageFile = e.target?.files?.[0] ?? e.dataTransfer?.files?.[0];
 
-      console.log("originalFile instanceof Blob", imageFile instanceof Blob); // true
-      console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
+      // console.log("originalFile instanceof Blob", imageFile instanceof Blob); // true
+      // console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
 
       setCompressImage(false);
 
@@ -297,7 +297,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
         return file;
       } catch (e) {
-        console.log(e);
+        // console.log(e);
         return undefined;
       }
     };

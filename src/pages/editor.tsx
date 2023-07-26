@@ -1,7 +1,8 @@
 import React from "react";
-import PhotoEditor from "../components/photoeditor";
-import ImageSelector from "../components/imageselector";
-import PreviousImage from "../components/previousImage";
+import PhotoEditor from "@/components/photoeditor";
+import ImageSelector from "@/components/imageselector";
+import PreviousImage from "@/components/previousImage";
+import { GetInfo } from "@/components/getinfo";
 import { useState, useEffect } from "react";
 import { Poppins } from "next/font/google";
 import { set, toNumber } from "lodash";
@@ -85,6 +86,14 @@ export default function Editor({}) {
   const [agree, setAgree] = useState(false);
   const [open, setOpen] = useState(false);
   const [fileSize, setFileSize] = useState(0);
+  const [userGPU, setUserGPU] = useState<Object>({});
+
+  useEffect(() => {
+    GetInfo().then((gpu) => {
+      console.log(gpu);
+      setUserGPU(gpu);
+    });
+  }, []);
 
   useEffect(() => {
     const storedImage = localStorage.getItem("imageData");
