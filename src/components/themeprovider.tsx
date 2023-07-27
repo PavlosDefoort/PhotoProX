@@ -1,3 +1,4 @@
+import { set } from "lodash";
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 
 interface ThemeContextType {
@@ -16,26 +17,33 @@ interface ThemeProviderProps {
 
 const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [darkMode, setDarkMode] = useState(false);
+  const [toggled, setToggled] = useState(false);
 
   useEffect(() => {
     // Check if dark mode is enabled in the user's system preference
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+    const alreadyMode = localStorage.getItem("darkMode");
+    if (alreadyMode) {
+      console.log(alreadyMode);
+      setDarkMode(JSON.parse(alreadyMode));
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 
-    // Function to handle changes in the system preference
-    const handleSystemPreferenceChange = (event: MediaQueryListEvent) => {
-      setDarkMode(event.matches);
-    };
+      // Function to handle changes in the system preference
+      const handleSystemPreferenceChange = (event: MediaQueryListEvent) => {
+        setDarkMode(event.matches);
+      };
 
-    // Listen for changes in the system preference and call the handler function
-    prefersDark.addEventListener("change", handleSystemPreferenceChange);
+      // Listen for changes in the system preference and call the handler function
+      prefersDark.addEventListener("change", handleSystemPreferenceChange);
 
-    // Initial check of the user's system preference
-    setDarkMode(prefersDark.matches);
+      // Initial check of the user's system preference
+      setDarkMode(prefersDark.matches);
 
-    // Clean up the event listener when the component unmounts
-    return () => {
-      prefersDark.removeEventListener("change", handleSystemPreferenceChange);
-    };
+      // Clean up the event listener when the component unmounts
+      return () => {
+        prefersDark.removeEventListener("change", handleSystemPreferenceChange);
+      };
+    }
   }, []);
 
   function updateTheme(newColorScheme: string) {
@@ -52,9 +60,17 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
+  useEffect(() => {
+    if (toggled) {
+      localStorage.setItem("darkMode", JSON.stringify(darkMode));
+    }
+  }, [toggled, darkMode]);
+
   const toggleDarkMode = () => {
+    console.log("toggle");
     setDarkMode((prevDarkMode) => !prevDarkMode);
     document.documentElement.classList.toggle("dark");
+    setToggled(true);
     // Add or remove the 'dark' class to the <html> element
   };
 

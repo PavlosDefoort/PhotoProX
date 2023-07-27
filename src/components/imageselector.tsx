@@ -523,16 +523,18 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                         inputProps={{
                           style: {
                             fontFamily: `${poppins.style.fontFamily}`,
+                            color: "black",
                           },
                         }} // font size of input text
                         InputLabelProps={{
                           style: {
                             fontFamily: `${poppins.style.fontFamily}`,
+                            color: "gray",
                           },
                         }} // font size of input label
                       />
                     </Box>
-                    <p className="pt-2 text-xs ${poppins.className}">
+                    <p className="pt-2 text-xs ${poppins.className} text-black dark:text-white">
                       Note: URLs that contain images of 4.5MB or greater will be
                       ignored
                     </p>

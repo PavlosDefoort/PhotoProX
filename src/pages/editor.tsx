@@ -1,9 +1,10 @@
-import React from "react";
+import React, { use } from "react";
 import PhotoEditor from "@/components/photoeditor";
 import ImageSelector from "@/components/imageselector";
 import PreviousImage from "@/components/previousImage";
+import { ThemeContext } from "../components/themeprovider";
 import { GetInfo } from "@/components/getinfo";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Poppins } from "next/font/google";
 import { set, toNumber } from "lodash";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -13,7 +14,13 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-const theme = createTheme({
+const lightTheme = createTheme({
+  palette: {
+    text: {
+      primary: "#000000",
+      secondary: "#000000",
+    },
+  },
   components: {
     MuiDialogContentText: {
       styleOverrides: {
@@ -21,7 +28,6 @@ const theme = createTheme({
           fontFamily: `${poppins.style.fontFamily}`,
           fontSize: "0.875rem",
           lineHeight: "1.25rem",
-          color: "#282929",
         },
       },
     },
@@ -73,7 +79,16 @@ const theme = createTheme({
   },
 });
 
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+  },
+  components: lightTheme.components,
+});
+
 export default function Editor({}) {
+  const { darkMode, toggleDarkMode } = useContext(ThemeContext);
+
   const [image, setImage] = useState("");
   const [possibleImage, setPossibleImage] = useState("");
   const [width, setWidth] = useState(0);
@@ -87,6 +102,7 @@ export default function Editor({}) {
   const [open, setOpen] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [userGPU, setUserGPU] = useState<Object>({});
+  const [theme, setTheme] = useState(darkTheme);
 
   useEffect(() => {
     GetInfo().then((gpu) => {
@@ -94,6 +110,14 @@ export default function Editor({}) {
       setUserGPU(gpu);
     });
   }, []);
+
+  useEffect(() => {
+    if (darkMode) {
+      setTheme(darkTheme);
+    } else {
+      setTheme(lightTheme);
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     const storedImage = localStorage.getItem("imageData");
