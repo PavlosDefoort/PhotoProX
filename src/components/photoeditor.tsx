@@ -459,7 +459,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       if (darkMode) {
         backgroundColor = 0x252525;
       } else {
-        backgroundColor = 0xd4d4d4;
+        backgroundColor = 0xcdcdcd;
       }
       appRef.current = new Application({
         view: canvasRef.current,
