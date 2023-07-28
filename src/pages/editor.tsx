@@ -170,7 +170,7 @@ export default function Editor({}) {
 
   return (
     <main
-      className={` bg-[#d4d4d4] dark:bg-[#252525] min-h-screen ${poppins.className}`}
+      className={` bg-[#cdcdcd] dark:bg-[#252525] min-h-screen ${poppins.className}`}
     >
       <ThemeProvider theme={theme}>
         {!agree && possibleImage && open && (

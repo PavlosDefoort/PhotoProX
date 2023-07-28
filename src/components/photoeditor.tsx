@@ -445,7 +445,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       if (darkMode) {
         app.renderer.background.color = 0x252525;
       } else {
-        app.renderer.background.color = 0xd4d4d4;
+        app.renderer.background.color = 0xcdcdcd;
       }
     }
   }, [darkMode]);
