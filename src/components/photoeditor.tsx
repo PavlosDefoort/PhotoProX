@@ -712,7 +712,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   return (
     <div>
-      <nav className="fixed top-0 z-50 w-full bg-[#e4e4e4] dark:bg-[#3b3b3b] border-b border-gray-500">
+      <nav className="fixed top-0 z-50 w-full bg-[#ececec] dark:bg-[#3b3b3b] border-b border-gray-500">
         <div className="px-3 py-3 lg:px-5 lg:pl-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -753,7 +753,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         className="fixed top-0 left-0 z-40 w-[56px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 py-6 overflow-y-auto bg-[#e4e4e4] dark:bg-[#3b3b3b] ">
+        <div className="h-full px-3 py-6 overflow-y-auto bg-[#ececec] dark:bg-[#3b3b3b] ">
           {imgSrc && (
             <div className="animate-fade animate-once animate-ease-linear">
               <div>
@@ -830,12 +830,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-40 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
           aria-label="Sidebar"
         >
-          <div className="h-full px-3 py-4 overflow-y-auto bg-[#e4e4e4] dark:bg-[#3b3b3b] "></div>
+          <div className="h-full px-3 py-4 overflow-y-auto bg-[#ececec] dark:bg-[#3b3b3b] "></div>
         </aside>
       )}
 
       <nav
-        className="fixed bottom-0 z-10 w-full bg-[#e4e4e4] dark:bg-[#3b3b3b]  dark:border-gray-700 border-t border-gray-500"
+        className="fixed bottom-0 z-10 w-full bg-[#ececec] dark:bg-[#3b3b3b]  dark:border-gray-700 border-t border-gray-500"
         style={{ height: "54px" }}
       >
         <div className="px-3 py-3.5 lg:px-5 lg:pl-2 ">
