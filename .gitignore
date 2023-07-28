@@ -20,7 +20,7 @@
 *.pem
 
 #pages
-pages/testEditor.tsx
+/src/pages/testEditor.tsx
 
 # debug
 npm-debug.log*
