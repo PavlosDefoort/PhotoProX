@@ -23,7 +23,6 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Check if dark mode is enabled in the user's system preference
     const alreadyMode = localStorage.getItem("darkMode");
     if (alreadyMode) {
-      console.log(alreadyMode);
       setDarkMode(JSON.parse(alreadyMode));
     } else {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -67,7 +66,6 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, [toggled, darkMode]);
 
   const toggleDarkMode = () => {
-    console.log("toggle");
     setDarkMode((prevDarkMode) => !prevDarkMode);
     document.documentElement.classList.toggle("dark");
     setToggled(true);

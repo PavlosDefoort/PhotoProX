@@ -28,13 +28,14 @@ import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import AspectRatioIcon from "@mui/icons-material/AspectRatio";
 import RedoIcon from "@mui/icons-material/Redo";
 // import { file } from "jszip";
-import { usePinch } from "@use-gesture/react";
+import { PinchState, usePinch } from "@use-gesture/react";
 import { Slider } from "@mui/material";
 import Link from "next/link";
 import { Application, Sprite, BlurFilter } from "pixi.js";
 import { ThemeContext } from "../components/themeprovider";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
+import { Console } from "console";
 
 interface PhotoEditorProps {
   imageData: string;
@@ -123,6 +124,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [translateYValue, setTranslateYValue] = useState(0);
   const [someWidth, setSomeWidth] = useState(0);
   const [someHeight, setSomeHeight] = useState(0);
+  const [pinchingScale, setPinchingScale] = useState(1);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const appRef = useRef<Application | null>(null);
@@ -166,29 +168,38 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     };
   }, []);
 
-  const zoomStep = 0.01;
+  const zoomStep = 0.02;
 
-  usePinch(
-    ({ active, last, offset: [pinchScale], pinching }) => {
+  function clamp(value: number, min: number, max: number) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  const pinchEventHandler = useCallback(
+    ({ active, last, delta }: PinchState) => {
       if (active) {
-        setIsZooming(true);
-        const stepScale = Math.floor(pinchScale / zoomStep) * zoomStep;
-        const newScale = stepScale + zoomStep;
-        setZoomValue(newScale);
-        return;
+        let newZoomValue = zoomValue;
+
+        if (delta[0] < 0) {
+          newZoomValue = clamp(zoomValue - zoomStep, 0.1, 4);
+        } else if (delta[0] > 0) {
+          newZoomValue = clamp(zoomValue + zoomStep, 0.1, 4);
+        }
+
+        setZoomValue(parseFloat(newZoomValue.toFixed(2)));
       }
 
       if (last) {
-        setIsZooming(false);
+        setIsZooming(active);
       }
     },
-    {
-      target,
-      scaleBounds: { min: 0.09, max: 3.99 },
-      pointer: { touch: true },
-      eventOptions: { passive: false },
-    }
+    [zoomValue]
   );
+
+  usePinch(pinchEventHandler, {
+    target,
+    pointer: { touch: true },
+    eventOptions: { passive: false },
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -370,8 +381,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       canvasHeight / realNaturalHeight
     );
 
-    setZoomValue(scale);
-    setFitToScreen(scale);
+    setZoomValue(parseFloat(scale.toFixed(2)));
+    setFitToScreen(parseFloat(scale.toFixed(2)));
     if (
       imageData.length > 0 &&
       realNaturalWidth > 0 &&
@@ -701,7 +712,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   return (
     <div>
-      <nav className="fixed top-0 z-50 w-full bg-[#ebebeb] dark:bg-[#3b3b3b] border-b border-gray-500">
+      <nav className="fixed top-0 z-50 w-full bg-[#e4e4e4] dark:bg-[#3b3b3b] border-b border-gray-500">
         <div className="px-3 py-3 lg:px-5 lg:pl-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -742,7 +753,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         className="fixed top-0 left-0 z-40 w-[56px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 py-6 overflow-y-auto bg-[#ebebeb] dark:bg-[#3b3b3b] ">
+        <div className="h-full px-3 py-6 overflow-y-auto bg-[#e4e4e4] dark:bg-[#3b3b3b] ">
           {imgSrc && (
             <div className="animate-fade animate-once animate-ease-linear">
               <div>
@@ -819,12 +830,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-40 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
           aria-label="Sidebar"
         >
-          <div className="h-full px-3 py-4 overflow-y-auto bg-[#ebebeb] dark:bg-[#3b3b3b] "></div>
+          <div className="h-full px-3 py-4 overflow-y-auto bg-[#e4e4e4] dark:bg-[#3b3b3b] "></div>
         </aside>
       )}
 
       <nav
-        className="fixed bottom-0 z-10 w-full bg-[#ebebeb] dark:bg-[#3b3b3b]  dark:border-gray-700 border-t border-gray-500"
+        className="fixed bottom-0 z-10 w-full bg-[#e4e4e4] dark:bg-[#3b3b3b]  dark:border-gray-700 border-t border-gray-500"
         style={{ height: "54px" }}
       >
         <div className="px-3 py-3.5 lg:px-5 lg:pl-2 ">
