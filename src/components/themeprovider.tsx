@@ -66,8 +66,10 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, [toggled, darkMode]);
 
   const toggleDarkMode = () => {
-    setDarkMode((prevDarkMode) => !prevDarkMode);
-    document.documentElement.classList.toggle("dark");
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    document.documentElement.classList.toggle("dark", newDarkMode);
+    localStorage.setItem("darkMode", JSON.stringify(newDarkMode));
     setToggled(true);
     // Add or remove the 'dark' class to the <html> element
   };

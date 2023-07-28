@@ -27,8 +27,8 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import AspectRatioIcon from "@mui/icons-material/AspectRatio";
 import RedoIcon from "@mui/icons-material/Redo";
+import PinchHandler from "./pinchLogic";
 // import { file } from "jszip";
-import { PinchState, usePinch } from "@use-gesture/react";
 import { Slider } from "@mui/material";
 import Link from "next/link";
 import { Application, Sprite, BlurFilter } from "pixi.js";
@@ -67,8 +67,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [displayXValue, setDisplayXValue] = useState(0);
   const [displayYValue, setDisplayYValue] = useState(0);
   // Add a canvasWidth and height global state to optimize resolution
-  const [canvasWidth, setCanvasWidth] = useState(5120);
-  const [canvasHeight, setCanvasHeight] = useState(2560);
+  const [canvasWidth, setCanvasWidth] = useState(5000);
+  const [canvasHeight, setCanvasHeight] = useState(2500);
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
   const [undoStack, setUndoStack] = useState<
     Array<{
@@ -167,39 +167,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       document.removeEventListener("gesturechange", preventGesture);
     };
   }, []);
-
-  const zoomStep = 0.02;
-
-  function clamp(value: number, min: number, max: number) {
-    return Math.min(Math.max(value, min), max);
-  }
-
-  const pinchEventHandler = useCallback(
-    ({ active, last, delta }: PinchState) => {
-      if (active) {
-        let newZoomValue = zoomValue;
-
-        if (delta[0] < 0) {
-          newZoomValue = clamp(zoomValue - zoomStep, 0.1, 4);
-        } else if (delta[0] > 0) {
-          newZoomValue = clamp(zoomValue + zoomStep, 0.1, 4);
-        }
-
-        setZoomValue(parseFloat(newZoomValue.toFixed(2)));
-      }
-
-      if (last) {
-        setIsZooming(active);
-      }
-    },
-    [zoomValue]
-  );
-
-  usePinch(pinchEventHandler, {
-    target,
-    pointer: { touch: true },
-    eventOptions: { passive: false },
-  });
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -895,6 +862,11 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
       <div className="p-20 sm:ml-64 ">
         <div className="">
+          <PinchHandler
+            setZoomValue={setZoomValue}
+            setIsZooming={setIsZooming}
+            target={target} // Pass the targetRef as the target
+          />
           <div
             ref={target}
             className="flex items-center justify-center "
