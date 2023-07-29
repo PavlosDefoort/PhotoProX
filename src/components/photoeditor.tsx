@@ -16,6 +16,7 @@ import { Tooltip } from "@mui/material";
 import CropIcon from "@mui/icons-material/Crop";
 import DownloadIcon from "@mui/icons-material/Download";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import SideBar from "./sidebar";
 import TransformIcon from "@mui/icons-material/Transform";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ControlCameraIcon from "@mui/icons-material/ControlCamera";
@@ -31,11 +32,19 @@ import PinchHandler from "./pinchLogic";
 // import { file } from "jszip";
 import { Slider } from "@mui/material";
 import Link from "next/link";
-import { Application, Sprite, BlurFilter } from "pixi.js";
+import {
+  Application,
+  Sprite,
+  BlurFilter,
+  NoiseFilter,
+  ColorMatrixFilter,
+} from "pixi.js";
 import { ThemeContext } from "../components/themeprovider";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import { Console } from "console";
+import { Filter } from "pixi.js";
+import EditBar from "./editbar";
 
 interface PhotoEditorProps {
   imageData: string;
@@ -52,7 +61,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   fileName,
   fileSize,
 }) => {
-  const [editingMode, setEditingMode] = useState("none");
+  const [editingMode, setEditingMode] = useState("");
   const [windowWidth, setWindowWidth] = useState(0);
   const [deltaWidth, setDeltaWidth] = useState(0);
   const [fitToScreen, setFitToScreen] = useState(0);
@@ -104,27 +113,127 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [fake, setFake] = useState(0);
   const [fakeX, setFakeX] = useState(0);
 
+  // Sidebar Layout
+
+  // Transform
+  // Crop
+  // Skew
+  // Rotate
+  // Resize
+
+  // Color Filters
+  // Tint
+  // Night
+  // Sepia
+  // Vintage
+  // Predator
+  // LSD
+  // Browni
+  // Polaroid
+  // Negative
+  // Kodachrome
+  // toBGR
+
   // Set the default values for the filters, tranformations, and effects
-  const [saturationValue, setSaturationValue] = useState(1);
-  const [brightnessValue, setBrightnessValue] = useState(1);
-  const [opacityValue, setOpacityValue] = useState(1);
-  const [contrastValue, setContrastValue] = useState(1);
-  const [blurValue, setBlurValue] = useState(0);
-  const [sepiaValue, setSepiaValue] = useState(0);
-  const [dropShadowValue, setDropShadowValue] = useState(0);
-  const [grayscaleValue, setGrayscaleValue] = useState(0);
-  const [hueRotateValue, setHueRotateValue] = useState(0);
-  const [invertValue, setInvertValue] = useState(0);
-  const [scaleXValue, setScaleXValue] = useState(1);
-  const [scaleYValue, setScaleYValue] = useState(1);
+
+  interface ImageProperties {
+    contrast: { value: number; multiply: boolean; enabled?: boolean };
+    brightness: { value: number; multiply: boolean; enabled?: boolean };
+    grayscale: { value: number; multiply: boolean; enabled?: boolean };
+    vintage: { multiply: boolean; enabled: boolean };
+    sepia: { multiply: boolean; enabled: boolean };
+    predator: { value: number; multiply: boolean; enabled: boolean };
+    night: { value: number; multiply: boolean; enabled: boolean };
+    lsd: { multiply: boolean; enabled: boolean };
+    browni: { multiply: boolean; enabled: boolean };
+    polaroid: { multiply: boolean; enabled: boolean };
+    negative: { multiply: boolean; enabled: boolean };
+    kodachrome: { multiply: boolean; enabled: boolean };
+    hue: { value: number; multiply: boolean; enabled?: boolean };
+    tint: { value: number; multiply: boolean; enabled: boolean }; // 'enabled' property is optional here
+    toBGR: { multiply: boolean; enabled: boolean };
+    technicolor: { multiply: boolean; enabled: boolean };
+
+    // Index signature
+    [key: string]: { value?: number; multiply: boolean; enabled?: boolean };
+  }
+
+  const defaultImageProperties: ImageProperties = {
+    contrast: {
+      value: 0,
+      multiply: false,
+    },
+    brightness: {
+      value: 1,
+      multiply: false,
+    },
+    grayscale: {
+      value: 1,
+      multiply: false,
+    },
+    vintage: {
+      multiply: true,
+      enabled: false,
+    },
+    sepia: {
+      multiply: false,
+      enabled: false,
+    },
+    predator: {
+      value: 0.1,
+      multiply: false,
+      enabled: false,
+    },
+    night: {
+      value: 1,
+      multiply: false,
+      enabled: false,
+    },
+    lsd: {
+      multiply: false,
+      enabled: false,
+    },
+    browni: {
+      multiply: true,
+      enabled: false,
+    },
+    polaroid: {
+      multiply: false,
+      enabled: false,
+    },
+    negative: {
+      multiply: false,
+      enabled: false,
+    },
+
+    kodachrome: {
+      multiply: true,
+      enabled: false,
+    },
+
+    hue: {
+      value: 0,
+      multiply: false,
+    },
+    tint: {
+      value: 0xff0000,
+      multiply: false,
+      enabled: false,
+    },
+    toBGR: {
+      multiply: false,
+      enabled: false,
+    },
+    technicolor: {
+      multiply: true,
+      enabled: false,
+    },
+  };
+  const [imageProperties, setImageProperties] = useState<ImageProperties>(
+    defaultImageProperties
+  );
+
   const [rotateValue, setRotateValue] = useState(0);
-  const [skewXValue, setSkewXValue] = useState(0);
-  const [skewYValue, setSkewYValue] = useState(0);
-  const [translateXValue, setTranslateXValue] = useState(0);
-  const [translateYValue, setTranslateYValue] = useState(0);
-  const [someWidth, setSomeWidth] = useState(0);
-  const [someHeight, setSomeHeight] = useState(0);
-  const [pinchingScale, setPinchingScale] = useState(1);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const appRef = useRef<Application | null>(null);
@@ -218,6 +327,10 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const handleModeChange = (mode: string) => {
     setEditingMode(mode);
   };
+
+  useEffect(() => {
+    console.log(editingMode);
+  }, [editingMode]);
 
   const handleDownload = () => {
     // Get the canvas element
@@ -316,10 +429,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       }
     };
 
-    window.addEventListener("wheel", handleScroll, { passive: false });
+    const canvas = canvasRef.current!;
+
+    canvas.addEventListener("wheel", handleScroll, { passive: false });
 
     return () => {
-      window.removeEventListener("wheel", handleScroll);
+      canvas.removeEventListener("wheel", handleScroll);
     };
   }, [
     fake,
@@ -344,8 +459,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     setImgSrc(imageData);
 
     const scale = Math.min(
-      canvasWidth / realNaturalWidth,
-      canvasHeight / realNaturalHeight
+      canvasWidth / 1.1 / realNaturalWidth,
+      canvasHeight / 1.1 / realNaturalHeight
     );
 
     setZoomValue(parseFloat(scale.toFixed(2)));
@@ -451,6 +566,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       const blurFilter = new BlurFilter();
       // Load image with PIXI
 
+      // Add a saturation filter
+      const saturationFilter = new NoiseFilter();
+
       const offsetX = 0;
 
       // Calculate the new dimensions of the image
@@ -478,6 +596,78 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
       image.width = imageWidth;
       image.height = imageHeight;
+
+      // Change saturation
+      const colorMatrix = new ColorMatrixFilter();
+
+      colorMatrix.contrast(
+        imageProperties.contrast.value,
+        imageProperties.contrast.multiply
+      );
+      colorMatrix.brightness(
+        imageProperties.brightness.value,
+        imageProperties.brightness.multiply
+      );
+
+      colorMatrix.grayscale(
+        imageProperties.grayscale.value,
+        imageProperties.grayscale.multiply
+      );
+      colorMatrix.hue(imageProperties.hue.value, imageProperties.hue.multiply);
+
+      if (imageProperties.vintage.enabled) {
+        colorMatrix.vintage(imageProperties.vintage.multiply);
+      }
+
+      if (imageProperties.toBGR.enabled) {
+        colorMatrix.toBGR(imageProperties.toBGR.multiply);
+      }
+
+      if (imageProperties.technicolor.enabled) {
+        colorMatrix.technicolor(imageProperties.technicolor.multiply);
+      }
+
+      if (imageProperties.sepia.enabled) {
+        colorMatrix.sepia(imageProperties.sepia.multiply);
+      }
+
+      if (imageProperties.predator.enabled) {
+        colorMatrix.predator(
+          imageProperties.predator.value,
+          imageProperties.predator.multiply
+        );
+      }
+
+      if (imageProperties.polaroid.enabled) {
+        colorMatrix.polaroid(imageProperties.polaroid.multiply);
+      }
+
+      if (imageProperties.night.enabled) {
+        colorMatrix.night(
+          imageProperties.night.value,
+          imageProperties.night.multiply
+        );
+      }
+
+      if (imageProperties.kodachrome.enabled) {
+        colorMatrix.kodachrome(imageProperties.kodachrome.multiply);
+      }
+
+      // colorMatrix.vintage(true);
+      // colorMatrix.toBGR(false);
+      // colorMatrix.tint(0xff0000, false);
+      // colorMatrix.technicolor(true);
+      // colorMatrix.sepia(false);
+      // colorMatrix.reset();
+      // colorMatrix.predator(1, false);
+      // colorMatrix.polaroid(false);
+      // colorMatrix.night(0.2, false);
+      // colorMatrix.negative(false);
+      // colorMatrix.lsd(false);
+      // colorMatrix.kodachrome(true);
+      // colorMatrix.browni(true);
+
+      image.filters = [colorMatrix];
 
       image.roundPixels = true;
 
@@ -509,6 +699,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     realNaturalHeight,
     canvasHeight,
     canvasWidth,
+    imageProperties,
   ]);
 
   const undoAction = useCallback(async () => {
@@ -525,11 +716,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
     // Apply the previous rotation value
     setRotateValue(lastRotationValue.rotate);
-    setSkewXValue(lastRotationValue.skewX);
-    setSkewYValue(lastRotationValue.skewY);
+
     setScaleFactor(lastRotationValue.scaleFactor);
-    setTranslateXValue(lastRotationValue.translateX);
-    setTranslateYValue(lastRotationValue.translateY);
 
     // Move the undone action to the redoStack
     setRedoStack([redoValue, ...redoStack]);
@@ -550,11 +738,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     undoStack,
     setIsUndoable,
     setRotateValue,
-    setSkewXValue,
-    setSkewYValue,
+
     setScaleFactor,
-    setTranslateXValue,
-    setTranslateYValue,
+
     setRedoStack,
     redoStack,
   ]);
@@ -570,12 +756,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
     // Reapply the canvas state
     setRotateValue(nextState.rotate);
-    setSkewXValue(nextState.skewX);
-    setSkewYValue(nextState.skewY);
-    setScaleFactor(nextState.scaleFactor);
-    setTranslateXValue(nextState.translateX);
-    setTranslateYValue(nextState.translateY);
 
+    setScaleFactor(nextState.scaleFactor);
     // Move the redone action to the undoStack
     setUndoStack([...undoStack, redoStack.shift()!]);
 
@@ -594,11 +776,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     redoStack,
     setIsUndoable,
     setRotateValue,
-    setSkewXValue,
-    setSkewYValue,
+
     setScaleFactor,
-    setTranslateXValue,
-    setTranslateYValue,
     setUndoStack,
     setRedoStack,
     undoStack,
@@ -640,26 +819,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     };
   }, [handleKeyDownTwo]);
 
-  const handleRotateChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    const rotatingValue = parseInt(value, 10);
-    setRotateValue(rotatingValue);
-  };
-
-  const handleSkewXChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    const skewingValue = parseInt(value, 10);
-    setSkewXValue(skewingValue);
-  };
-
   const handleReset = () => {
     setRotateValue(0);
-    setSkewXValue(0);
-    setSkewYValue(0);
-    setScaleXValue(1);
-    setScaleYValue(1);
-    setTranslateXValue(0);
-    setTranslateYValue(0);
+
     setDisplayXValue(0);
     setDisplayYValue(0);
     setScaleFactor(1);
@@ -677,9 +839,100 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     setZoomValue(newZoomValue);
   };
 
+  let content = <SideBar changeActive={handleModeChange} />;
+
+  interface ImagePropertiesUpdate {
+    [key: string]: {
+      value?: number | undefined;
+      multiply: boolean;
+      enabled?: boolean | undefined;
+    };
+  }
+
+  const handleEnable = (name: string) => {
+    // Object is possibly undefined
+
+    const updatedImageProperties = {
+      ...imageProperties,
+      [name]: {
+        ...imageProperties[name as keyof ImageProperties],
+        enabled:
+          !imageProperties[name as keyof ImageProperties]?.enabled ?? false,
+      },
+    };
+
+    setImageProperties(updatedImageProperties);
+  };
+
+  const handleMultiply = (name: string) => {
+    const updatedImageProperties = {
+      ...imageProperties,
+      [name]: {
+        ...imageProperties[name as keyof ImageProperties],
+        multiply:
+          !imageProperties[name as keyof ImageProperties]?.multiply ?? false,
+      },
+    };
+
+    setImageProperties(updatedImageProperties);
+  };
+
+  const editModeProperties: Record<
+    string,
+    {
+      name: keyof ImageProperties;
+      enabled: boolean;
+      multiply: boolean;
+    }
+  > = {
+    sepia: {
+      name: "sepia",
+      enabled: imageProperties.sepia.enabled,
+      multiply: imageProperties.sepia.multiply,
+    },
+    night: {
+      name: "night",
+      enabled: imageProperties.night.enabled,
+      multiply: imageProperties.night.multiply,
+    },
+    vintage: {
+      name: "vintage",
+      enabled: imageProperties.vintage.enabled,
+      multiply: imageProperties.vintage.multiply,
+    },
+    polaroid: {
+      name: "polaroid",
+      enabled: imageProperties.polaroid.enabled,
+      multiply: imageProperties.polaroid.multiply,
+    },
+    kodachrome: {
+      name: "kodachrome",
+      enabled: imageProperties.kodachrome.enabled,
+      multiply: imageProperties.kodachrome.multiply,
+    },
+  };
+
+  const modeProperties = editModeProperties[editingMode];
+
+  if (modeProperties) {
+    content = (
+      <EditBar
+        name={editingMode}
+        changeActive={handleModeChange}
+        handleEnable={handleEnable}
+        enabled={modeProperties.enabled}
+        multiply={modeProperties.multiply}
+        handleMultiply={handleMultiply}
+      />
+    );
+  } else {
+    // If the editing mode is not found, render the default SideBar
+    content = <SideBar changeActive={handleModeChange} />;
+  }
+
   return (
     <div>
-      <nav className="fixed top-0 z-50 w-full bg-[#ececec] dark:bg-[#3b3b3b] border-b border-gray-500">
+      <nav className="fixed top-0 z-50 w-full bg-white dark:bg-[#3b3b3b] border-b border-gray-500">
         <div className="px-3 py-3 lg:px-5 lg:pl-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -720,7 +973,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         className="fixed top-0 left-0 z-40 w-[56px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 py-6 overflow-y-auto bg-[#ececec] dark:bg-[#3b3b3b] ">
+        <div className="h-full px-3 py-6 overflow-y-auto bg-white dark:bg-[#3b3b3b] ">
           {imgSrc && (
             <div className="animate-fade animate-once animate-ease-linear">
               <div>
@@ -797,12 +1050,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-40 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
           aria-label="Sidebar"
         >
-          <div className="h-full px-3 py-4 overflow-y-auto bg-[#ececec] dark:bg-[#3b3b3b] "></div>
+          {content}
         </aside>
       )}
 
       <nav
-        className="fixed bottom-0 z-10 w-full bg-[#ececec] dark:bg-[#3b3b3b]  dark:border-gray-700 border-t border-gray-500"
+        className="fixed bottom-0 z-10 w-full bg-white dark:bg-[#3b3b3b]  dark:border-gray-700 border-t border-gray-500"
         style={{ height: "54px" }}
       >
         <div className="px-3 py-3.5 lg:px-5 lg:pl-2 ">
@@ -890,6 +1143,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 position: "absolute",
                 width: realNaturalWidth ? `${1410}px` : "100%",
                 height: realNaturalHeight ? `${705}px` : "100%",
+                zIndex: -1,
 
                 // backgroundImage:
                 //   "linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%)",

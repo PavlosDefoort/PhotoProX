@@ -19,6 +19,7 @@ module.exports = {
     require("flowbite/plugin"),
     require("tw-elements/dist/plugin.cjs"),
     require("tailwindcss-animated"),
+    require("tailwind-scrollbar"),
   ],
   darkMode: "class",
 };
