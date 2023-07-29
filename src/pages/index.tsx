@@ -15,9 +15,9 @@ const poppins = Poppins({
 export default function Home() {
   return (
     <main
-      className={`z-0 bg-gradient-to-t from-[#f2709c] to-[#ff9472] flex flex-col min-h-screen items-center justify-center  ${poppins.className}`}
+      className={`z-0 bg-gradient-to-t from-[#f2709c] to-[#ff9472] dark:from-[#000000]  dark:to-[#434343] flex flex-col min-h-screen items-center justify-center  ${poppins.className}`}
     >
-      <div className="animate-jump absolute top-0 right-0 mt-4 mr-14 flex">
+      <div className="animate-jump absolute top-4 left-12 flex">
         <a href="https://github.com/PavlosDefoort/PhotoProX" className="pr-4">
           <svg
             className="w-6 h-6  text-gray-800 dark:text-white hover:animate-bounce"
@@ -85,7 +85,7 @@ export default function Home() {
           }}
         />
       </div> */}
-      <footer className="animate-fade rounded-lg shadow  fixed bottom-0 left-0 w-full dark:bg-gray-800">
+      <footer className="animate-fade rounded-lg shadow  fixed bottom-0 left-0 w-full ">
         <div className="w-full mx-auto max-w-screen-xl p-4 flex items-center justify-center ">
           <span className="text-sm text-gray-100 sm:text-center dark:text-gray-100">
             © 2023{" "}

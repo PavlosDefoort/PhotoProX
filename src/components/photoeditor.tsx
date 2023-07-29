@@ -932,7 +932,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   return (
     <div>
-      <nav className="fixed top-0 z-50 w-full bg-white dark:bg-[#3b3b3b] border-b border-gray-500">
+      <nav className="fixed top-0 z-40 w-full bg-white dark:bg-[#3b3b3b] border-b border-gray-500">
         <div className="px-3 py-3 lg:px-5 lg:pl-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -947,30 +947,14 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 </span>
               </Link>
             </div>
-            <div className="mr-7">
-              {darkMode ? (
-                <Tooltip title="See the Sun rise" placement="bottom">
-                  <DarkModeIcon
-                    onClick={toggleDarkMode}
-                    className="text-white"
-                  />
-                </Tooltip>
-              ) : (
-                <Tooltip title="Let the Moon fall" placement="bottom">
-                  <LightModeIcon
-                    onClick={toggleDarkMode}
-                    className="text-black"
-                  />
-                </Tooltip>
-              )}
-            </div>
+            <div className="mr-7"></div>
           </div>
         </div>
       </nav>
 
       <aside
         id="logo-sidebar"
-        className="fixed top-0 left-0 z-40 w-[56px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
+        className="fixed top-0 left-0 z-30 w-[56px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
         aria-label="Sidebar"
       >
         <div className="h-full px-3 py-6 overflow-y-auto bg-white dark:bg-[#3b3b3b] ">
@@ -1047,7 +1031,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       {imgSrc && (
         <aside
           id="logo-sidebar"
-          className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-40 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
+          className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-30 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
           aria-label="Sidebar"
         >
           {content}
