@@ -25,15 +25,12 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TransformIcon from "@mui/icons-material/Transform";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ControlCameraIcon from "@mui/icons-material/ControlCamera";
-import { Crop, Remove, Undo } from "@mui/icons-material";
-import { blue, pink, red } from "@mui/material/colors";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import UndoIcon from "@mui/icons-material/Undo";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import AspectRatioIcon from "@mui/icons-material/AspectRatio";
-import RedoIcon from "@mui/icons-material/Redo";
 import PinchHandler from "./pinchLogic";
+
 // import { file } from "jszip";
 import { Slider } from "@mui/material";
 const SideBar = dynamic(() => import("../components/sidebar"), {
@@ -977,6 +974,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
             <div className="flex items-center">
               <Link href="/" className="flex md:mr-24">
                 <Image
+                  width={35}
+                  height={35}
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
                   className="h-8 mr-3"
                   alt="PhotoProX Logo"
@@ -1005,6 +1004,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                     src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
                     className="h-6 mr-3 sm:h-7"
                     alt="Flowbite Logo"
+                    width={35}
+                    height={35}
                   />
                 </Link>
                 <ul className="space-y-6 font-medium ">
@@ -1189,6 +1190,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               src={imgSrc}
               ref={imgRef}
               alt="Image"
+              width={1410}
+              height={705}
             ></Image>
           </div>
         </div>
