@@ -5,6 +5,8 @@ import React, {
   useCallback,
   ChangeEvent,
   useContext,
+  lazy,
+  Suspense,
 } from "react";
 
 // import Cropping from "./cropping";
@@ -16,7 +18,7 @@ import { Tooltip } from "@mui/material";
 import CropIcon from "@mui/icons-material/Crop";
 import DownloadIcon from "@mui/icons-material/Download";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import SideBar from "./sidebar";
+
 import TransformIcon from "@mui/icons-material/Transform";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ControlCameraIcon from "@mui/icons-material/ControlCamera";
@@ -31,6 +33,8 @@ import RedoIcon from "@mui/icons-material/Redo";
 import PinchHandler from "./pinchLogic";
 // import { file } from "jszip";
 import { Slider } from "@mui/material";
+const SideBar = lazy(() => import("../components/sidebar"));
+const FilterBar = lazy(() => import("../components/filterbar"));
 import Link from "next/link";
 import {
   Application,
@@ -76,8 +80,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [displayXValue, setDisplayXValue] = useState(0);
   const [displayYValue, setDisplayYValue] = useState(0);
   // Add a canvasWidth and height global state to optimize resolution
-  const [canvasWidth, setCanvasWidth] = useState(5000);
-  const [canvasHeight, setCanvasHeight] = useState(2500);
+  const [canvasWidth, setCanvasWidth] = useState(3000);
+  const [canvasHeight, setCanvasHeight] = useState(1500);
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
   const [undoStack, setUndoStack] = useState<
     Array<{
@@ -912,21 +916,49 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     },
   };
 
-  const modeProperties = editModeProperties[editingMode];
+  const someComponents = [
+    {
+      name: "sepia",
+      enabled: imageProperties.sepia.enabled,
+      multiply: imageProperties.sepia.multiply,
+    },
+    {
+      name: "night",
+      enabled: imageProperties.night.enabled,
+      multiply: imageProperties.night.multiply,
+    },
+    {
+      name: "vintage",
+      enabled: imageProperties.vintage.enabled,
+      multiply: imageProperties.vintage.multiply,
+    },
+    {
+      name: "polaroid",
+      enabled: imageProperties.polaroid.enabled,
+      multiply: imageProperties.polaroid.multiply,
+    },
+    {
+      name: "kodachrome",
+      enabled: imageProperties.kodachrome.enabled,
+      multiply: imageProperties.kodachrome.multiply,
+    },
+    {
+      name: "predator",
+      enabled: imageProperties.predator.enabled,
+      multiply: imageProperties.predator.multiply,
+    },
+  ];
 
-  if (modeProperties) {
+  if (editingMode === "filters") {
     content = (
-      <EditBar
-        name={editingMode}
+      <FilterBar
         changeActive={handleModeChange}
         handleEnable={handleEnable}
-        enabled={modeProperties.enabled}
-        multiply={modeProperties.multiply}
         handleMultiply={handleMultiply}
+        components={someComponents}
       />
     );
   } else {
-    // If the editing mode is not found, render the default SideBar
     content = <SideBar changeActive={handleModeChange} />;
   }
 
@@ -1034,7 +1066,18 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-30 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
           aria-label="Sidebar"
         >
-          {content}
+          <Suspense fallback={<div>Loading...</div>}>
+            {editingMode === "filters" ? (
+              <FilterBar
+                changeActive={handleModeChange}
+                handleEnable={handleEnable}
+                components={someComponents}
+                handleMultiply={handleMultiply}
+              />
+            ) : (
+              <SideBar changeActive={handleModeChange} />
+            )}
+          </Suspense>
         </aside>
       )}
 
