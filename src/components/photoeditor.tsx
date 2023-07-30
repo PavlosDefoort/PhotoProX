@@ -8,6 +8,9 @@ import React, {
   lazy,
   Suspense,
 } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import Image from "next/image";
 
 // import Cropping from "./cropping";
 // import SaturationSlider from "./saturation";
@@ -33,9 +36,13 @@ import RedoIcon from "@mui/icons-material/Redo";
 import PinchHandler from "./pinchLogic";
 // import { file } from "jszip";
 import { Slider } from "@mui/material";
-const SideBar = lazy(() => import("../components/sidebar"));
-const FilterBar = lazy(() => import("../components/filterbar"));
-import Link from "next/link";
+const SideBar = dynamic(() => import("../components/sidebar"), {
+  loading: () => <p>loading</p>,
+});
+const FilterBar = dynamic(() => import("../components/filterbar"), {
+  loading: () => <p>loading</p>,
+});
+
 import {
   Application,
   Sprite,
@@ -80,8 +87,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [displayXValue, setDisplayXValue] = useState(0);
   const [displayYValue, setDisplayYValue] = useState(0);
   // Add a canvasWidth and height global state to optimize resolution
-  const [canvasWidth, setCanvasWidth] = useState(3000);
-  const [canvasHeight, setCanvasHeight] = useState(1500);
+  const [canvasWidth, setCanvasWidth] = useState(2800);
+  const [canvasHeight, setCanvasHeight] = useState(1400);
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
   const [undoStack, setUndoStack] = useState<
     Array<{
@@ -969,7 +976,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Link href="/" className="flex md:mr-24">
-                <img
+                <Image
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
                   className="h-8 mr-3"
                   alt="PhotoProX Logo"
@@ -994,7 +1001,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
             <div className="animate-fade animate-once animate-ease-linear">
               <div>
                 <Link href="/" className="flex items-center pl-2.5 mb-5">
-                  <img
+                  <Image
                     src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
                     className="h-6 mr-3 sm:h-7"
                     alt="Flowbite Logo"
@@ -1066,18 +1073,16 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-30 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
           aria-label="Sidebar"
         >
-          <Suspense fallback={<div>Loading...</div>}>
-            {editingMode === "filters" ? (
-              <FilterBar
-                changeActive={handleModeChange}
-                handleEnable={handleEnable}
-                components={someComponents}
-                handleMultiply={handleMultiply}
-              />
-            ) : (
-              <SideBar changeActive={handleModeChange} />
-            )}
-          </Suspense>
+          {editingMode === "filters" ? (
+            <FilterBar
+              changeActive={handleModeChange}
+              handleEnable={handleEnable}
+              components={someComponents}
+              handleMultiply={handleMultiply}
+            />
+          ) : (
+            <SideBar changeActive={handleModeChange} />
+          )}
         </aside>
       )}
 
@@ -1179,16 +1184,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               }}
             ></canvas>
 
-            <img style={{ display: "none" }} src={imgSrc} ref={imgRef}></img>
-
-            {editingMode === "crop" && (
-              <div>Hello</div>
-              //   <Cropping
-              //     image={newImgSrc}
-              //     scaledWidth={naturalWidth}
-              //     scaledHeight={naturalHeight}
-              //   />
-            )}
+            <Image
+              style={{ display: "none" }}
+              src={imgSrc}
+              ref={imgRef}
+              alt="Image"
+            ></Image>
           </div>
         </div>
       </div>

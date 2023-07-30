@@ -22,6 +22,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   React.useEffect(() => {
     const init = async () => {
       const { initTE, Sidenav } = await import("tw-elements");
+      console.log("init");
       initTE({ Sidenav });
     };
     init();
