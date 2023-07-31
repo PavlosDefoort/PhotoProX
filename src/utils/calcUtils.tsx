@@ -39,11 +39,13 @@ export function calculateZoomPan(
   if (deltaY !== 0) {
     // Zoom vertically
     if (zoomY > 0) {
+      // Taking min of positive values
       newScaleFactorY = Math.min(
         fakeY + zoomY,
         maxVerticalOffset !== 0 ? maxVerticalOffset + 100 : maxVerticalOffset
       );
     } else {
+      // Taking max of negative values
       newScaleFactorY = Math.max(
         fakeY + zoomY,
         -maxVerticalOffset !== 0 ? -maxVerticalOffset - 100 : -maxVerticalOffset
@@ -69,4 +71,25 @@ export function calculateZoomPan(
   }
 
   return { newScaleFactorX, newScaleFactorY };
+}
+
+export function fitImageToScreen(
+  width: number,
+  height: number,
+  canvasWidth: number,
+  canvasHeight: number,
+  rotateValue: number
+) {
+  const newWidth = WidthRotate(width, height, rotateValue);
+  const newHeight = HeightRotate(width, height, rotateValue);
+
+  // Recalculate scale based off rotation
+  const scale = Math.min(
+    canvasWidth / 1.1 / newWidth,
+    canvasHeight / 1.1 / newHeight
+  );
+
+  const roundedScale = Math.round(scale * 100) / 100;
+
+  return roundedScale;
 }

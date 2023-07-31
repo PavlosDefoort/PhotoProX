@@ -12,13 +12,14 @@ import ToolBar from "./UI/toolbar";
 import BottomBar from "./UI/bottombar";
 import ApplyCanvas from "@/components/Editor/PhotoEditor/applyCanvas";
 import PinchHandler from "./pinchLogic";
-import { Application } from "pixi.js";
+import { Application, Container, Sprite, autoDetectRenderer } from "pixi.js";
 import { ThemeContext } from "../../ThemeProvider/themeprovider";
 import {
   WidthRotate,
   HeightRotate,
   clamp,
   calculateZoomPan,
+  fitImageToScreen,
 } from "@/utils/calcUtils";
 import { Newsreader } from "next/font/google";
 
@@ -182,6 +183,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const appRef = useRef<Application | null>(null);
+  const spriteRef = useRef<Sprite | null>(null);
   const imgRef = useRef(null);
   const target = useRef<HTMLDivElement | null>(null);
 
@@ -208,7 +210,15 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   }, [windowWidth]);
 
   const handleFitToScreen = () => {
-    setZoomValue(fitToScreen);
+    const roundedScale = fitImageToScreen(
+      realNaturalWidth,
+      realNaturalHeight,
+      canvasWidth,
+      canvasHeight,
+      rotateValue
+    );
+
+    setZoomValue(roundedScale);
   };
 
   useEffect(() => {
@@ -262,17 +272,65 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     setEditingMode(mode);
   };
 
-  const handleDownload = () => {
-    // Get the canvas element
-    const canvas = canvasRef.current!;
+  const handleDownload = async () => {
+    // Make the function asynchronous
+    if (spriteRef.current) {
+      const image = spriteRef.current;
+      image.width = realNaturalWidth;
+      image.height = realNaturalHeight;
+      image.pivot.set(0, 0);
 
-    // Create a temporary link element
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL(); // Convert canvas to data URL
-    link.download = "image.png"; // Set the filename for the downloaded image
+      image.scale.set(1);
+      image.position.set(0, 0);
 
-    // Simulate a click event   on the link element to trigger the download
-    link.click();
+      // Assuming you have created the sprite 'image' and applied filters to it
+      const renderer = autoDetectRenderer({
+        width: realNaturalWidth,
+        height: realNaturalHeight,
+        powerPreference: "high-performance",
+        antialias: true,
+        resolution: 1,
+      });
+
+      const container = new Container();
+
+      container.addChild(image);
+      console.log(container.width, container.height);
+      renderer.render(container);
+
+      // Get the image as base64 data url using async/await
+      const base64 = await renderer.extract.base64();
+      // Alternatively, you can use .then() instead of async/await
+      // renderer.extract.base64().then(base64 => { ... });
+
+      // Create a link
+      const link = document.createElement("a");
+      // Set link's href to point to the Base64 URL
+      link.href = base64;
+      link.download = "image.png";
+
+      // Simulate a click on the link to trigger the download
+      link.click();
+
+      // Destroy the renderer object to free up resources
+      renderer.destroy();
+      // Destroy the container object to free up resources
+      container.destroy();
+
+      const app = appRef.current!;
+      // Add the child to the stage, the container took it from the image
+      app.stage.addChild(image);
+
+      const scale = fitImageToScreen(
+        realNaturalWidth,
+        realNaturalHeight,
+        canvasWidth,
+        canvasHeight,
+        rotateValue
+      );
+
+      setZoomValue(scale);
+    }
   };
 
   useEffect(() => {
@@ -378,6 +436,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     canvasWidth,
     imageProperties,
     appRef,
+    spriteRef,
   });
 
   useEffect(() => {
@@ -385,13 +444,16 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
     setImgSrc(imageData);
 
-    const scale = Math.min(
-      canvasWidth / 1.1 / realNaturalWidth,
-      canvasHeight / 1.1 / realNaturalHeight
+    const scale = fitImageToScreen(
+      realNaturalWidth,
+      realNaturalHeight,
+      canvasWidth,
+      canvasHeight,
+      rotateValue
     );
 
-    setZoomValue(parseFloat(scale.toFixed(2)));
-    setFitToScreen(parseFloat(scale.toFixed(2)));
+    setZoomValue(scale);
+
     if (
       imageData.length > 0 &&
       realNaturalWidth > 0 &&
@@ -408,6 +470,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     imageData,
     realNaturalWidth,
     realNaturalHeight,
+    rotateValue,
     fileName,
     fileSize,
     canvasWidth,
@@ -659,7 +722,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   return (
     <div>
       <TopBar />
-      <ToolBar imgSrc={imgSrc} />
+      <ToolBar imgSrc={imgSrc} downloadImage={handleDownload} />
       {imgSrc && (
         <aside
           id="logo-sidebar"

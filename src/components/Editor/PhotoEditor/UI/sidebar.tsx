@@ -20,8 +20,8 @@ const SideBar: React.FC<SideBarProps> = ({ changeActive }) => {
           className="relative m-0 list-none px-[0.2rem] pb-12 pt-16"
           data-te-sidenav-menu-ref
         >
-          {/* <li className="relative ">
-            <span className="px-6 py-10 text-[0.6rem] font-bold uppercase text-gray-600 dark:text-gray-400">
+          <li className="relative ">
+            <span className="px-6 py-4 text-[0.6rem] font-bold uppercase text-gray-600 dark:text-gray-400">
               Transform
             </span>
             <a
@@ -34,13 +34,13 @@ const SideBar: React.FC<SideBarProps> = ({ changeActive }) => {
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
-                  stroke-width="1.5"
+                  strokeWidth="1.5"
                   stroke="currentColor"
                   className="h-5 w-5"
                 >
                   <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     d="M12 4.5v15m7.5-7.5h-15"
                   />
                 </svg>
@@ -58,20 +58,20 @@ const SideBar: React.FC<SideBarProps> = ({ changeActive }) => {
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
-                  stroke-width="1.5"
+                  strokeWidth="1.5"
                   stroke="currentColor"
                   className="h-5 w-5"
                 >
                   <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     d="M12 4.5v15m7.5-7.5h-15"
                   />
                 </svg>
               </span>
               <span>Skew</span>
             </a>
-          </li> */}
+          </li>
           <li className="relative pt-4">
             <span className="px-6 py-4 text-[0.6rem] font-bold uppercase text-gray-600 dark:text-gray-400">
               Colour Adjustment

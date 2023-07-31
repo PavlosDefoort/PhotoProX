@@ -12,9 +12,10 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 interface ToolBarProps {
   imgSrc: string;
+  downloadImage: () => void;
 }
 
-const ToolBar: React.FC<ToolBarProps> = ({ imgSrc }) => {
+const ToolBar: React.FC<ToolBarProps> = ({ imgSrc, downloadImage }) => {
   return (
     <aside
       id="logo-sidebar"
@@ -49,6 +50,7 @@ const ToolBar: React.FC<ToolBarProps> = ({ imgSrc }) => {
                     <DownloadIcon
                       aria-hidden="true"
                       className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                      onClick={() => downloadImage()}
                     ></DownloadIcon>
                   </a>
                 </li>

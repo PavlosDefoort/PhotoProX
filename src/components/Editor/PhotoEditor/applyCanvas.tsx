@@ -5,8 +5,16 @@ import {
   ColorMatrixFilter,
   BlurFilter,
   NoiseFilter,
+  TYPES,
+  FORMATS,
+  TARGETS,
+  SCALE_MODES,
+  MIPMAP_MODES,
+  autoDetectRenderer,
 } from "pixi.js";
 // ... (import other necessary dependencies)
+
+import { AdjustmentFilter } from "pixi-filters";
 
 interface ImageProperties {
   contrast: { value: number; multiply: boolean; enabled?: boolean };
@@ -43,6 +51,7 @@ interface ApplyCanvasProps {
   canvasWidth: number;
   imageProperties: ImageProperties;
   darkMode: boolean;
+  spriteRef: React.MutableRefObject<Sprite | null>;
 }
 
 const ApplyCanvas = ({
@@ -59,6 +68,7 @@ const ApplyCanvas = ({
   canvasWidth,
   imageProperties,
   darkMode,
+  spriteRef,
 }: ApplyCanvasProps): void => {
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -97,28 +107,37 @@ const ApplyCanvas = ({
       // Add a saturation filter
       const saturationFilter = new NoiseFilter();
 
-      const offsetX = 0;
-
       // Calculate the new dimensions of the image
       const newWidth = imageWidth * zoomValue;
       const newHeight = imageHeight * zoomValue;
 
       // Calculate the coordinates to position the image at the center of the canvas
-      const imageX = (canvasWidth - newWidth) / 2 + offsetX;
+      const imageX = (canvasWidth - newWidth) / 2;
 
       const imageY = (canvasHeight - newHeight) / 2;
 
       // Calculate the adjusted coordinates to position the image at the center of the canvas using rotation matrix
-      const adjustedX =
-        imageX +
-        fakeX * Math.cos((rotateValue * Math.PI) / 180) -
-        fakeY * Math.sin((rotateValue * Math.PI) / 180);
-      const adjustedY =
-        imageY +
-        fakeY * Math.cos((rotateValue * Math.PI) / 180) +
-        fakeX * Math.sin((rotateValue * Math.PI) / 180);
+      const adjustedX = imageX + fakeX;
+      // * Math.cos((rotateValue * Math.PI) / 180) -
+      // fakeY * Math.sin((rotateValue * Math.PI) / 180);
+      const adjustedY = imageY + fakeY;
+      // Math.cos((rotateValue * Math.PI) / 180) +
+      // fakeX * Math.sin((rotateValue * Math.PI) / 180);
+      let image; // Declare the image variable outside of the if statement
 
-      const image = Sprite.from(imgSrc);
+      if (!spriteRef.current) {
+        spriteRef.current = Sprite.from(imgSrc, {
+          resolution: 1,
+          type: TYPES.UNSIGNED_BYTE,
+          format: FORMATS.RGBA,
+          target: TARGETS.TEXTURE_2D,
+          scaleMode: SCALE_MODES.LINEAR,
+          mipmap: MIPMAP_MODES.ON,
+          anisotropicLevel: 16,
+        });
+      }
+
+      image = spriteRef.current;
 
       // Calculate the scale factor
 
@@ -205,7 +224,13 @@ const ApplyCanvas = ({
 
       image.scale.set(zoomValue, zoomValue);
 
-      image.position.set(adjustedX, adjustedY);
+      image.pivot.set(imageWidth / 2, imageHeight / 2);
+
+      image.angle = rotateValue;
+
+      image.position.set(canvasWidth / 2 + fakeX, canvasHeight / 2 + fakeY);
+
+      // image.position.set(adjustedX, adjustedY);
 
       app.stage.addChild(image);
     }
@@ -230,6 +255,7 @@ const ApplyCanvas = ({
     appRef,
     canvasRef,
     darkMode,
+    spriteRef,
   ]);
 
   // You can perform calculations or other operations here
