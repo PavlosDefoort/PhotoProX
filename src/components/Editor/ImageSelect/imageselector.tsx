@@ -5,7 +5,7 @@ import { Slider } from "@mui/material";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material";
-import configurationsObject from "./configurations.json";
+import configurationsObject from "@/components/Editor/ImageSelect/configurations.json";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";

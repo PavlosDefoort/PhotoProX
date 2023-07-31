@@ -1,6 +1,6 @@
 // PinchHandler.tsx
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { PinchState, usePinch } from "@use-gesture/react";
 import { set } from "lodash";
 

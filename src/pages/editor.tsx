@@ -1,8 +1,8 @@
 import React, { use } from "react";
-import PhotoEditor from "@/components/photoeditor";
-import ImageSelector from "@/components/imageselector";
-import PreviousImage from "@/components/previousImage";
-import { ThemeContext } from "../components/themeprovider";
+import PhotoEditor from "@/components/Editor/PhotoEditor/photoeditor";
+import ImageSelector from "@/components/Editor/ImageSelect/imageselector";
+import PreviousImage from "@/components/Editor/previousImage";
+import { ThemeContext } from "../components/ThemeProvider/themeprovider";
 import { GetInfo } from "@/components/getinfo";
 import { useState, useEffect, useContext } from "react";
 import { Poppins } from "next/font/google";

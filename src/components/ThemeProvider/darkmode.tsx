@@ -1,4 +1,4 @@
-import { ThemeContext } from "../components/themeprovider";
+import { ThemeContext } from "./themeprovider";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import { Tooltip } from "@mui/material";
