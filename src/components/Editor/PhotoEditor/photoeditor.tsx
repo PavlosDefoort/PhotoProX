@@ -14,7 +14,13 @@ import ApplyCanvas from "@/components/Editor/PhotoEditor/applyCanvas";
 import PinchHandler from "./pinchLogic";
 import { Application } from "pixi.js";
 import { ThemeContext } from "../../ThemeProvider/themeprovider";
-import { WidthRotate, HeightRotate } from "@/utils/calcUtils";
+import {
+  WidthRotate,
+  HeightRotate,
+  clamp,
+  calculateZoomPan,
+} from "@/utils/calcUtils";
+import { Newsreader } from "next/font/google";
 
 const SideBar = dynamic(() => import("./UI/sidebar"), {
   loading: () => <p>loading</p>,
@@ -72,7 +78,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [zoomValue, setZoomValue] = useState(1);
   const [previousZoom, setPreviousZoom] = useState(zoomValue);
   const [isZooming, setIsZooming] = useState(false);
-  const [fake, setFake] = useState(0);
+  const [fakeY, setFakeY] = useState(0);
   const [fakeX, setFakeX] = useState(0);
 
   interface ImageProperties {
@@ -233,7 +239,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     };
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
-    canvas.addEventListener("wheel", handleWheel);
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
@@ -293,7 +299,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           rotateValue
         );
 
-        const maxOffsetLimit = Math.abs(
+        const maxOffsetLimitY = Math.abs(
           (newHeight * zoomValue - canvasHeight) / 2
         );
         const maxOffsetLimitX = Math.abs(
@@ -301,60 +307,41 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         );
 
         // Calculate the maximum vertical offset based on the zoom level (prevent scrolling past the edges of the image)
-        const maxVerticalOffset = Math.min(
-          Math.max(0, newHeight * zoomValue - canvasHeight),
-          maxOffsetLimit
+        const maxVerticalOffset = clamp(
+          newHeight * zoomValue - canvasHeight,
+          0,
+          maxOffsetLimitY
         );
-        const maxHorizontalOffset = Math.min(
-          Math.max(0, newWidth * zoomValue - canvasWidth),
+
+        const maxHorizontalOffset = clamp(
+          newWidth * zoomValue - canvasWidth,
+          0,
           maxOffsetLimitX
         );
+
         const zoomSpeed = 100; // Adjust the zoom speed as needed
         const deltaY = -event.deltaY; // Get the direction of the vertical scroll (negative to zoom in, positive to zoom out)
         const deltaX = -event.deltaX; // Get the direction of the horizontal scroll (negative to pan left, positive to pan right)
-        const zoom = deltaY > 0 ? zoomSpeed : -zoomSpeed;
+        const zoomY = deltaY > 0 ? zoomSpeed : -zoomSpeed;
         const zoomX = deltaX > 0 ? zoomSpeed : -zoomSpeed;
-        let newScaleFactor = fake;
+        let newScaleFactorY = fakeY;
         let newScaleFactorX = fakeX;
 
-        if (deltaY !== 0) {
-          // Zoom vertically
-          if (zoom > 0) {
-            newScaleFactor = Math.min(
-              fake + zoom,
-              maxVerticalOffset !== 0
-                ? maxVerticalOffset + 100
-                : maxVerticalOffset
-            );
-          } else {
-            newScaleFactor = Math.max(
-              fake + zoom,
-              -maxVerticalOffset !== 0
-                ? -maxVerticalOffset - 100
-                : -maxVerticalOffset
-            );
-          }
-        } else if (deltaX !== 0) {
-          // Pan horizontally
-          if (zoomX > 0) {
-            newScaleFactorX = Math.min(
-              fakeX + zoomX,
-              maxHorizontalOffset !== 0
-                ? maxHorizontalOffset + 100
-                : maxHorizontalOffset
-            );
-          } else {
-            newScaleFactorX = Math.max(
-              fakeX + zoomX,
-              -maxHorizontalOffset !== 0
-                ? -maxHorizontalOffset - 100
-                : -maxHorizontalOffset
-            );
-          }
-        }
+        const factors = calculateZoomPan(
+          deltaY,
+          deltaX,
+          newScaleFactorX,
+          newScaleFactorY,
+          fakeX,
+          fakeY,
+          zoomX,
+          zoomY,
+          maxHorizontalOffset,
+          maxVerticalOffset
+        );
 
-        setFake(newScaleFactor);
-        setFakeX(newScaleFactorX);
+        setFakeY(factors.newScaleFactorY);
+        setFakeX(factors.newScaleFactorX);
       }
     };
 
@@ -366,7 +353,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       canvas.removeEventListener("wheel", handleScroll);
     };
   }, [
-    fake,
+    fakeY,
     fakeX,
     isZooming,
     zoomValue,
@@ -382,7 +369,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     imgSrc,
     zoomValue,
     darkMode,
-    fake,
+    fakeY,
     fakeX,
     rotateValue,
     realNaturalWidth,
@@ -450,7 +437,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   }, [realNaturalWidth, realNaturalHeight]);
 
   const previousZoomRef = useRef(zoomValue);
-  const previousFakeRef = useRef(fake);
+  const previousFakeRef = useRef(fakeY);
   const previousFakeXRef = useRef(fakeX);
 
   useEffect(() => {
@@ -458,16 +445,16 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       // Zoom Out: Set the offset proportionally to the zoom level
       //(only if the zoom level is less than 1 to avoid growing the offset indefinitely)
       if (zoomValue < 1) {
-        setFake(previousFakeRef.current * zoomValue);
+        setFakeY(previousFakeRef.current * zoomValue);
         setFakeX(previousFakeXRef.current * zoomValue);
       }
     }
 
     // Update the previous values with the current values for the next iteration
     previousZoomRef.current = zoomValue;
-    previousFakeRef.current = fake;
+    previousFakeRef.current = fakeY;
     previousFakeXRef.current = fakeX;
-  }, [zoomValue, fake, fakeX]);
+  }, [zoomValue, fakeY, fakeX]);
 
   useEffect(() => {
     const app = appRef.current!;
@@ -738,7 +725,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 // backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
               }}
             ></canvas>
-            {imgSrc && (
+            {/* {imgSrc && (
               <Image
                 style={{ display: "none" }}
                 src={imgSrc}
@@ -747,7 +734,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 width={1410}
                 height={705}
               ></Image>
-            )}
+            )} */}
           </div>
         </div>
       </div>

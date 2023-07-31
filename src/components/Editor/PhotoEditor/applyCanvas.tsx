@@ -34,7 +34,7 @@ interface ApplyCanvasProps {
   appRef: React.MutableRefObject<Application | null>;
   imgSrc: string;
   zoomValue: number;
-  fake: number;
+  fakeY: number;
   fakeX: number;
   rotateValue: number;
   realNaturalWidth: number;
@@ -50,7 +50,7 @@ const ApplyCanvas = ({
   appRef,
   imgSrc,
   zoomValue,
-  fake,
+  fakeY,
   fakeX,
   rotateValue,
   realNaturalWidth,
@@ -112,10 +112,10 @@ const ApplyCanvas = ({
       const adjustedX =
         imageX +
         fakeX * Math.cos((rotateValue * Math.PI) / 180) -
-        fake * Math.sin((rotateValue * Math.PI) / 180);
+        fakeY * Math.sin((rotateValue * Math.PI) / 180);
       const adjustedY =
         imageY +
-        fake * Math.cos((rotateValue * Math.PI) / 180) +
+        fakeY * Math.cos((rotateValue * Math.PI) / 180) +
         fakeX * Math.sin((rotateValue * Math.PI) / 180);
 
       const image = Sprite.from(imgSrc);
@@ -219,7 +219,7 @@ const ApplyCanvas = ({
   }, [
     imgSrc,
     zoomValue,
-    fake,
+    fakeY,
     fakeX,
     rotateValue,
     realNaturalWidth,
