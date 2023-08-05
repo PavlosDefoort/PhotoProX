@@ -369,11 +369,11 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
         <div>
           {" "}
           <div className="flex justify-between mb-2">
-            <span className="text-base  text-white font-bold dark:text-white">
-              {progressString}
+            <span className="text-base  text-black font-bold dark:text-white">
+              Loading Image...
             </span>
-            <span className="text-sm font-bold text-white dark:text-white">
-              {progressValue}%
+            <span className="text-sm font-bold text-black dark:text-white">
+              {/* {progressValue}% */}
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5 ">

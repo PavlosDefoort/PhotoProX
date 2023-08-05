@@ -10,8 +10,10 @@ import {
   TARGETS,
   SCALE_MODES,
   MIPMAP_MODES,
-  autoDetectRenderer,
+  Graphics,
+  Texture,
 } from "pixi.js";
+import { WidthRotate, HeightRotate } from "@/utils/calcUtils";
 // ... (import other necessary dependencies)
 
 import { AdjustmentFilter } from "pixi-filters";
@@ -52,6 +54,11 @@ interface ApplyCanvasProps {
   imageProperties: ImageProperties;
   darkMode: boolean;
   spriteRef: React.MutableRefObject<Sprite | null>;
+  showThirds: boolean;
+  scaleXSign: number;
+  scaleYSign: number;
+  scaleX: number;
+  scaleY: number;
 }
 
 const ApplyCanvas = ({
@@ -69,6 +76,11 @@ const ApplyCanvas = ({
   imageProperties,
   darkMode,
   spriteRef,
+  showThirds,
+  scaleXSign,
+  scaleYSign,
+  scaleX,
+  scaleY,
 }: ApplyCanvasProps): void => {
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -108,21 +120,14 @@ const ApplyCanvas = ({
       const saturationFilter = new NoiseFilter();
 
       // Calculate the new dimensions of the image
-      const newWidth = imageWidth * zoomValue;
-      const newHeight = imageHeight * zoomValue;
+      const newWidth = imageWidth * zoomValue * scaleX;
+      const newHeight = imageHeight * zoomValue * scaleY;
 
       // Calculate the coordinates to position the image at the center of the canvas
       const imageX = (canvasWidth - newWidth) / 2;
 
       const imageY = (canvasHeight - newHeight) / 2;
 
-      // Calculate the adjusted coordinates to position the image at the center of the canvas using rotation matrix
-      const adjustedX = imageX + fakeX;
-      // * Math.cos((rotateValue * Math.PI) / 180) -
-      // fakeY * Math.sin((rotateValue * Math.PI) / 180);
-      const adjustedY = imageY + fakeY;
-      // Math.cos((rotateValue * Math.PI) / 180) +
-      // fakeX * Math.sin((rotateValue * Math.PI) / 180);
       let image; // Declare the image variable outside of the if statement
 
       if (!spriteRef.current) {
@@ -222,9 +227,13 @@ const ApplyCanvas = ({
       // image.rotation = (rotateValue * Math.PI) / 180;
       // image.position.set(-canvasWidth / 2, -canvasHeight / 2);
 
-      image.scale.set(zoomValue, zoomValue);
+      image.scale.set(
+        scaleXSign * zoomValue * scaleX,
+        scaleYSign * zoomValue * scaleY
+      );
 
       image.pivot.set(imageWidth / 2, imageHeight / 2);
+      // Center the image
 
       image.angle = rotateValue;
 
@@ -232,10 +241,105 @@ const ApplyCanvas = ({
 
       // image.position.set(adjustedX, adjustedY);
 
-      app.stage.addChild(image);
-    }
+      const drawRuleOfThirdsGrid = () => {
+        const gridGraphics = new Graphics();
+        let gridColor;
+        if (darkMode) {
+          gridColor = 0xffffff;
+        } else {
+          gridColor = 0x00000;
+        } // Color of the grid lines
+        const gridAlpha = 0.8; // Transparency of the grid lines
+        const numCols = 3; // Number of columns in the Rule of Thirds grid
+        const numRows = 3; // Number of rows in the Rule of Thirds grid
+        // Adjust width and height to account for rotation
+        const nextWidth = WidthRotate(newWidth, newHeight, rotateValue);
+        const nextHeight = HeightRotate(newWidth, newHeight, rotateValue);
+        const cellWidth = nextWidth / numCols;
+        const cellHeight = nextHeight / numRows;
+        const nextImageX = (canvasWidth - nextWidth) / 2;
 
-    app.start(); // Start the app
+        const nextImageY = (canvasHeight - nextHeight) / 2;
+        // const cellSize = 100; // Size of each grid cell in pixels
+
+        // Adjust fakeX and fakeY to account for rotation
+        const adjustedFakeX = fakeX;
+
+        const adjustedFakeY = fakeY;
+
+        for (let col = 1; col < numCols; col++) {
+          const x = nextImageX + col * cellWidth;
+          gridGraphics.lineStyle(1.8, gridColor, gridAlpha);
+          gridGraphics.moveTo(x + adjustedFakeX, nextImageY + adjustedFakeY);
+          gridGraphics.lineTo(
+            x + adjustedFakeX,
+            nextImageY + nextHeight + adjustedFakeY
+          );
+        }
+
+        // Draw the horizontal grid lines
+        for (let row = 1; row < numRows; row++) {
+          const y = nextImageY + row * cellHeight;
+          gridGraphics.lineStyle(1.8, gridColor, gridAlpha);
+          gridGraphics.moveTo(nextImageX + adjustedFakeX, y + adjustedFakeY);
+          gridGraphics.lineTo(
+            nextImageX + nextWidth + adjustedFakeX,
+            y + adjustedFakeY
+          );
+        }
+
+        return gridGraphics;
+      };
+      let gridGraphics = new Graphics();
+      if (showThirds) {
+        gridGraphics = drawRuleOfThirdsGrid();
+      }
+
+      //       // Calculate the number of grid cells horizontally and vertically
+      // const numCols = Math.floor(newWidth / cellSize);
+      // const numRows = Math.floor(newHeight / cellSize);
+
+      // // Calculate the actual grid width and height based on the number of cells
+      // const gridWidth = numCols * cellSize;
+      // const gridHeight = numRows * cellSize;
+
+      // // Draw the vertical grid lines
+      // for (let x = 0; x <= gridWidth; x += cellSize) {
+      //     gridGraphics.lineStyle(1, gridColor, gridAlpha);
+      //     gridGraphics.moveTo(x + imageX +fakeX, imageY +fakeY);
+      //     gridGraphics.lineTo(x + imageX +fakeX, imageY + gridHeight +fakeY);
+      // }
+
+      // // Draw the horizontal grid lines
+      // for (let y = 0; y <= gridHeight; y += cellSize) {
+      //     gridGraphics.lineStyle(1, gridColor, gridAlpha);
+      //     gridGraphics.moveTo(imageX +fakeX, y + imageY +fakeY);
+      //     gridGraphics.lineTo(imageX + gridWidth +fakeX, y + imageY +fakeY);
+      // }
+
+      // Create a black background and apply it on image
+
+      if (rotateValue !== 0) {
+        const nextWidth = WidthRotate(newWidth, newHeight, rotateValue);
+        const nextHeight = HeightRotate(newWidth, newHeight, rotateValue);
+        const nextImageX = (canvasWidth - nextWidth) / 2;
+
+        const nextImageY = (canvasHeight - nextHeight) / 2;
+        const background = new Graphics();
+        background.beginFill(0x000000);
+        background.drawRect(0, 0, nextWidth, nextHeight);
+        background.endFill();
+        background.alpha = 0.3;
+        background.zIndex = -1;
+        // position the background behind the image
+        background.position.set(nextImageX + fakeX, nextImageY + fakeY);
+        app.stage.addChild(background);
+      }
+
+      app.stage.addChild(image);
+      app.stage.addChild(gridGraphics);
+      app.start();
+    }
 
     return () => {
       // The cleanup function will be called when the component unmounts
@@ -256,6 +360,11 @@ const ApplyCanvas = ({
     canvasRef,
     darkMode,
     spriteRef,
+    showThirds,
+    scaleXSign,
+    scaleYSign,
+    scaleX,
+    scaleY,
   ]);
 
   // You can perform calculations or other operations here

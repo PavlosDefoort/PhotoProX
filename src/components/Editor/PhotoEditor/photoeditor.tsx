@@ -12,7 +12,25 @@ import ToolBar from "./UI/toolbar";
 import BottomBar from "./UI/bottombar";
 import ApplyCanvas from "@/components/Editor/PhotoEditor/applyCanvas";
 import PinchHandler from "./pinchLogic";
-import { Application, Container, Sprite, autoDetectRenderer } from "pixi.js";
+import {
+  Application,
+  Container,
+  DisplayObject,
+  Prepare,
+  Sprite,
+  autoDetectRenderer,
+} from "pixi.js";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import BedtimeIcon from "@mui/icons-material/Bedtime";
+import FilterVintageIcon from "@mui/icons-material/FilterVintage";
+import CameraEnhanceIcon from "@mui/icons-material/CameraEnhance";
+import WarningIcon from "@mui/icons-material/Warning";
+import AlarmIcon from "@mui/icons-material/Alarm";
+import LooksIcon from "@mui/icons-material/Looks";
+
 import { ThemeContext } from "../../ThemeProvider/themeprovider";
 import {
   WidthRotate,
@@ -22,11 +40,20 @@ import {
   fitImageToScreen,
 } from "@/utils/calcUtils";
 import { Newsreader } from "next/font/google";
+import { set } from "lodash";
 
 const SideBar = dynamic(() => import("./UI/sidebar"), {
   loading: () => <p>loading</p>,
 });
 const FilterBar = dynamic(() => import("./UI/filterbar"), {
+  loading: () => <p>loading</p>,
+});
+
+const RotateBar = dynamic(() => import("./UI/rotatebar"), {
+  loading: () => <p>loading</p>,
+});
+
+const ResizeBar = dynamic(() => import("./UI/resizebar"), {
   loading: () => <p>loading</p>,
 });
 
@@ -81,6 +108,13 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [isZooming, setIsZooming] = useState(false);
   const [fakeY, setFakeY] = useState(0);
   const [fakeX, setFakeX] = useState(0);
+  const [rendering, setRendering] = useState(false);
+  const [showThirds, setShowThirds] = useState(false);
+  const [scaleXSign, setScaleXSign] = useState(1);
+  const [scaleYSign, setScaleYSign] = useState(1);
+  const [scaleX, setScaleX] = useState(1);
+  const [scaleY, setScaleY] = useState(1);
+  const [useRatio, setUseRatio] = useState(true);
 
   interface ImageProperties {
     contrast: { value: number; multiply: boolean; enabled?: boolean };
@@ -211,14 +245,22 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   const handleFitToScreen = () => {
     const roundedScale = fitImageToScreen(
-      realNaturalWidth,
-      realNaturalHeight,
+      realNaturalWidth * scaleX,
+      realNaturalHeight * scaleY,
       canvasWidth,
       canvasHeight,
       rotateValue
     );
+    setZoomValue(clamp(roundedScale, 0.1, 4));
+    // wait 1 second for the zoom to finish
+    setTimeout(() => {
+      setFakeX(0);
+      setFakeY(0);
+    }, 20);
+  };
 
-    setZoomValue(roundedScale);
+  const handleThirds = () => {
+    setShowThirds(!showThirds);
   };
 
   useEffect(() => {
@@ -270,36 +312,80 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   const handleModeChange = (mode: string) => {
     setEditingMode(mode);
+    const fitToScreen = fitImageToScreen(
+      realNaturalWidth * scaleX,
+      realNaturalHeight * scaleY,
+      canvasWidth,
+      canvasHeight,
+      rotateValue
+    );
+    // setZoomValue(clamp(fitToScreen, 0.1, 4));
   };
 
   const handleDownload = async () => {
-    // Make the function asynchronous
+    // Make the function asynchronous, to deal with the promise of the toDataURL method
     if (spriteRef.current) {
+      setRendering(true);
+
+      // Get the sprite as reference
       const image = spriteRef.current;
+
+      // Get the width of the rotated image
+      const rotatedWidth = WidthRotate(
+        realNaturalWidth * scaleX,
+        realNaturalHeight * scaleY,
+        rotateValue
+      );
+
+      // Get the height of the rotated image
+      const rotatedHeight = HeightRotate(
+        realNaturalWidth * scaleX,
+        realNaturalHeight * scaleY,
+        rotateValue
+      );
+
+      // Height and width technically does not need to be set due to the reference, but it is good practice to do so
       image.width = realNaturalWidth;
       image.height = realNaturalHeight;
+
+      // Scale the image to fit the canvas
+      image.scale.set(scaleX * scaleXSign, scaleY * scaleYSign);
+
+      // Rotate the image
+      image.angle = rotateValue;
+
+      // Set the origin to the middle of the image
+      image.anchor.set(0.5);
+
+      // The pivot is about the origin, which is now in the middle of the image
       image.pivot.set(0, 0);
 
-      image.scale.set(1);
-      image.position.set(0, 0);
+      // Position the image in the center of the canvas
+      image.position.set(rotatedWidth / 2, rotatedHeight / 2);
 
-      // Assuming you have created the sprite 'image' and applied filters to it
+      // Create a renderer, with the best performance settings
       const renderer = autoDetectRenderer({
-        width: realNaturalWidth,
-        height: realNaturalHeight,
+        width: rotatedWidth,
+        height: rotatedHeight,
         powerPreference: "high-performance",
         antialias: true,
         resolution: 1,
+        backgroundAlpha: 0,
       });
 
+      // Create a container object, that will hold the image
       const container = new Container();
 
+      // Add the image to the container, the container will inherit the filters from the image
       container.addChild(image);
-      console.log(container.width, container.height);
+
+      // Render the container
       renderer.render(container);
 
       // Get the image as base64 data url using async/await
       const base64 = await renderer.extract.base64();
+      setRendering(false);
+
       // Alternatively, you can use .then() instead of async/await
       // renderer.extract.base64().then(base64 => { ... });
 
@@ -319,6 +405,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
       const app = appRef.current!;
       // Add the child to the stage, the container took it from the image
+      image.anchor.set(0);
       app.stage.addChild(image);
 
       const scale = fitImageToScreen(
@@ -329,9 +416,14 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         rotateValue
       );
 
-      setZoomValue(scale);
+      // Cheap tricks to force a re-render of the canvas
+      setZoomValue(scale + 0.00001);
     }
   };
+
+  useEffect(() => {
+    console.log("Rendering changed: ", rendering);
+  }, [rendering]);
 
   useEffect(() => {
     const handleScroll = (event: WheelEvent) => {
@@ -346,14 +438,14 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
         // Adjust the width and height based on the rotation (absolute rotation matrix)
         const newWidth = WidthRotate(
-          realNaturalWidth,
-          realNaturalHeight,
+          realNaturalWidth * scaleX,
+          realNaturalHeight * scaleY,
           rotateValue
         );
 
         const newHeight = HeightRotate(
-          realNaturalWidth,
-          realNaturalHeight,
+          realNaturalWidth * scaleX,
+          realNaturalHeight * scaleY,
           rotateValue
         );
 
@@ -420,6 +512,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     rotateValue,
     canvasWidth,
     canvasHeight,
+    scaleX,
+    scaleY,
   ]);
 
   ApplyCanvas({
@@ -437,7 +531,31 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     imageProperties,
     appRef,
     spriteRef,
+    showThirds,
+    scaleXSign,
+    scaleYSign,
+    scaleX,
+    scaleY,
   });
+
+  useEffect(() => {
+    const newZoom = fitImageToScreen(
+      realNaturalWidth * scaleX,
+      realNaturalHeight * scaleY,
+      canvasWidth,
+      canvasHeight,
+      rotateValue
+    );
+    // setZoomValue(clamp(newZoom, 0.1, 4));
+  }, [
+    scaleX,
+    scaleY,
+    canvasHeight,
+    canvasWidth,
+    rotateValue,
+    realNaturalHeight,
+    realNaturalWidth,
+  ]);
 
   useEffect(() => {
     // set the image source to the imageData prop
@@ -445,14 +563,14 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     setImgSrc(imageData);
 
     const scale = fitImageToScreen(
-      realNaturalWidth,
-      realNaturalHeight,
+      realNaturalWidth * scaleX,
+      realNaturalHeight * scaleY,
       canvasWidth,
       canvasHeight,
       rotateValue
     );
 
-    setZoomValue(scale);
+    setZoomValue(clamp(scale, 0.1, 4));
 
     if (
       imageData.length > 0 &&
@@ -466,6 +584,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       localStorage.setItem("realNaturalHeight", realNaturalHeight.toString());
       localStorage.setItem("imageName", fileName);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     imageData,
     realNaturalWidth,
@@ -500,7 +619,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   }, [realNaturalWidth, realNaturalHeight]);
 
   const previousZoomRef = useRef(zoomValue);
-  const previousFakeRef = useRef(fakeY);
+  const previousFakeYRef = useRef(fakeY);
   const previousFakeXRef = useRef(fakeX);
 
   useEffect(() => {
@@ -508,14 +627,14 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       // Zoom Out: Set the offset proportionally to the zoom level
       //(only if the zoom level is less than 1 to avoid growing the offset indefinitely)
       if (zoomValue < 1) {
-        setFakeY(previousFakeRef.current * zoomValue);
+        setFakeY(previousFakeYRef.current * zoomValue);
         setFakeX(previousFakeXRef.current * zoomValue);
       }
     }
 
     // Update the previous values with the current values for the next iteration
     previousZoomRef.current = zoomValue;
-    previousFakeRef.current = fakeY;
+    previousFakeYRef.current = fakeY;
     previousFakeXRef.current = fakeX;
   }, [zoomValue, fakeY, fakeX]);
 
@@ -685,60 +804,105 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
     setImageProperties(updatedImageProperties);
   };
-
   const someComponents = [
     {
       name: "sepia",
       enabled: imageProperties.sepia.enabled,
       multiply: imageProperties.sepia.multiply,
+      filterIcon: <AlarmIcon />,
     },
     {
       name: "night",
       enabled: imageProperties.night.enabled,
       multiply: imageProperties.night.multiply,
+      filterIcon: <BedtimeIcon />,
     },
     {
       name: "vintage",
       enabled: imageProperties.vintage.enabled,
       multiply: imageProperties.vintage.multiply,
+      filterIcon: <FilterVintageIcon />,
     },
     {
       name: "polaroid",
       enabled: imageProperties.polaroid.enabled,
       multiply: imageProperties.polaroid.multiply,
+      filterIcon: <CameraEnhanceIcon />,
     },
     {
       name: "kodachrome",
       enabled: imageProperties.kodachrome.enabled,
       multiply: imageProperties.kodachrome.multiply,
+      filterIcon: <LooksIcon />,
     },
     {
       name: "predator",
       enabled: imageProperties.predator.enabled,
       multiply: imageProperties.predator.multiply,
+      filterIcon: <WarningIcon />,
     },
   ];
+
+  let content = <SideBar changeActive={handleModeChange} />;
+  // Create switch statement to render the correct component based on editingMode
+  switch (editingMode) {
+    case "rotate":
+      content = (
+        <RotateBar
+          changeActive={handleModeChange}
+          setRotateValue={setRotateValue}
+          rotateValue={rotateValue}
+          setScaleXSign={setScaleXSign}
+          setScaleYSign={setScaleYSign}
+          scaleXSign={scaleXSign}
+          scaleYSign={scaleYSign}
+        />
+      );
+      break;
+    case "filters":
+      content = (
+        <FilterBar
+          changeActive={handleModeChange}
+          handleEnable={handleEnable}
+          components={someComponents}
+          handleMultiply={handleMultiply}
+        />
+      );
+      break;
+    case "resize":
+      content = (
+        <ResizeBar
+          changeActive={handleModeChange}
+          setScaleX={setScaleX}
+          setScaleY={setScaleY}
+          scaleX={scaleX}
+          scaleY={scaleY}
+          imageWidth={realNaturalWidth}
+          imageHeight={realNaturalHeight}
+          useRatio={useRatio}
+          setUseRatio={setUseRatio}
+        />
+      );
+      break;
+    default:
+      content = <SideBar changeActive={handleModeChange} />;
+  }
 
   return (
     <div>
       <TopBar />
-      <ToolBar imgSrc={imgSrc} downloadImage={handleDownload} />
+      <ToolBar
+        imgSrc={imgSrc}
+        downloadImage={handleDownload}
+        toggleThirds={handleThirds}
+      />
       {imgSrc && (
         <aside
           id="logo-sidebar"
           className="animate-fade animate-once animate-ease-out fixed top-0 left-[56px] z-30 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
           aria-label="Sidebar"
         >
-          {editingMode === "filters" ? (
-            <FilterBar
-              changeActive={handleModeChange}
-              handleEnable={handleEnable}
-              components={someComponents}
-              handleMultiply={handleMultiply}
-            />
-          ) : (
-            <SideBar changeActive={handleModeChange} />
-          )}
+          {content}
         </aside>
       )}
       <BottomBar
@@ -749,6 +913,14 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         handleZoomIn={handleZoomIn}
         handleZoomOut={handleZoomOut}
       />
+
+      {rendering && (
+        <Dialog open={rendering}>
+          <DialogContentText id="render-dialog">
+            Rendering Image...
+          </DialogContentText>
+        </Dialog>
+      )}
 
       <div className="p-20 sm:ml-64 ">
         <div className="">

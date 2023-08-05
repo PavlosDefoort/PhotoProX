@@ -13,9 +13,14 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 interface ToolBarProps {
   imgSrc: string;
   downloadImage: () => void;
+  toggleThirds: () => void;
 }
 
-const ToolBar: React.FC<ToolBarProps> = ({ imgSrc, downloadImage }) => {
+const ToolBar: React.FC<ToolBarProps> = ({
+  imgSrc,
+  downloadImage,
+  toggleThirds,
+}) => {
   return (
     <aside
       id="logo-sidebar"
@@ -41,6 +46,7 @@ const ToolBar: React.FC<ToolBarProps> = ({ imgSrc, downloadImage }) => {
                     <CropIcon
                       aria-hidden="true"
                       className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                      onClick={() => toggleThirds()}
                     ></CropIcon>
                   </a>
                 </li>
@@ -54,7 +60,7 @@ const ToolBar: React.FC<ToolBarProps> = ({ imgSrc, downloadImage }) => {
                     ></DownloadIcon>
                   </a>
                 </li>
-                <li>
+                {/* <li>
                   <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
                     <ControlCameraIcon
                       aria-hidden="true"
@@ -77,10 +83,10 @@ const ToolBar: React.FC<ToolBarProps> = ({ imgSrc, downloadImage }) => {
                       className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                     ></SettingsIcon>
                   </a>
-                </li>
+                </li> */}
               </ul>
             </div>
-            <div className="mt-6">
+            {/* <div className="mt-6">
               <ul className="space-y-6 font-medium ">
                 <li>
                   <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
@@ -91,7 +97,7 @@ const ToolBar: React.FC<ToolBarProps> = ({ imgSrc, downloadImage }) => {
                   </a>
                 </li>
               </ul>
-            </div>
+            </div> */}
           </div>
         )}
       </div>
