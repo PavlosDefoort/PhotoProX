@@ -205,6 +205,18 @@ const ApplyCanvas = ({
         colorMatrix.kodachrome(imageProperties.kodachrome.multiply);
       }
 
+      if (imageProperties.lsd.enabled) {
+        colorMatrix.lsd(imageProperties.lsd.multiply);
+      }
+
+      if (imageProperties.browni.enabled) {
+        colorMatrix.browni(imageProperties.browni.multiply);
+      }
+
+      if (imageProperties.negative.enabled) {
+        colorMatrix.negative(imageProperties.negative.multiply);
+      }
+
       // colorMatrix.vintage(true);
       // colorMatrix.toBGR(false);
       // colorMatrix.tint(0xff0000, false);

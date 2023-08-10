@@ -5,6 +5,7 @@ import { TextField } from "@mui/material";
 import { clamp } from "@/utils/calcUtils";
 import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
+import { calculateMaxScale } from "@/utils/calcUtils";
 
 interface ResizeBarProps {
   changeActive: (mode: string) => void;
@@ -50,6 +51,10 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
     setPreviousUseRatio(useRatioRef.current);
   }, []);
 
+  useEffect(() => {
+    console.log(displayScaleX, displayScaleY);
+  }, [displayScaleX, displayScaleY]);
+
   const handleAccept = () => {
     // Check if assigned value is a number
     if (isNaN(scaleX) || isNaN(scaleY)) {
@@ -73,7 +78,9 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
     if (!isNaN(value)) {
       try {
         const newScaleX = value / imageWidth;
-        setScaleX(Math.min(newScaleX, 2));
+        setScaleX(
+          Math.min(newScaleX, calculateMaxScale(imageWidth, imageHeight))
+        );
       } catch (error) {
         console.log(error);
       }
@@ -84,7 +91,14 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
     if (event.key === "Enter") {
       const value = parseInt(displayScaleX);
       if (!isNaN(value)) {
-        const newValue = Math.round(clamp(value / 100, 0.05, 2) * 100) / 100;
+        const newValue =
+          Math.round(
+            clamp(
+              value / 100,
+              0.05,
+              calculateMaxScale(imageWidth, imageHeight)
+            ) * 100
+          ) / 100;
         console.log((newValue * 100).toFixed(0).toString());
 
         if (useRatio) {
@@ -105,7 +119,14 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
     if (event.key === "Enter") {
       const value = parseInt(displayScaleY);
       if (!isNaN(value)) {
-        const newValue = Math.round(clamp(value / 100, 0.05, 2) * 100) / 100;
+        const newValue =
+          Math.round(
+            clamp(
+              value / 100,
+              0.05,
+              calculateMaxScale(imageWidth, imageHeight)
+            ) * 100
+          ) / 100;
 
         if (useRatio) {
           setScaleX(newValue);
@@ -127,7 +148,9 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
         const newScaleY = value / imageHeight;
         // Round the value to 2 decimal places
 
-        setScaleY(Math.min(newScaleY, 2));
+        setScaleY(
+          Math.min(newScaleY, calculateMaxScale(imageWidth, imageHeight))
+        );
       } catch (error) {
         console.log(error);
       }

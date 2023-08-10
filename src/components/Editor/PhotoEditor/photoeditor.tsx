@@ -30,6 +30,11 @@ import CameraEnhanceIcon from "@mui/icons-material/CameraEnhance";
 import WarningIcon from "@mui/icons-material/Warning";
 import AlarmIcon from "@mui/icons-material/Alarm";
 import LooksIcon from "@mui/icons-material/Looks";
+import PsychologyIcon from "@mui/icons-material/Psychology";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
+import AcUnitIcon from "@mui/icons-material/AcUnit";
+import TagFacesIcon from "@mui/icons-material/TagFaces";
 
 import { ThemeContext } from "../../ThemeProvider/themeprovider";
 import {
@@ -38,6 +43,7 @@ import {
   clamp,
   calculateZoomPan,
   fitImageToScreen,
+  calculateMaxScale,
 } from "@/utils/calcUtils";
 import { Newsreader } from "next/font/google";
 import { set } from "lodash";
@@ -216,6 +222,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [rotateValue, setRotateValue] = useState(0);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [firstLoad, setFirstLoad] = useState(true);
   const appRef = useRef<Application | null>(null);
   const spriteRef = useRef<Sprite | null>(null);
   const imgRef = useRef(null);
@@ -380,6 +387,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       container.addChild(image);
 
       // Render the container
+      console.log(image.position.x, image.position.y);
       renderer.render(container);
 
       // Get the image as base64 data url using async/await
@@ -561,10 +569,16 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     // set the image source to the imageData prop
 
     setImgSrc(imageData);
+    const maxScale = calculateMaxScale(realNaturalWidth, realNaturalHeight);
+    let scale;
+    if (firstLoad && maxScale < 1) {
+      setScaleX(maxScale);
+      setScaleY(maxScale);
+    }
 
-    const scale = fitImageToScreen(
-      realNaturalWidth * scaleX,
-      realNaturalHeight * scaleY,
+    scale = fitImageToScreen(
+      realNaturalWidth * (firstLoad && maxScale < 1 ? maxScale : scaleX),
+      realNaturalHeight * (firstLoad && maxScale < 1 ? maxScale : scaleY),
       canvasWidth,
       canvasHeight,
       rotateValue
@@ -583,6 +597,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       localStorage.setItem("realNaturalWidth", realNaturalWidth.toString());
       localStorage.setItem("realNaturalHeight", realNaturalHeight.toString());
       localStorage.setItem("imageName", fileName);
+      setFirstLoad(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -594,6 +609,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     fileSize,
     canvasWidth,
     canvasHeight,
+    firstLoad,
   ]);
 
   useEffect(() => {
@@ -810,36 +826,77 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       enabled: imageProperties.sepia.enabled,
       multiply: imageProperties.sepia.multiply,
       filterIcon: <AlarmIcon />,
+      background: "yellow",
     },
     {
       name: "night",
       enabled: imageProperties.night.enabled,
       multiply: imageProperties.night.multiply,
       filterIcon: <BedtimeIcon />,
+      background: "purple",
     },
     {
       name: "vintage",
       enabled: imageProperties.vintage.enabled,
       multiply: imageProperties.vintage.multiply,
       filterIcon: <FilterVintageIcon />,
+      background: "bg-yellow-500",
     },
     {
       name: "polaroid",
       enabled: imageProperties.polaroid.enabled,
       multiply: imageProperties.polaroid.multiply,
       filterIcon: <CameraEnhanceIcon />,
+      background: "bg-yellow-500",
     },
     {
       name: "kodachrome",
       enabled: imageProperties.kodachrome.enabled,
       multiply: imageProperties.kodachrome.multiply,
       filterIcon: <LooksIcon />,
+      background: "bg-yellow-500",
     },
     {
       name: "predator",
       enabled: imageProperties.predator.enabled,
       multiply: imageProperties.predator.multiply,
       filterIcon: <WarningIcon />,
+      background: "bg-yellow-500",
+    },
+    {
+      name: "lsd",
+      enabled: imageProperties.lsd.enabled,
+      multiply: imageProperties.lsd.multiply,
+      filterIcon: <PsychologyIcon />,
+      background: "bg-yellow-500",
+    },
+    {
+      name: "technicolor",
+      enabled: imageProperties.technicolor.enabled,
+      multiply: imageProperties.technicolor.multiply,
+      filterIcon: <TagFacesIcon />,
+      background: "bg-yellow-500",
+    },
+    {
+      name: "browni",
+      enabled: imageProperties.browni.enabled,
+      multiply: imageProperties.browni.multiply,
+      filterIcon: <LocalFireDepartmentIcon />,
+      background: "bg-yellow-500",
+    },
+    {
+      name: "toBGR",
+      enabled: imageProperties.toBGR.enabled,
+      multiply: imageProperties.toBGR.multiply,
+      filterIcon: <AcUnitIcon />,
+      background: "bg-yellow-500",
+    },
+    {
+      name: "negative",
+      enabled: imageProperties.negative.enabled,
+      multiply: imageProperties.negative.multiply,
+      filterIcon: <RemoveCircleOutlineIcon />,
+      background: "blue",
     },
   ];
 

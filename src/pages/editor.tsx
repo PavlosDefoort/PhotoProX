@@ -8,6 +8,7 @@ import { useState, useEffect, useContext } from "react";
 import { Poppins } from "next/font/google";
 import { set, toNumber } from "lodash";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { calculateScaledDimensions } from "@/utils/calcUtils";
 
 const poppins = Poppins({
   subsets: ["latin"],
