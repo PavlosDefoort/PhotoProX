@@ -270,6 +270,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     setShowThirds(!showThirds);
   };
 
+  // Make a function to let the user drag on the canvas to move the image
+
   useEffect(() => {
     const canvas = canvasRef.current!;
 
@@ -387,7 +389,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       container.addChild(image);
 
       // Render the container
-      console.log(image.position.x, image.position.y);
       renderer.render(container);
 
       // Get the image as base64 data url using async/await
@@ -429,9 +430,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     }
   };
 
-  useEffect(() => {
-    console.log("Rendering changed: ", rendering);
-  }, [rendering]);
+  useEffect(() => {}, [rendering]);
 
   useEffect(() => {
     const handleScroll = (event: WheelEvent) => {
@@ -944,6 +943,99 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     default:
       content = <SideBar changeActive={handleModeChange} />;
   }
+  interface ImagePosition {
+    x: number;
+    y: number;
+  }
+  const [startPosition, setStartPosition] = useState<ImagePosition>({
+    x: 0,
+    y: 0,
+  });
+  const [isInsideImage, setIsInsideImage] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current!;
+    if (isInsideImage) {
+      canvas.style.cursor = isDragging ? "grabbing" : "grab";
+    } else {
+      canvas.style.cursor = "default";
+    }
+  }, [isInsideImage, isDragging]);
+
+  const draggingSpeed = 2;
+  useEffect(() => {
+    const canvas = canvasRef.current!;
+    const handleMouseMove = (e: MouseEvent) => {
+      // Check if the user is on the image and not just on the canvas
+      const canvasRect = canvas.getBoundingClientRect();
+      const canvasX = e.clientX - canvasRect.left;
+      const canvasY = e.clientY - canvasRect.top;
+      // Check if the mouse is inside the image
+
+      const sprite = spriteRef.current!;
+
+      const rangeX = sprite.position.x / 2;
+      const rangeY = sprite.position.y / 2;
+      const rotatedWidth = WidthRotate(
+        realNaturalWidth * zoomValue * scaleX,
+        realNaturalHeight * zoomValue * scaleY,
+        rotateValue
+      );
+      const rotatedHeight = HeightRotate(
+        realNaturalWidth * zoomValue * scaleX,
+        realNaturalHeight * zoomValue * scaleY,
+        rotateValue
+      );
+      const adjustedX = rotatedWidth / 4;
+      const adjustedY = rotatedHeight / 4;
+
+      const isInsideImage =
+        canvasX >= rangeX - adjustedX &&
+        canvasX <= rangeX + adjustedX &&
+        canvasY >= rangeY - adjustedY &&
+        canvasY <= rangeY + adjustedY;
+      setIsInsideImage(isInsideImage);
+
+      if (!isInsideImage) {
+        canvas.style.cursor = "default"; // Not on the image
+        return;
+      }
+
+      if (isDragging) {
+        const offsetX = (e.clientX - startPosition.x) * draggingSpeed;
+        const offsetY = (e.clientY - startPosition.y) * draggingSpeed;
+        setFakeX(fakeX + offsetX);
+        setFakeY(fakeY + offsetY);
+        setStartPosition({ x: e.clientX, y: e.clientY });
+      }
+    };
+
+    canvas.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      canvas.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [
+    isDragging,
+    fakeX,
+    fakeY,
+    startPosition,
+    realNaturalWidth,
+    zoomValue,
+    scaleX,
+    scaleY,
+    realNaturalHeight,
+    rotateValue,
+  ]);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    setIsDragging(true);
+    setStartPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   return (
     <div>
@@ -998,12 +1090,16 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               marginLeft: `${deltaWidth}px`,
               width: realNaturalWidth ? `${1410}px` : "100%",
               height: realNaturalHeight ? `${705}px` : "100%",
+              cursor: "default",
             }}
           >
             <canvas
               id="canvas"
               ref={canvasRef}
               className=""
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
               style={{
                 display: "block",
                 position: "absolute",

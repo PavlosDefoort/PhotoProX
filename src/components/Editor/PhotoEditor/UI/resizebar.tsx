@@ -51,10 +51,6 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
     setPreviousUseRatio(useRatioRef.current);
   }, []);
 
-  useEffect(() => {
-    console.log(displayScaleX, displayScaleY);
-  }, [displayScaleX, displayScaleY]);
-
   const handleAccept = () => {
     // Check if assigned value is a number
     if (isNaN(scaleX) || isNaN(scaleY)) {
@@ -65,7 +61,6 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
   };
 
   const handleCancel = () => {
-    console.log(previousScaleX, previousScaleY);
     setScaleX(previousScaleX);
     setScaleY(previousScaleY);
     setUseRatio(previousUseRatio);
@@ -99,7 +94,6 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
               calculateMaxScale(imageWidth, imageHeight)
             ) * 100
           ) / 100;
-        console.log((newValue * 100).toFixed(0).toString());
 
         if (useRatio) {
           setScaleY(newValue);

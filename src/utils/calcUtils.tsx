@@ -17,7 +17,6 @@ export function calculateScaledDimensions(
   const aspectRatio = originalWidth / originalHeight;
   const area = originalWidth * originalHeight;
   if (area <= maxArea) {
-    console.log("area <= maxArea");
     return { width: originalWidth, height: originalHeight };
   } else {
     // Calculate new dimensions, keeping aspect ratio and area <= maxArea
@@ -25,7 +24,6 @@ export function calculateScaledDimensions(
     const newHeight = Math.floor(Math.sqrt(maxArea / aspectRatio));
     const newWidth = Math.floor(aspectRatio * newHeight);
 
-    console.log("area > maxArea", newWidth, newHeight);
     return { width: newWidth, height: newHeight };
   }
 }
@@ -38,17 +36,16 @@ export function calculateMaxDimensions(
   const aspectRatio = width / height;
   const newHeight = Math.floor(Math.sqrt(maxArea / aspectRatio));
   const newWidth = Math.floor(aspectRatio * newHeight);
-  console.log("calculateMaxDimensions", newWidth, newHeight);
+
   return { width: newWidth, height: newHeight };
 }
 
 export function calculateMaxScale(width: number, height: number) {
   const maxWidth = calculateMaxDimensions(width, height).width;
-  console.log(width);
   const maxScale = maxWidth / width;
   // Round scale to 2 decimal places
   const maxScaleRounded = Math.round(maxScale * 100) / 100;
-  console.log("calculateMaxScale", maxScaleRounded);
+
   return maxScaleRounded;
 }
 

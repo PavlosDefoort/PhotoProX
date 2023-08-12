@@ -109,7 +109,7 @@ const ApplyCanvas = ({
 
     const app = appRef.current; // Use the existing app instance
 
-    if (imgSrc) {
+    if (imgSrc && app.view) {
       const imageWidth = realNaturalWidth;
       const imageHeight = realNaturalHeight;
       app.stage.removeChildren();
@@ -128,7 +128,7 @@ const ApplyCanvas = ({
 
       const imageY = (canvasHeight - newHeight) / 2;
 
-      let image; // Declare the image variable outside of the if statement
+      let image: Sprite; // Declare the image variable outside of the if statement
 
       if (!spriteRef.current) {
         spriteRef.current = Sprite.from(imgSrc, {
@@ -351,6 +351,7 @@ const ApplyCanvas = ({
       app.stage.addChild(image);
       app.stage.addChild(gridGraphics);
       app.start();
+      // Check if mouse is on sprite
     }
 
     return () => {

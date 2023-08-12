@@ -65,7 +65,7 @@ const PinchHandler: React.FC<PinchHandlerProps> = ({
   usePinch(pinchEventHandler, {
     target,
     pointer: { touch: true },
-    threshold: 0.1,
+
     eventOptions: { passive: false },
     scaleBounds: { min: 0.09, max: 3.99 },
   });
