@@ -14,7 +14,7 @@ const SideBar: React.FC<SideBarProps> = ({ changeActive }) => {
     <div className="z-10">
       <nav
         id="sidenav-8"
-        className="animate-fade-right animate-once animate-duration-[500ms] overflow-y-scroll hover: scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-200 absolute left-0 top-0 z-[1035] h-full w-60 -translate-x-full overflow-hidden bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.07),_0_2px_4px_rgba(0,0,0,0.05)] data-[te-sidenav-hidden='false']:translate-x-0 dark:bg-[#3b3b3b]"
+        className="animate-fade-right animate-once animate-duration-[500ms] overflow-y-scroll hover: scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-200 absolute left-0 top-0 z-[1035] h-full w-64 -translate-x-full overflow-hidden bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.07),_0_2px_4px_rgba(0,0,0,0.05)] data-[te-sidenav-hidden='false']:translate-x-0 dark:bg-[#3b3b3b]"
         data-te-sidenav-init
         data-te-sidenav-hidden="false"
         data-te-sidenav-position="absolute"

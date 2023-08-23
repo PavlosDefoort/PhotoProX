@@ -128,6 +128,7 @@ export default function Editor({}) {
       setImage(storedImage);
       setRealWidth(parseInt(storedWidth!));
       setRealHeight(parseInt(storedHeight!));
+      setFileName(localStorage.getItem("imageName")!);
     }
   }, [agree]);
 

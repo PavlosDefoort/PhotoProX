@@ -1,4 +1,4 @@
-import React, { use } from "react";
+import React, { use, useRef } from "react";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 
 interface FilterBarProps {
@@ -6,6 +6,7 @@ interface FilterBarProps {
   changeActive: (mode: string) => void;
   handleEnable: (name: string) => void;
   handleMultiply: (name: string) => void;
+  setComponents: (component: FilterElement[]) => void;
 }
 
 type FilterElement = {
@@ -21,19 +22,28 @@ const FilterBar: React.FC<FilterBarProps> = ({
   changeActive,
   handleEnable,
   handleMultiply,
+  setComponents,
 }) => {
-  React.useEffect(() => {
-    const init = async () => {
-      const { initTE, Sidenav } = await import("tw-elements");
+  // React.useEffect(() => {
+  //   const init = async () => {
+  //     const { initTE, Sidenav } = await import("tw-elements");
 
-      initTE({ Sidenav });
-    };
-    init();
-  }, []);
+  //     initTE({ Sidenav });
+  //   };
+  //   init();
+  // }, []);
+
+  const componentsRef = useRef(components);
+
+  const handleCancel = () => {
+    console.log(componentsRef.current);
+    setComponents(componentsRef.current);
+    changeActive("");
+  };
 
   return (
     <div className="z-10">
-      <nav
+      {/* <nav
         id="sidenav-1"
         className="animate-fade-right animate-once animate-duration-[500ms] animate-ease-out overflow-y-scroll hover: scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-200 absolute left-0 top-0 z-[1035] h-full w-60 -translate-x-full overflow-hidden bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.07),_0_2px_4px_rgba(0,0,0,0.05)] data-[te-sidenav-hidden='false']:translate-x-0 dark:bg-[#3b3b3b]"
         data-te-sidenav-init
@@ -44,7 +54,12 @@ const FilterBar: React.FC<FilterBarProps> = ({
           className="relative m-0 list-none px-[0.2rem] pt-16"
           data-te-sidenav-menu-ref
         >
-          <li className="relative" onClick={() => changeActive("")}>
+          <li
+            className="relative"
+            onClick={() => {
+              handleCancel();
+            }}
+          >
             <a
               className=" flex h-12 cursor-pointer items-center truncate rounded-[5px] px-6 py-4 text-[0.875rem] text-gray-600 outline-none transition duration-300 ease-linear  hover:text-inherit hover:outline-none focus:bg-slate-50 focus:text-inherit focus:outline-none active:bg-slate-50 active:text-inherit active:outline-none data-[te-sidenav-state-active]:text-inherit data-[te-sidenav-state-focus]:outline-none motion-reduce:transition-none dark:text-gray-300  dark:focus:bg-white/10 dark:active:bg-white/10"
               data-te-sidenav-link-ref
@@ -127,7 +142,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
             </li>
           ))}
         </ul>
-      </nav>
+      </nav> */}
     </div>
   );
 };

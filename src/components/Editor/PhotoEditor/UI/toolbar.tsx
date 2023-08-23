@@ -24,22 +24,13 @@ const ToolBar: React.FC<ToolBarProps> = ({
   return (
     <aside
       id="logo-sidebar"
-      className="fixed top-0 left-0 z-30 w-[56px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
+      className="animate-fade animate-once animate-ease-out fixed top-0 left-0 z-30 w-10 h-screen transition-transform -translate-x-full sm:translate-x-0 border-r-2 border-[#cdcdcd] dark:border-[#252525]"
       aria-label="Sidebar"
     >
       <div className="h-full px-3 py-6 overflow-y-auto bg-white dark:bg-[#3b3b3b] ">
         {imgSrc && (
-          <div className="animate-fade animate-once animate-ease-linear">
+          <div className="animate-fade animate-once animate-ease-linear mt-8">
             <div>
-              <Link href="/" className="flex items-center pl-2.5 mb-5">
-                <Image
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
-                  className="h-6 mr-3 sm:h-7"
-                  alt="Flowbite Logo"
-                  width={35}
-                  height={35}
-                />
-              </Link>
               <ul className="space-y-6 font-medium ">
                 <li>
                   <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">

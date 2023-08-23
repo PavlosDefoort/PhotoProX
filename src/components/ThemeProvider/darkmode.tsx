@@ -8,8 +8,8 @@ const DarkMode = () => {
   const anchorRef = useRef(null);
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
   return (
-    <div className="animate-jump z-50 absolute top-4 right-12">
-      {darkMode ? (
+    <div className="animate-jump z-50 absolute top-2 right-12">
+      {/* {darkMode ? (
         <Tooltip
           title="See the Sun rise"
           placement="bottom"
@@ -33,7 +33,7 @@ const DarkMode = () => {
             className="text-black hover:animate-bounce"
           />
         </Tooltip>
-      )}
+      )} */}
     </div>
   );
 };
