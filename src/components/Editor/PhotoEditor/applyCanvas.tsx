@@ -118,6 +118,15 @@ const ApplyCanvas = ({
         hello: true,
       });
     }
+    // Create a new app if canvasWidth or canvasHeight changes
+
+    if (
+      canvasHeight !== appRef.current.renderer.height ||
+      canvasWidth !== appRef.current.renderer.width
+    ) {
+      appRef.current.renderer.resize(canvasWidth, canvasHeight);
+    }
+
     const app = appRef.current; // Use the existing app instance
 
     let dragOffset: PIXI.Point | null = null; // Store the initial offset when dragging starts
@@ -157,8 +166,8 @@ const ApplyCanvas = ({
         containerRef.current.pivot.set(imageWidth / 2, imageHeight / 2);
         const background = new PIXI.Graphics();
         const squareSize = 20; // Adjust the size of each square as needed
-        const numRows = Math.ceil(imageHeight / squareSize);
-        const numCols = Math.ceil(imageWidth / squareSize);
+        const numRows = Math.floor(imageHeight / squareSize);
+        const numCols = Math.floor(imageWidth / squareSize);
         const colors = [0xffffff, 0xe5e5e5]; // Colors for the checkerboard pattern
 
         for (let row = 0; row < numRows; row++) {
@@ -251,7 +260,6 @@ const ApplyCanvas = ({
       container.addChild(mask);
       container.mask = mask;
       app.stage.addChild(container);
-
       app.start();
       // Check if mouse is on sprite
       return () => {

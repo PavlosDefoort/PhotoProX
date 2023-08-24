@@ -6,6 +6,7 @@ import React, {
   useContext,
 } from "react";
 import dynamic from "next/dynamic";
+import Decimal from "decimal.js";
 import Image from "next/image";
 import TopBar from "./UI/topbar";
 import ToolBar from "./UI/toolbar";
@@ -103,8 +104,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [dragStartY, setDragStartY] = useState(0);
   const [scaleFactor, setScaleFactor] = useState(1);
   // Add a canvasWidth and height global state to optimize resolution
-  const [canvasWidth, setCanvasWidth] = useState(2800);
-  const [canvasHeight, setCanvasHeight] = useState(1400);
+  const [canvasWidth, setCanvasWidth] = useState(8000);
+  const [canvasHeight, setCanvasHeight] = useState(4000);
   const { darkMode } = useContext(ThemeContext);
   const [undoStack, setUndoStack] = useState<Stack>([]);
   const [redoStack, setRedoStack] = useState<Stack>([]);
@@ -230,7 +231,13 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const maskRef = useRef<Graphics | null>(null);
   const imgRef = useRef(null);
   const target = useRef<HTMLDivElement | null>(null);
+  const [windowHeight, setWindowHeight] = useState(0);
 
+  useEffect(() => {
+    console.log("here");
+    setWindowWidth(window.innerWidth);
+    setWindowHeight(window.innerHeight);
+  }, [windowWidth, windowHeight]);
   useEffect(() => {
     const calculateDeltaWidth = () => {
       const x = (windowWidth - 592) / 2;
@@ -243,7 +250,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     };
 
     const handleResize = () => {
+      console.log("here");
       setWindowWidth(window.innerWidth);
+      setWindowHeight(window.innerHeight);
     };
 
     window.addEventListener("resize", handleResize);
@@ -465,9 +474,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         const maxOffsetLimitX = Math.abs(
           (newWidth * zoomValue - canvasWidth) / 2
         );
-
-        const deltaX = -event.deltaX;
-        const deltaY = -event.deltaY;
+        const moveSpeed = 2;
+        const deltaX = -event.deltaX * moveSpeed;
+        const deltaY = -event.deltaY * moveSpeed;
         const halfHeight = (newHeight * scaleY * zoomValue) / 2;
         const halfWidth = (newWidth * scaleX * zoomValue) / 2;
         // Restrict to the canvas size
@@ -779,16 +788,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     };
   }, [handleKeyDownTwo]);
 
-  const handleZoomIn = () => {
-    const newZoomValue = Math.min(zoomValue * 2, 4); // Zoom in by doubling the value, limit to a maximum of 4
-    setZoomValue(newZoomValue);
-  };
-
-  const handleZoomOut = () => {
-    const newZoomValue = Math.max(zoomValue / 2, 0.1); // Zoom out by halving the value, limit to a minimum of 0.1
-    setZoomValue(newZoomValue);
-  };
-
   const handleEnable = (name: string) => {
     // Object is possibly undefined
 
@@ -960,107 +959,29 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     default:
       content = <SideBar changeActive={handleModeChange} />;
   }
-  interface ImagePosition {
-    x: number;
-    y: number;
-  }
-  const [startPosition, setStartPosition] = useState<ImagePosition>({
-    x: 0,
-    y: 0,
-  });
-  const [isInsideImage, setIsInsideImage] = useState(false);
 
-  // useEffect(() => {
-  //   const canvas = canvasRef.current!;
-  //   if (isInsideImage) {
-  //     canvas.style.cursor = isDragging ? "grabbing" : "grab";
-  //   } else {
-  //     canvas.style.cursor = "default";
-  //   }
-  // }, [isInsideImage, isDragging]);
-
-  // const draggingSpeed = 2;
-  // useEffect(() => {
-  //   const canvas = canvasRef.current!;
-  //   const handleMouseMove = (e: MouseEvent) => {
-  //     // Check if the user is on the image and not just on the canvas
-  //     const canvasRect = canvas.getBoundingClientRect();
-  //     const canvasX = e.clientX - canvasRect.left;
-  //     const canvasY = e.clientY - canvasRect.top;
-  //     // Check if the mouse is inside the image
-
-  //     const sprite = spriteRef.current!;
-
-  //     const rangeX = sprite.position.x / 2;
-  //     const rangeY = sprite.position.y / 2;
-  //     const rotatedWidth = WidthRotate(
-  //       realNaturalWidth * zoomValue * scaleX,
-  //       realNaturalHeight * zoomValue * scaleY,
-  //       rotateValue
-  //     );
-  //     const rotatedHeight = HeightRotate(
-  //       realNaturalWidth * zoomValue * scaleX,
-  //       realNaturalHeight * zoomValue * scaleY,
-  //       rotateValue
-  //     );
-  //     const adjustedX = rotatedWidth / 4;
-  //     const adjustedY = rotatedHeight / 4;
-
-  //     const isInsideImage =
-  //       canvasX >= rangeX - adjustedX &&
-  //       canvasX <= rangeX + adjustedX &&
-  //       canvasY >= rangeY - adjustedY &&
-  //       canvasY <= rangeY + adjustedY;
-  //     setIsInsideImage(isInsideImage);
-
-  //     if (!isInsideImage) {
-  //       canvas.style.cursor = "default"; // Not on the image
-  //       return;
-  //     }
-
-  //     if (isDragging) {
-  //       const offsetX = (e.clientX - startPosition.x) * draggingSpeed;
-  //       const offsetY = (e.clientY - startPosition.y) * draggingSpeed;
-  //       setFakeX(fakeX + offsetX);
-  //       setFakeY(fakeY + offsetY);
-  //       setStartPosition({ x: e.clientX, y: e.clientY });
-  //     }
-  //   };
-
-  //   canvas.addEventListener("mousemove", handleMouseMove);
-
-  //   return () => {
-  //     canvas.removeEventListener("mousemove", handleMouseMove);
-  //   };
-  // }, [
-  //   isDragging,
-  //   fakeX,
-  //   fakeY,
-  //   startPosition,
-  //   realNaturalWidth,
-  //   zoomValue,
-  //   scaleX,
-  //   scaleY,
-  //   realNaturalHeight,
-  //   rotateValue,
-  // ]);
-
-  // const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-  //   setIsDragging(true);
-  //   setStartPosition({ x: e.clientX, y: e.clientY });
-  // };
-
-  // const handleMouseUp = () => {
-  //   setIsDragging(false);
-  // };
-
-  // useEffect(() => {
-  //   console.log(zoomValue);
-  // }, [zoomValue]);
+  useEffect(() => {
+    const factor = 5;
+    const adjustWidth = (window.innerWidth - 80) * factor;
+    const adjustHeight = (window.innerHeight - 40) * factor;
+    setCanvasWidth(adjustWidth);
+    setCanvasHeight(adjustHeight);
+  }, [windowWidth, windowHeight]);
 
   return (
     <div>
-      <TopBar imgName={fileName} zoomValue={zoomValue.toFixed(2)} />
+      <TopBar
+        imgName={fileName}
+        zoomValue={zoomValue.toFixed(2)}
+        width={realNaturalWidth}
+        height={realNaturalHeight}
+        canvasWidth={canvasWidth}
+        canvasHeight={canvasHeight}
+        setZoomValue={setZoomValue}
+        setFakeX={setFakeX}
+        setFakeY={setFakeY}
+        rotateValue={rotateValue}
+      />
       {imgSrc && (
         <ToolBar
           imgSrc={imgSrc}
@@ -1078,14 +999,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           {content}
         </aside>
       )} */}
-      {/* <BottomBar
-        zoomValue={zoomValue}
-        imgSrc={imgSrc}
-        setZoomValue={setZoomValue}
-        handleFitToScreen={handleFitToScreen}
-        handleZoomIn={handleZoomIn}
-        handleZoomOut={handleZoomOut}
-      /> */}
 
       {rendering && (
         <Dialog open={rendering}>
@@ -1103,47 +1016,30 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
             target={target} // Pass the targetRef as the target
           />
           <div
+            id="stage-container"
             ref={target}
             className="flex items-center justify-center "
             style={{
               position: "fixed",
               top: `calc(50% + 18px)`,
-              left: `calc(50% + 148px)`,
+              left: `calc(50%)`,
               transform: `translate(-50%, -50%)`,
-              width: realNaturalWidth ? `${1534}px` : "100%",
-              height: realNaturalHeight ? `${767}px` : "100%",
+              width: realNaturalWidth ? `${windowWidth - 80}px` : "100%",
+              height: realNaturalHeight ? `${windowHeight - 40}px` : "100%",
             }}
           >
             <canvas
               id="canvas"
               ref={canvasRef}
               className=""
-              // onMouseDown={handleMouseDown}
-              // onMouseUp={handleMouseUp}
-              // onMouseLeave={handleMouseUp}
               style={{
                 display: "block",
                 position: "absolute",
-                width: realNaturalWidth ? `${1534}px` : "100%",
-                height: realNaturalHeight ? `${767}px` : "100%",
+                width: realNaturalWidth ? `${windowWidth - 80}px` : "100%",
+                height: realNaturalHeight ? `${windowHeight - 40}px` : "100%",
                 zIndex: -1,
-
-                // backgroundImage:
-                //   "linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%)",
-                // backgroundSize: "10px 10px",
-                // backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
               }}
             ></canvas>
-            {/* {imgSrc && (
-              <Image
-                style={{ display: "none" }}
-                src={imgSrc}
-                ref={imgRef}
-                alt="Image"
-                width={1410}
-                height={705}
-              ></Image>
-            )} */}
           </div>
         </div>
       </div>

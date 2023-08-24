@@ -1,3 +1,5 @@
+import Decimal from "decimal.js";
+
 export function WidthRotate(
   width: number,
   height: number,
@@ -123,13 +125,23 @@ export function fitImageToScreen(
   const newWidth = WidthRotate(width, height, rotateValue);
   const newHeight = HeightRotate(width, height, rotateValue);
 
-  // Recalculate scale based off rotation
-  const scale = Math.min(
-    canvasWidth / 1.1 / newWidth,
-    canvasHeight / 1.1 / newHeight
-  );
+  const widthRatio = new Decimal(canvasWidth).dividedBy(newWidth).toNumber();
+  const heightRatio = new Decimal(canvasHeight).dividedBy(newHeight).toNumber();
 
-  const roundedScale = Math.round(scale * 100) / 100;
+  const newScale = Decimal.min(widthRatio, heightRatio).toDecimalPlaces(2);
 
-  return roundedScale;
+  return newScale.toNumber();
+}
+
+export function fillImageToScreen(
+  width: number,
+  height: number,
+  canvasWidth: number,
+  canvasHeight: number,
+  rotateValue: number
+) {
+  const widthRatio = canvasWidth / width;
+  const heightRatio = canvasHeight / height;
+
+  return Math.max(widthRatio, heightRatio);
 }
