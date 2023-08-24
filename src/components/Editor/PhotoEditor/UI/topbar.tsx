@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import DownloadIcon from "@mui/icons-material/Download";
+import { DownloadIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -101,6 +101,10 @@ const TopBar: React.FC<TopBarProps> = ({
         handleZoomIn();
       } else if (e.ctrlKey && e.key === "-") {
         handleZoomOut();
+      } else if (e.ctrlKey && e.key === "0") {
+        requestFit();
+      } else if (e.ctrlKey && e.key === "9") {
+        requestFill();
       }
     };
 
@@ -110,7 +114,7 @@ const TopBar: React.FC<TopBarProps> = ({
     };
   });
   return (
-    <nav className="fixed top-0 z-40 w-full h-10 bg-white dark:bg-[#3b3b3b] border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-between p-2">
+    <nav className="fixed top-0 z-40 w-full h-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-between p-2">
       <div className="flex items-center h-full text-black dark:text-white">
         <Link href="/">
           <Image
@@ -131,16 +135,14 @@ const TopBar: React.FC<TopBarProps> = ({
           zoomOut={handleZoomOut}
         />
       </div>
-      <div className="flex items-center h-full text-black dark:text-white">
+      <div className="flex items-center h-full text-black dark:text-white ">
         <Button
           type="button"
-          className="flex flex-row items-center justify-center text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-3 py-0.3 text-center"
+          className="flex flex-row items-center justify-center text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-3 py-0.3 h-6 text-center"
         >
-          <span className="flex flex-row justify-center items-center mr-1 ">
-            <span className="mr-0.5">
-              <DownloadIcon />
-            </span>
-            <h1>Download</h1>
+          <span className="flex flex-row justify-center items-center">
+            <DownloadIcon className="mr-0.5" />
+            Download
           </span>
         </Button>
       </div>

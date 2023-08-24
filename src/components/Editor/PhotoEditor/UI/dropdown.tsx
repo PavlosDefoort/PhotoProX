@@ -36,7 +36,10 @@ const DropDown: React.FC<DropDownProps> = ({
     <div className="w-16 ">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="w-24 bg-[#3b3b3b]" variant="outline">
+          <Button
+            className="w-24 dark:bg-navbarBackground bg-navbarBackground border-0 h-5"
+            variant="outline"
+          >
             <span className="inline-block w-16">{zoomValue}%</span>
             <ChevronDownIcon className="ml-0.5 w-6" />
           </Button>
@@ -51,7 +54,7 @@ const DropDown: React.FC<DropDownProps> = ({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={zoomOut}>
               Zoom out
-              <DropdownMenuShortcut>Ctrl--</DropdownMenuShortcut>
+              <DropdownMenuShortcut>Ctrl+-</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />

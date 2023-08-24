@@ -101,7 +101,7 @@ const ApplyCanvas = ({
       // If the app doesn't exist, create it
       let backgroundColor;
       if (darkMode) {
-        backgroundColor = 0x252525;
+        backgroundColor = 0x1e1e1e;
       } else {
         backgroundColor = 0xcdcdcd;
       }
