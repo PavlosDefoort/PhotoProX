@@ -1,3 +1,4 @@
+const { mauve, violet } = require("@radix-ui/colors");
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
@@ -17,6 +18,9 @@ module.exports = {
     },
     extend: {
       colors: {
+        ...mauve,
+        ...violet,
+        buttonHover: "hsl(var(--hover))",
         navbarBackground: "hsl(var(--navbar-background))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

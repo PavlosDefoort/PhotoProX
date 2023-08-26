@@ -2,8 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "@radix-ui/colors/black-alpha.css";
+@import "@radix-ui/colors/mauve.css";
+@import "@radix-ui/colors/violet.css";
+
 @layer base {
   :root {
+    --hover: 0, 0%, 94%;
     --navbar-background: 0, 0%, 97%;
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
@@ -28,6 +33,7 @@
   }
 
   .dark {
+    --hover: 0, 0%, 25%;
     --navbar-background: 0, 0%, 21%;
     --background: 0 0% 18%;
     --foreground: 0 0% 98%;

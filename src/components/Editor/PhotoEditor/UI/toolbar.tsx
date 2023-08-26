@@ -47,18 +47,18 @@ const ToolBar: React.FC<ToolBarProps> = ({
                   <Popover open={open}>
                     <PopoverTrigger asChild>
                       <Button
-                        className="w-6"
+                        className="w-6 flex flex-row items-center justify-center bg-navbarBackground dark:bg-navbarBackground hover:bg-buttonHover dark:hover:bg-buttonHover"
                         variant="outline"
                         onMouseEnter={() => setOpen(true)}
                         onMouseLeave={() => setOpen(false)}
                       >
-                        <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
+                        <span>
                           <MoveIcon
                             aria-hidden="true"
-                            className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white"
+                            className="w-6 h-6 text-gray-500 dark:text-gray-100"
                             onClick={() => toggleThirds()}
                           ></MoveIcon>
-                        </a>
+                        </span>
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-64">

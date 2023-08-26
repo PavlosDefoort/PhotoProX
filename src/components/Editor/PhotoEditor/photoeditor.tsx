@@ -49,6 +49,12 @@ import {
 } from "@/utils/calcUtils";
 import { Newsreader } from "next/font/google";
 import { set } from "lodash";
+import * as ContextMenu from "@radix-ui/react-context-menu";
+import {
+  DotFilledIcon,
+  CheckIcon,
+  ChevronRightIcon,
+} from "@radix-ui/react-icons";
 
 const SideBar = dynamic(() => import("./UI/sidebar"), {
   loading: () => <p>loading</p>,
@@ -123,6 +129,11 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [scaleX, setScaleX] = useState(1);
   const [scaleY, setScaleY] = useState(1);
   const [useRatio, setUseRatio] = useState(true);
+  const [imgName, setImgName] = useState("");
+
+  const [bookmarksChecked, setBookmarksChecked] = React.useState(true);
+  const [urlsChecked, setUrlsChecked] = React.useState(false);
+  const [person, setPerson] = React.useState("pedro");
 
   interface ImageProperties {
     contrast: { value: number; multiply: boolean; enabled?: boolean };
@@ -603,6 +614,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       localStorage.setItem("realNaturalHeight", realNaturalHeight.toString());
       localStorage.setItem("imageName", fileName);
       setFirstLoad(false);
+      setImgName(fileName);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -971,7 +983,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   return (
     <div>
       <TopBar
-        imgName={fileName}
+        imgName={imgName}
+        setFileName={setImgName}
         zoomValue={zoomValue.toFixed(2)}
         width={realNaturalWidth}
         height={realNaturalHeight}
@@ -981,6 +994,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         setFakeX={setFakeX}
         setFakeY={setFakeY}
         rotateValue={rotateValue}
+        scaleX={scaleX}
+        scaleY={scaleY}
       />
       {imgSrc && (
         <ToolBar
@@ -1008,41 +1023,160 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         </Dialog>
       )}
 
-      <div className=" ">
-        <div className="">
-          <PinchHandler
-            setZoomValue={setZoomValue}
-            setIsZooming={setIsZooming}
-            target={target} // Pass the targetRef as the target
-          />
-          <div
-            id="stage-container"
-            ref={target}
-            className="flex items-center justify-center "
-            style={{
-              position: "fixed",
-              top: `calc(50% + 18px)`,
-              left: `calc(50%)`,
-              transform: `translate(-50%, -50%)`,
-              width: realNaturalWidth ? `${windowWidth - 80}px` : "100%",
-              height: realNaturalHeight ? `${windowHeight - 40}px` : "100%",
-            }}
-          >
-            <canvas
-              id="canvas"
-              ref={canvasRef}
-              className=""
-              style={{
-                display: "block",
-                position: "absolute",
-                width: realNaturalWidth ? `${windowWidth - 80}px` : "100%",
-                height: realNaturalHeight ? `${windowHeight - 40}px` : "100%",
-                zIndex: -1,
-              }}
-            ></canvas>
+      <ContextMenu.Root>
+        <ContextMenu.Trigger className="">
+          <div className=" ">
+            <div className="">
+              <PinchHandler
+                setZoomValue={setZoomValue}
+                setIsZooming={setIsZooming}
+                target={target} // Pass the targetRef as the target
+              />
+              <div
+                id="stage-container"
+                ref={target}
+                className="flex items-center justify-center "
+                style={{
+                  position: "fixed",
+                  top: `calc(50% + 18px)`,
+                  left: `calc(50%)`,
+                  transform: `translate(-50%, -50%)`,
+                  width: realNaturalWidth ? `${windowWidth - 80}px` : "100%",
+                  height: realNaturalHeight ? `${windowHeight - 40}px` : "100%",
+                }}
+              >
+                <canvas
+                  id="canvas"
+                  ref={canvasRef}
+                  className=""
+                  style={{
+                    display: "block",
+                    position: "absolute",
+                    width: realNaturalWidth ? `${windowWidth - 80}px` : "100%",
+                    height: realNaturalHeight
+                      ? `${windowHeight - 40}px`
+                      : "100%",
+                    zIndex: -1,
+                  }}
+                ></canvas>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </ContextMenu.Trigger>
+        <ContextMenu.Portal>
+          <ContextMenu.Content
+            className="min-w-[220px] bg-navbarBackground dark:bg-navbarBackground rounded-md overflow-hidden p-[5px] shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)]"
+            // sideOffset={5}
+            // align="end"
+          >
+            <ContextMenu.Item className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
+              Back{" "}
+              <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
+                ⌘+[
+              </div>
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className="group text-[13px] leading-none text-violet11  rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
+              disabled
+            >
+              Foward{" "}
+              <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
+                ⌘+]
+              </div>
+            </ContextMenu.Item>
+            <ContextMenu.Item className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
+              Reload{" "}
+              <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
+                ⌘+R
+              </div>
+            </ContextMenu.Item>
+            <ContextMenu.Sub>
+              <ContextMenu.SubTrigger className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[state=open]:bg-violet4 dark:data-[state=open]:bg-violet9 data-[state=open]:text-violet11 data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1 data-[highlighted]:data-[state=open]:bg-violet9 data-[highlighted]:data-[state=open]:text-violet1">
+                More Tools
+                <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
+                  <ChevronRightIcon />
+                </div>
+              </ContextMenu.SubTrigger>
+              <ContextMenu.Portal>
+                <ContextMenu.SubContent
+                  className="min-w-[220px] bg-navbarBackground dark:bg-navbarBackground rounded-md overflow-hidden p-[5px] shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)]"
+                  sideOffset={2}
+                  alignOffset={-5}
+                >
+                  <ContextMenu.Item className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
+                    Save Page As…{" "}
+                    <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
+                      ⌘+S
+                    </div>
+                  </ContextMenu.Item>
+                  <ContextMenu.Item className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
+                    Create Shortcut…
+                  </ContextMenu.Item>
+                  <ContextMenu.Item className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
+                    Name Window…
+                  </ContextMenu.Item>
+                  <ContextMenu.Separator className="h-[1px] bg-violet6 m-[5px]" />
+                  <ContextMenu.Item className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
+                    Developer Tools
+                  </ContextMenu.Item>
+                </ContextMenu.SubContent>
+              </ContextMenu.Portal>
+            </ContextMenu.Sub>
+
+            <ContextMenu.Separator className="h-[1px] bg-violet6 m-[5px]" />
+
+            <ContextMenu.CheckboxItem
+              className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
+              checked={bookmarksChecked}
+              onCheckedChange={setBookmarksChecked}
+            >
+              <ContextMenu.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
+                <CheckIcon />
+              </ContextMenu.ItemIndicator>
+              Show Bookmarks{" "}
+              <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
+                ⌘+B
+              </div>
+            </ContextMenu.CheckboxItem>
+            <ContextMenu.CheckboxItem
+              className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
+              checked={urlsChecked}
+              onCheckedChange={setUrlsChecked}
+            >
+              <ContextMenu.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
+                <CheckIcon />
+              </ContextMenu.ItemIndicator>
+              Show Full URLs
+            </ContextMenu.CheckboxItem>
+
+            <ContextMenu.Separator className="h-[1px] bg-violet6 m-[5px]" />
+
+            <ContextMenu.Label className="pl-[25px] text-xs leading-[25px] text-mauve11 dark:text-mauve8">
+              People
+            </ContextMenu.Label>
+            <ContextMenu.RadioGroup value={person} onValueChange={setPerson}>
+              <ContextMenu.RadioItem
+                className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
+                value="pedro"
+              >
+                <ContextMenu.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
+                  <DotFilledIcon />
+                </ContextMenu.ItemIndicator>
+                Pedro Duarte
+              </ContextMenu.RadioItem>
+              <ContextMenu.RadioItem
+                className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
+                value="colm"
+              >
+                <ContextMenu.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
+                  <DotFilledIcon />
+                </ContextMenu.ItemIndicator>
+                Colm Tuite
+              </ContextMenu.RadioItem>
+            </ContextMenu.RadioGroup>
+          </ContextMenu.Content>
+        </ContextMenu.Portal>
+      </ContextMenu.Root>
     </div>
   );
 };

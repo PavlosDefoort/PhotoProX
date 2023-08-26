@@ -11,6 +11,8 @@ import Select from "@mui/material/Select";
 import dynamic from "next/dynamic";
 import { fillImageToScreen, fitImageToScreen, clamp } from "@/utils/calcUtils";
 import { set } from "lodash";
+import ImageDropDown from "./imagedropdown";
+import SheetSide from "./rename";
 interface TopBarProps {
   imgName: string;
   zoomValue: string;
@@ -22,8 +24,15 @@ interface TopBarProps {
   setZoomValue: (value: number) => void;
   setFakeX: (value: number) => void;
   setFakeY: (value: number) => void;
+  setFileName: (value: string) => void;
+  scaleX: number;
+  scaleY: number;
 }
 const DynamicComponent = dynamic(() => import("./dropdown"), {
+  ssr: false,
+});
+
+const DynamicImageDropDown = dynamic(() => import("./imagedropdown"), {
   ssr: false,
 });
 const TopBar: React.FC<TopBarProps> = ({
@@ -37,30 +46,39 @@ const TopBar: React.FC<TopBarProps> = ({
   rotateValue,
   setFakeX,
   setFakeY,
+  scaleX,
+  scaleY,
+  setFileName,
 }) => {
   const requestFill = () => {
     const newScale = fillImageToScreen(
-      width,
-      height,
+      width * scaleX,
+      height * scaleY,
       canvasWidth,
       canvasHeight,
       rotateValue
     );
-    setFakeX(0);
-    setFakeY(0);
+
     setZoomValue(newScale);
+    setTimeout(() => {
+      setFakeX(0);
+      setFakeY(0);
+    }, 10);
   };
   const requestFit = () => {
     const newScale = fitImageToScreen(
-      width,
-      height,
+      width * scaleX,
+      height * scaleY,
       canvasWidth,
       canvasHeight,
       rotateValue
     );
-    setFakeX(0);
-    setFakeY(0);
+
     setZoomValue(newScale);
+    setTimeout(() => {
+      setFakeX(0);
+      setFakeY(0);
+    }, 10);
   };
 
   const handleZoom = (zoomFactor: number) => {
@@ -96,14 +114,17 @@ const TopBar: React.FC<TopBarProps> = ({
 
   React.useEffect(() => {
     const checkZoom = (e: KeyboardEvent) => {
-      e.preventDefault();
       if (e.ctrlKey && e.key === "=") {
+        e.preventDefault();
         handleZoomIn();
       } else if (e.ctrlKey && e.key === "-") {
+        e.preventDefault();
         handleZoomOut();
       } else if (e.ctrlKey && e.key === "0") {
+        e.preventDefault();
         requestFit();
       } else if (e.ctrlKey && e.key === "9") {
+        e.preventDefault();
         requestFill();
       }
     };
@@ -126,7 +147,10 @@ const TopBar: React.FC<TopBarProps> = ({
         </Link>
       </div>
       <div className="pl-16 flex items-center h-full text-black dark:text-white text-xs">
-        <h1 className="mx-4">{imgName}</h1>
+        <h1 className="mx-0.5">
+          <ImageDropDown imgName={imgName} setImgName={setFileName} />
+        </h1>
+
         <DynamicComponent
           zoomValue={zoomValue}
           requestFill={requestFill}
