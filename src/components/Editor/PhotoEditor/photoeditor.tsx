@@ -601,7 +601,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     );
 
     setZoomValue(clamp(scale, 0.1, 4));
-
+    if (fileName.length > 0 && imgName.length === 0) {
+      setImgName(fileName);
+    }
     if (
       imageData.length > 0 &&
       realNaturalWidth > 0 &&
@@ -614,7 +616,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       localStorage.setItem("realNaturalHeight", realNaturalHeight.toString());
       localStorage.setItem("imageName", fileName);
       setFirstLoad(false);
-      setImgName(fileName);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

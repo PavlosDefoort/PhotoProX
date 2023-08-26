@@ -147,7 +147,7 @@ const TopBar: React.FC<TopBarProps> = ({
         </Link>
       </div>
       <div className="pl-16 flex items-center h-full text-black dark:text-white text-xs">
-        <h1 className="mx-0.5">
+        <h1 className="mx-2">
           <ImageDropDown imgName={imgName} setImgName={setFileName} />
         </h1>
 
