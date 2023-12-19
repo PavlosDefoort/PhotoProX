@@ -2,6 +2,8 @@ import { FC, useState, useEffect } from "react";
 import SheetSide from "./rename";
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
+import { useProjectContext } from "@/pages/editor";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +32,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
   const openIsChanging = () => {
     console.log("open is changing");
   };
+  const { project, setProject } = useProjectContext();
 
   useEffect(() => {
     // Create a listener for f2 key
@@ -59,7 +62,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
             className="dark:bg-navbarBackground bg-navbarBackground border-0 h-8 py-1 px-2 dark:hover:bg-buttonHover hover:bg-buttonHover flex items-center"
             variant="outline"
           >
-            <span className="text-xs flex-grow">{imgName}</span>
+            <span className="text-xs flex-grow">{project.settings.name}</span>
             <ChevronDownIcon className="w-6" />
           </Button>
         </DropdownMenuTrigger>

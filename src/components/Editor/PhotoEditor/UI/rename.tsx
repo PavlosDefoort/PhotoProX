@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
+import { useProjectContext } from "@/pages/editor";
+
 import {
   Sheet,
   SheetClose,
@@ -31,10 +33,15 @@ const SheetSide: React.FC<SheetSideProps> = ({
   setFileName,
 }) => {
   const [name, setName] = useState(imgName);
-
+  const { project, setProject } = useProjectContext();
   useEffect(() => {
     setName(imgName);
+    localStorage.setItem("imageName", imgName);
   }, [imgName]);
+
+  useEffect(() => {
+    setName(project.settings.name);
+  }, [project.settings.name]);
 
   return (
     <div className="grid grid-cols-2 gap-2">
@@ -66,7 +73,10 @@ const SheetSide: React.FC<SheetSideProps> = ({
             </div>
             <SheetFooter>
               <SheetClose asChild>
-                <Button type="submit" onClick={() => setFileName(name)}>
+                <Button
+                  type="submit"
+                  onClick={() => project.renameProject(name, setProject)}
+                >
                   Save changes
                 </Button>
               </SheetClose>

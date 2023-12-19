@@ -1,7 +1,11 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { DownloadIcon } from "@radix-ui/react-icons";
+import {
+  DividerVerticalIcon,
+  DownloadIcon,
+  HomeIcon,
+} from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -12,7 +16,7 @@ import dynamic from "next/dynamic";
 import { fillImageToScreen, fitImageToScreen, clamp } from "@/utils/calcUtils";
 import { set } from "lodash";
 import ImageDropDown from "./imagedropdown";
-import SheetSide from "./rename";
+import MenubarDemo from "@/components/ui/menu";
 interface TopBarProps {
   imgName: string;
   zoomValue: string;
@@ -138,14 +142,18 @@ const TopBar: React.FC<TopBarProps> = ({
     <nav className="fixed top-0 z-40 w-full h-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-between p-2">
       <div className="flex items-center h-full text-black dark:text-white">
         <Link href="/">
-          <Image
+          <HomeIcon className="hover:animate-bounce w-5 h-5" />
+          {/* <Image
             width={25}
             height={25}
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
             alt="PhotoProX Logo"
-          />
+          /> */}
         </Link>
+        <DividerVerticalIcon className="w-6 h-6 text-[#cdcdcd] dark:text-gray-500" />
+        <MenubarDemo />
       </div>
+
       <div className="pl-16 flex items-center h-full text-black dark:text-white text-xs">
         <h1 className="mx-2">
           <ImageDropDown imgName={imgName} setImgName={setFileName} />

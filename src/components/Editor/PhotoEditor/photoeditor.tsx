@@ -13,6 +13,7 @@ import ToolBar from "./UI/toolbar";
 import BottomBar from "./UI/bottombar";
 import ApplyCanvas from "@/components/Editor/PhotoEditor/applyCanvas";
 import PinchHandler from "./pinchLogic";
+import { EditorProject } from "@/utils/interfaces";
 import {
   Application,
   Container,
@@ -37,7 +38,6 @@ import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import AcUnitIcon from "@mui/icons-material/AcUnit";
 import TagFacesIcon from "@mui/icons-material/TagFaces";
-
 import { ThemeContext } from "../../ThemeProvider/themeprovider";
 import {
   WidthRotate,
@@ -55,10 +55,13 @@ import {
   CheckIcon,
   ChevronRightIcon,
 } from "@radix-ui/react-icons";
+import { ConstructionIcon } from "lucide-react";
+import { useProjectContext } from "@/pages/editor";
 
 const SideBar = dynamic(() => import("./UI/sidebar"), {
   loading: () => <p>loading</p>,
 });
+
 const FilterBar = dynamic(() => import("./UI/filterbar"), {
   loading: () => <p>loading</p>,
 });
@@ -109,6 +112,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartY, setDragStartY] = useState(0);
   const [scaleFactor, setScaleFactor] = useState(1);
+
   // Add a canvasWidth and height global state to optimize resolution
   const [canvasWidth, setCanvasWidth] = useState(8000);
   const [canvasHeight, setCanvasHeight] = useState(4000);
@@ -116,7 +120,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [undoStack, setUndoStack] = useState<Stack>([]);
   const [redoStack, setRedoStack] = useState<Stack>([]);
   const [isUndoable, setIsUndoable] = useState(true);
-  const [maxUndoStackSize, setMaxUndoStackSize] = useState(100);
   const [zoomValue, setZoomValue] = useState(1);
   const [previousZoom, setPreviousZoom] = useState(zoomValue);
   const [isZooming, setIsZooming] = useState(false);
@@ -130,7 +133,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [scaleY, setScaleY] = useState(1);
   const [useRatio, setUseRatio] = useState(true);
   const [imgName, setImgName] = useState("");
-
   const [bookmarksChecked, setBookmarksChecked] = React.useState(true);
   const [urlsChecked, setUrlsChecked] = React.useState(false);
   const [person, setPerson] = React.useState("pedro");
@@ -238,17 +240,19 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [firstLoad, setFirstLoad] = useState(true);
   const appRef = useRef<Application | null>(null);
   const spriteRef = useRef<Sprite | null>(null);
+  const spriteRefs = useRef<Sprite[]>([]);
   const containerRef = useRef<Container | null>(null);
   const maskRef = useRef<Graphics | null>(null);
   const imgRef = useRef(null);
   const target = useRef<HTMLDivElement | null>(null);
   const [windowHeight, setWindowHeight] = useState(0);
+  const { project, setProject } = useProjectContext();
 
   useEffect(() => {
-    console.log("here");
     setWindowWidth(window.innerWidth);
     setWindowHeight(window.innerHeight);
   }, [windowWidth, windowHeight]);
+
   useEffect(() => {
     const calculateDeltaWidth = () => {
       const x = (windowWidth - 592) / 2;
@@ -261,7 +265,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     };
 
     const handleResize = () => {
-      console.log("here");
       setWindowWidth(window.innerWidth);
       setWindowHeight(window.innerHeight);
     };
@@ -539,6 +542,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   ]);
 
   ApplyCanvas({
+    project,
+    spriteRefs,
     canvasRef,
     imgSrc,
     zoomValue,
@@ -601,9 +606,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     );
 
     setZoomValue(clamp(scale, 0.1, 4));
-    if (fileName.length > 0 && imgName.length === 0) {
-      setImgName(fileName);
-    }
+
     if (
       imageData.length > 0 &&
       realNaturalWidth > 0 &&
@@ -614,7 +617,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       localStorage.setItem("imageData", imageData);
       localStorage.setItem("realNaturalWidth", realNaturalWidth.toString());
       localStorage.setItem("realNaturalHeight", realNaturalHeight.toString());
-      localStorage.setItem("imageName", fileName);
       setFirstLoad(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -981,6 +983,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     setCanvasHeight(adjustHeight);
   }, [windowWidth, windowHeight]);
 
+  useEffect(() => {
+    if (project) {
+      project.renameProject(fileName, setProject);
+    }
+  }, [fileName]);
+
   return (
     <div>
       <TopBar
@@ -1071,18 +1079,18 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
             // align="end"
           >
             <ContextMenu.Item className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
-              Back{" "}
+              Copy{" "}
               <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
-                ⌘+[
+                Ctrl+C
               </div>
             </ContextMenu.Item>
             <ContextMenu.Item
               className="group text-[13px] leading-none text-violet11  rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
               disabled
             >
-              Foward{" "}
+              Paste{" "}
               <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
-                ⌘+]
+                Ctrl+V
               </div>
             </ContextMenu.Item>
             <ContextMenu.Item className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">

@@ -1,14 +1,24 @@
-import React, { use } from "react";
 import PhotoEditor from "@/components/Editor/PhotoEditor/photoeditor";
 import ImageSelector from "@/components/Editor/ImageSelect/imageselector";
 import PreviousImage from "@/components/Editor/previousImage";
 import { ThemeContext } from "../components/ThemeProvider/themeprovider";
 import { GetInfo } from "@/components/getinfo";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, createContext } from "react";
 import { Poppins } from "next/font/google";
-import { set, toNumber } from "lodash";
+import { create, toNumber } from "lodash";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { calculateScaledDimensions } from "@/utils/calcUtils";
+import { Project } from "@/utils/interfaces";
+
+import {
+  EditingParameters,
+  EditorProject,
+  ImageData,
+  ImageLayer,
+  ProjectSettings,
+  initialEditingParameters,
+} from "@/utils/interfaces";
+import { TYPES, SCALE_MODES, Sprite } from "pixi.js";
+import { v4 as uuidv4 } from "uuid";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -88,6 +98,25 @@ const darkTheme = createTheme({
 });
 
 export default function Editor({}) {
+  // // Create a new project
+  const initialParameters = initialEditingParameters;
+
+  const initialSettings: ProjectSettings = {
+    name: "New Project",
+    dateCreated: Date.now(),
+    dateModified: Date.now(),
+    size: 0,
+    colorMode: TYPES.UNSIGNED_BYTE,
+    scaleMode: SCALE_MODES.LINEAR,
+    canvasSettings: {
+      width: 0,
+      height: 0,
+      antialias: false,
+    },
+  };
+
+  const [project, setProject] = useState<Project>(new Project());
+
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
 
   const [image, setImage] = useState("");
@@ -140,6 +169,16 @@ export default function Editor({}) {
     }
   }, []);
 
+  /// Create a function that will remove the file extension from the string
+
+  const removeExtension = (fileName: string) => {
+    const splitName = fileName.split(".");
+    if (splitName.length > 1) {
+      splitName.pop();
+    }
+    return splitName.join(".");
+  };
+
   const handleImageSet = (
     selectedImage: HTMLImageElement | string | ArrayBuffer | null,
     natWidth: number,
@@ -151,15 +190,33 @@ export default function Editor({}) {
   ) => {
     if (typeof selectedImage === "string") {
       setImage(selectedImage);
+      const randomId = uuidv4();
+      const imageData: ImageData = {
+        name: fileName,
+        src: selectedImage,
+        imageHeight: realHit,
+        imageWidth: realWit,
+      };
+
+      project.changeCanvasDimensions(realWit, realHit, setProject);
+      const newLayer = project.createLayer(imageData);
+      // Add the layer to the project
+      console.log(newLayer.sprite.width, newLayer.sprite.height);
+      project.addLayer(newLayer, setProject);
     }
     setWidth(natWidth);
     setHeight(natHeight);
     setRealWidth(realWit);
     setRealHeight(realHit);
-    setFileName(fileName);
-
+    const newName = removeExtension(fileName);
+    setFileName(newName);
     setFileSize(toNumber((fileSize / 1024 / 1024).toFixed(2)));
   };
+
+  useEffect(() => {
+    console.log("Project:", project);
+    console.log(fileName);
+  }, [project, fileName]);
 
   const previousAgreement = () => {
     setAgree(true);
@@ -184,14 +241,29 @@ export default function Editor({}) {
         )}
 
         {!image && <ImageSelector onImageSelect={handleImageSet} />}
-        <PhotoEditor
-          imageData={image}
-          realNaturalWidth={realWidth}
-          realNaturalHeight={realHeight}
-          fileName={fileName}
-          fileSize={fileSize}
-        />
+        <ProjectContext.Provider value={{ project, setProject }}>
+          <PhotoEditor
+            imageData={image}
+            realNaturalWidth={realWidth}
+            realNaturalHeight={realHeight}
+            fileName={fileName}
+            fileSize={fileSize}
+          />
+        </ProjectContext.Provider>
       </ThemeProvider>
     </main>
   );
+}
+
+interface ProjectContextValue {
+  project: Project;
+  setProject: React.Dispatch<React.SetStateAction<Project>>;
+}
+export const ProjectContext = createContext<ProjectContextValue>({
+  project: new Project(),
+  setProject: () => {},
+});
+
+export function useProjectContext() {
+  return useContext(ProjectContext);
 }
