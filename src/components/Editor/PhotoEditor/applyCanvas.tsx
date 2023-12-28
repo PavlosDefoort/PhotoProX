@@ -205,6 +205,7 @@ const ApplyCanvas = ({
     }
 
     const app = appRef.current;
+
     // Remove the children whenever there's a change
     // app.stage.removeChildren();
     // Check if there's a container
@@ -220,21 +221,79 @@ const ApplyCanvas = ({
 
     const container = containerRef.current;
     const mask = maskRef.current;
+    let dragTarget: Sprite | null = null;
+    let dragOffset: PIXI.Point | null = null; // Store the initial offset when dragging starts
+
+    const onDragMove = (event: FederatedPointerEvent) => {
+      if (dragTarget && dragOffset) {
+        const newPosition = event.global.clone();
+        // Account for zoom
+        const zoomAdjustedDeltaX = (newPosition.x - dragOffset.x) / zoomValue;
+        const zoomAdjustedDeltaY = (newPosition.y - dragOffset.y) / zoomValue;
+
+        // Update the drag target's position
+        dragTarget.position.set(
+          dragTarget.x + zoomAdjustedDeltaX,
+          dragTarget.y + zoomAdjustedDeltaY
+        );
+        dragOffset = newPosition;
+      }
+    };
 
     if (container && mask && project.layers.length > 0) {
       container.position.set(canvasWidth / 2 + fakeX, canvasHeight / 2 + fakeY);
       container.scale.set(zoomValue * scaleX, zoomValue * scaleY);
+
       const layers = project.layers;
       layers.forEach((layer) => {
         // Add the layer to container if it's not there
+        app.stage.eventMode = "static";
+        app.stage.on("pointerup", (event: FederatedPointerEvent) =>
+          onDragEnd(event)
+        );
+        app.stage.on("pointerupoutside", (event: FederatedPointerEvent) =>
+          onDragEnd(event)
+        );
 
         layer.sprite.zIndex = layer.zIndex;
+        layer.sprite.rotation = rotateValue * (Math.PI / 180);
+        layer.sprite.eventMode = "static";
+        layer.sprite.cursor = "pointer";
+        layer.sprite.on("pointerdown", (event: FederatedPointerEvent) =>
+          onDragStart(event)
+        );
+        const onDragStart = (event: FederatedPointerEvent) => {
+          layer.sprite.alpha = 0.75;
+          dragTarget = layer.sprite;
+
+          dragOffset = event.global.clone(); // Store the initial offset
+
+          app.stage.on("pointermove", (event: FederatedPointerEvent) =>
+            onDragMove(event)
+          );
+        };
+
+        const onDragEnd = (event: FederatedPointerEvent) => {
+          if (dragTarget) {
+            app.stage.off("pointermove", (event: FederatedPointerEvent) =>
+              onDragMove(event)
+            );
+            dragTarget.alpha = 1;
+            dragTarget = null;
+          }
+        };
+
         if (!container.children.find((child) => child.name === layer.id)) {
           console.log(layer.zIndex);
           container.addChild(layer.sprite);
         }
       });
-
+      return () => {
+        app.stage.removeAllListeners();
+        layers.forEach((layer) => {
+          layer.sprite.removeAllListeners();
+        });
+      };
       // container.addChild(mask);
       // container.mask = mask;
       // app.stage.addChild(container);
