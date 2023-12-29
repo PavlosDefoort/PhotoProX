@@ -224,22 +224,6 @@ const ApplyCanvas = ({
     let dragTarget: Sprite | null = null;
     let dragOffset: PIXI.Point | null = null; // Store the initial offset when dragging starts
 
-    const onDragMove = (event: FederatedPointerEvent) => {
-      if (dragTarget && dragOffset) {
-        const newPosition = event.global.clone();
-        // Account for zoom
-        const zoomAdjustedDeltaX = (newPosition.x - dragOffset.x) / zoomValue;
-        const zoomAdjustedDeltaY = (newPosition.y - dragOffset.y) / zoomValue;
-
-        // Update the drag target's position
-        dragTarget.position.set(
-          dragTarget.x + zoomAdjustedDeltaX,
-          dragTarget.y + zoomAdjustedDeltaY
-        );
-        dragOffset = newPosition;
-      }
-    };
-
     if (container && mask && project.layers.length > 0) {
       container.position.set(canvasWidth / 2 + fakeX, canvasHeight / 2 + fakeY);
       container.scale.set(zoomValue * scaleX, zoomValue * scaleY);
@@ -258,13 +242,34 @@ const ApplyCanvas = ({
         layer.sprite.zIndex = layer.zIndex;
         layer.sprite.rotation = rotateValue * (Math.PI / 180);
         layer.sprite.eventMode = "static";
-        layer.sprite.cursor = "pointer";
-        layer.sprite.on("pointerdown", (event: FederatedPointerEvent) =>
-          onDragStart(event)
-        );
+        console.log("here");
+        layer.sprite.cursor = "grab";
+        layer.sprite.on("pointerdown", (event: FederatedPointerEvent) => {
+          onDragStart(event);
+        });
+
+        const onDragMove = (event: FederatedPointerEvent) => {
+          if (dragTarget && dragOffset) {
+            const newPosition = event.global.clone();
+            // Account for zoom
+            const zoomAdjustedDeltaX =
+              (newPosition.x - dragOffset.x) / zoomValue;
+            const zoomAdjustedDeltaY =
+              (newPosition.y - dragOffset.y) / zoomValue;
+
+            // Update the drag target's position
+            dragTarget.position.set(
+              dragTarget.x + zoomAdjustedDeltaX,
+              dragTarget.y + zoomAdjustedDeltaY
+            );
+            dragOffset = newPosition;
+          }
+        };
         const onDragStart = (event: FederatedPointerEvent) => {
           layer.sprite.alpha = 0.75;
+
           dragTarget = layer.sprite;
+          dragTarget.cursor = "grabbing";
 
           dragOffset = event.global.clone(); // Store the initial offset
 
@@ -279,6 +284,7 @@ const ApplyCanvas = ({
               onDragMove(event)
             );
             dragTarget.alpha = 1;
+            dragTarget.cursor = "grab";
             dragTarget = null;
           }
         };
@@ -289,6 +295,7 @@ const ApplyCanvas = ({
         }
       });
       return () => {
+        console.log("unmounting");
         app.stage.removeAllListeners();
         layers.forEach((layer) => {
           layer.sprite.removeAllListeners();
