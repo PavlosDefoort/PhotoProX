@@ -57,6 +57,7 @@ import {
 } from "@radix-ui/react-icons";
 import { ConstructionIcon } from "lucide-react";
 import { useProjectContext } from "@/pages/editor";
+import LayerBar from "./UI/layerbar";
 
 const SideBar = dynamic(() => import("./UI/sidebar"), {
   loading: () => <p>loading</p>,
@@ -542,7 +543,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   ]);
 
   ApplyCanvas({
-    project,
     spriteRefs,
     canvasRef,
     imgSrc,
@@ -1007,11 +1007,18 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         scaleY={scaleY}
       />
       {imgSrc && (
-        <ToolBar
-          imgSrc={imgSrc}
-          downloadImage={handleDownload}
-          toggleThirds={handleThirds}
-        />
+        <div>
+          <ToolBar
+            imgSrc={imgSrc}
+            downloadImage={handleDownload}
+            toggleThirds={handleThirds}
+          />
+          <LayerBar
+            imgSrc={imgSrc}
+            downloadImage={handleDownload}
+            toggleThirds={handleThirds}
+          />
+        </div>
       )}
 
       {/* {imgSrc && (
@@ -1078,7 +1085,16 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
             // sideOffset={5}
             // align="end"
           >
-            <ContextMenu.Item className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
+            <ContextMenu.Item
+              className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
+              onClick={() =>
+                project?.removeLayer(
+                  project.target!.id,
+                  setProject,
+                  project.container
+                )
+              }
+            >
               Copy{" "}
               <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
                 Ctrl+C

@@ -54,7 +54,6 @@ const MenubarDemo = () => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check if Ctrl (Cmd on macOS) + L is pressed
-      console.log(event.key);
       if ((event.ctrlKey || event.metaKey) && event.key === "l") {
         event.preventDefault(); // Prevent browser's default behavior
         fileInputRef.current?.click();

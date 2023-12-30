@@ -7,6 +7,8 @@ import {
   FORMATS,
   TARGETS,
   MIPMAP_MODES,
+  Container,
+  DisplayObject,
 } from "pixi.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -283,6 +285,8 @@ export class Project {
   currentSnapshot: ProjectSnapshot | null = null;
   settings: ProjectSettings = initialSettings;
   id: string = uuidv4();
+  target: ImageLayer | null = null;
+  container: Container | null = null;
 
   renameProject = (
     name: string,
@@ -304,11 +308,13 @@ export class Project {
 
   removeLayer = (
     id: string,
-    setState: React.Dispatch<React.SetStateAction<Project>>
+    setState: React.Dispatch<React.SetStateAction<Project>>,
+    container: Container | null
   ) => {
     this.layerManager.removeLayer(id);
     this.layers = this.layerManager.getLayers();
     setState({ ...this });
+    container?.removeChild(container.getChildByName(id)!);
   };
 
   createLayer = (imageData: ImageData) => {

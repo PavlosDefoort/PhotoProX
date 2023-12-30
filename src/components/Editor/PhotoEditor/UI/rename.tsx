@@ -64,7 +64,6 @@ const SheetSide: React.FC<SheetSideProps> = ({
                   type="text"
                   value={name}
                   onChange={(e) => {
-                    console.log("Name:", e.target.value);
                     setName(e.target.value);
                   }}
                   className="col-span-3 bg-buttonHover dark:bg-[#3b3b3b]"

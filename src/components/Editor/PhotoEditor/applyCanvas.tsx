@@ -25,6 +25,7 @@ import { AdjustmentFilter } from "pixi-filters";
 import { InteractionEvents, Stage } from "@pixi/react";
 import { on } from "events";
 import { Project } from "@/utils/interfaces";
+import { useProjectContext } from "@/pages/editor";
 
 interface ImageProperties {
   contrast: { value: number; multiply: boolean; enabled?: boolean };
@@ -49,7 +50,6 @@ interface ImageProperties {
 }
 
 interface ApplyCanvasProps {
-  project: Project;
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
   appRef: React.MutableRefObject<Application | null>;
   imgSrc: string;
@@ -75,7 +75,6 @@ interface ApplyCanvasProps {
 }
 
 const ApplyCanvas = ({
-  project,
   canvasRef,
   appRef,
   imgSrc,
@@ -102,6 +101,7 @@ const ApplyCanvas = ({
   // Create container if needed
 
   // Create mask if needed
+  const { project, setProject } = useProjectContext();
 
   useEffect(() => {
     const createContainerIfNeeded = () => {
@@ -220,6 +220,10 @@ const ApplyCanvas = ({
     // Check if there's a new layer in project that's not in the app
 
     const container = containerRef.current;
+    // Add container to project
+    if (container && !project.container) {
+      project.container = container;
+    }
     const mask = maskRef.current;
     let dragTarget: Sprite | null = null;
     let dragOffset: PIXI.Point | null = null; // Store the initial offset when dragging starts
@@ -231,6 +235,7 @@ const ApplyCanvas = ({
       const layers = project.layers;
       layers.forEach((layer) => {
         // Add the layer to container if it's not there
+        console.log("layer", layer);
         app.stage.eventMode = "static";
         app.stage.on("pointerup", (event: FederatedPointerEvent) =>
           onDragEnd(event)
@@ -242,9 +247,11 @@ const ApplyCanvas = ({
         layer.sprite.zIndex = layer.zIndex;
         layer.sprite.rotation = rotateValue * (Math.PI / 180);
         layer.sprite.eventMode = "static";
-        console.log("here");
         layer.sprite.cursor = "grab";
+
         layer.sprite.on("pointerdown", (event: FederatedPointerEvent) => {
+          project.target = layer;
+
           onDragStart(event);
         });
 
@@ -290,12 +297,10 @@ const ApplyCanvas = ({
         };
 
         if (!container.children.find((child) => child.name === layer.id)) {
-          console.log(layer.zIndex);
           container.addChild(layer.sprite);
         }
       });
       return () => {
-        console.log("unmounting");
         app.stage.removeAllListeners();
         layers.forEach((layer) => {
           layer.sprite.removeAllListeners();
@@ -307,6 +312,7 @@ const ApplyCanvas = ({
     }
   }, [
     project,
+    setProject,
     spriteRefs,
     imgSrc,
     zoomValue,
