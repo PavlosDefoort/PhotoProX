@@ -231,11 +231,13 @@ const ApplyCanvas = ({
     if (container && mask && project.layers.length > 0) {
       container.position.set(canvasWidth / 2 + fakeX, canvasHeight / 2 + fakeY);
       container.scale.set(zoomValue * scaleX, zoomValue * scaleY);
-
-      const layers = project.layers;
+      //Only show layers that are visible
+      const visibleLayers = project.layers.filter((layer) => layer.visible);
+      const layers = visibleLayers;
+      console.log("layers", layers);
       layers.forEach((layer) => {
         // Add the layer to container if it's not there
-        console.log("layer", layer);
+        console.log("layer", layer.visible);
         app.stage.eventMode = "static";
         app.stage.on("pointerup", (event: FederatedPointerEvent) =>
           onDragEnd(event)
@@ -296,10 +298,16 @@ const ApplyCanvas = ({
           }
         };
 
-        if (!container.children.find((child) => child.name === layer.id)) {
+        if (
+          !container.children.find(
+            (child) => child.name === layer.id && child.visible
+          )
+        ) {
+          console.log("adding layer");
           container.addChild(layer.sprite);
         }
       });
+      console.log("hereeee");
       return () => {
         app.stage.removeAllListeners();
         layers.forEach((layer) => {

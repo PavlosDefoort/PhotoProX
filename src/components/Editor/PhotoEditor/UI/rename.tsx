@@ -44,9 +44,9 @@ const SheetSide: React.FC<SheetSideProps> = ({
   }, [project.settings.name]);
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-2 z-[-10]">
       {SHEET_SIDES.map((side) => (
-        <Sheet key={side} open={open} onOpenChange={() => setOpen(false)}>
+        <Sheet key={side} open={open}>
           <SheetContent side="top">
             <SheetHeader>
               <SheetTitle>Rename project</SheetTitle>
@@ -74,7 +74,10 @@ const SheetSide: React.FC<SheetSideProps> = ({
               <SheetClose asChild>
                 <Button
                   type="submit"
-                  onClick={() => project.renameProject(name, setProject)}
+                  onClick={() => {
+                    project.renameProject(name, setProject);
+                    setOpen(!open);
+                  }}
                 >
                   Save changes
                 </Button>

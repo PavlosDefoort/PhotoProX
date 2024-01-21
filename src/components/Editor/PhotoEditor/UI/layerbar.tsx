@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
-import { CropIcon } from "@radix-ui/react-icons";
+import React, { useEffect } from "react";
+import { CropIcon, EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import ControlCameraIcon from "@mui/icons-material/ControlCamera";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useProjectContext } from "@/pages/editor";
+import { EditorProject, Project } from "@/utils/interfaces";
 
 interface LayerBarProps {
   imgSrc: string;
@@ -34,6 +35,14 @@ const LayerBar: React.FC<LayerBarProps> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const { project, setProject } = useProjectContext();
+
+  const toggleLayerVisibility = (layerId: string) => {};
+
+  useEffect(() => {
+    // Output all layer.visible values
+    console.log(project.layers.map((layer) => layer.visible));
+  }, [project]);
+
   return (
     <aside
       id="logo-sidebar"
@@ -46,11 +55,37 @@ const LayerBar: React.FC<LayerBarProps> = ({
             <div>
               <ul className="space-y-6 font-medium ">
                 <li className="flex justify-center items-center">Layers</li>
+
                 {project.layers
                   .slice()
                   .reverse()
                   .map((layer) => (
                     <li key={layer.id}>
+                      {layer.visible ? (
+                        <div>
+                          <EyeOpenIcon
+                            onClick={() =>
+                              project.hideLayer(
+                                layer.id,
+                                project.container,
+                                setProject
+                              )
+                            }
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <EyeClosedIcon
+                            onClick={() =>
+                              project.showLayer(
+                                layer.id,
+                                project.container,
+                                setProject
+                              )
+                            }
+                          />
+                        </div>
+                      )}
                       <span className="text-xs">Layer {layer.zIndex}</span>
                       <div className="w-20 h-20 bg-blue-500 relative">
                         <img

@@ -47,6 +47,7 @@ export interface ImageLayer {
   zIndex: number;
   editingParameters: EditingParameters;
   sprite: Sprite;
+  visible: boolean;
 }
 
 export interface LayerSnapshot {
@@ -268,6 +269,7 @@ class LayerManager {
       zIndex: this.layers.length,
       editingParameters: initialEditingParameters,
       sprite: newSprite,
+      visible: true,
     };
 
     return newLayer;
@@ -317,6 +319,42 @@ export class Project {
     container?.removeChild(container.getChildByName(id)!);
   };
 
+  hideLayer = (
+    id: string,
+    container: Container | null,
+    setState: React.Dispatch<React.SetStateAction<Project>>
+  ) => {
+    const layer = this.layers.find((layer) => layer.id === id);
+    if (layer) {
+      layer.visible = false;
+      if (container) {
+        const child = container.getChildByName(id);
+        if (child) {
+          child.visible = false;
+        }
+      }
+      setState({ ...this });
+    }
+  };
+
+  showLayer = (
+    id: string,
+    container: Container | null,
+    setState: React.Dispatch<React.SetStateAction<Project>>
+  ) => {
+    const layer = this.layers.find((layer) => layer.id === id);
+    if (layer) {
+      layer.visible = true;
+      if (container) {
+        const child = container.getChildByName(id);
+        if (child) {
+          child.visible = true;
+        }
+      }
+      setState({ ...this });
+    }
+  };
+
   createLayer = (imageData: ImageData) => {
     const newLayer = this.layerManager.createLayer(
       this.settings.canvasSettings.width!,
@@ -362,6 +400,7 @@ export class Project {
     if (layer) {
       layer.editingParameters = initialEditingParameters;
     }
+
     setState({ ...this });
   };
 
@@ -380,6 +419,17 @@ export class Project {
   ) => {
     this.layerManager.moveLayerDown(id);
     this.layers = this.layerManager.getLayers();
+    setState({ ...this });
+  };
+
+  changeVisibility = (
+    id: string,
+    setState: React.Dispatch<React.SetStateAction<Project>>
+  ) => {
+    const layer = this.layers.find((layer) => layer.id === id);
+    if (layer) {
+      layer.visible = !layer.visible;
+    }
     setState({ ...this });
   };
 

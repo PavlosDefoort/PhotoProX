@@ -249,6 +249,19 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [windowHeight, setWindowHeight] = useState(0);
   const { project, setProject } = useProjectContext();
 
+  // useEffect(() => {
+  //   if (
+  //     project.settings.canvasSettings.width != null &&
+  //     project.settings.canvasSettings.height != null
+  //   ) {
+  //     setCanvasWidth(project.settings.canvasSettings.width);
+  //     setCanvasHeight(project.settings.canvasSettings.height);
+  //   }
+  // }, [
+  //   project.settings.canvasSettings.width,
+  //   project.settings.canvasSettings.height,
+  // ]);
+
   useEffect(() => {
     setWindowWidth(window.innerWidth);
     setWindowHeight(window.innerHeight);
