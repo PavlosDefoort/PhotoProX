@@ -186,7 +186,8 @@ export default function Editor({}) {
     realWit: number,
     realHit: number,
     fileName: string,
-    fileSize: number
+    fileSize: number,
+    file: File
   ) => {
     if (typeof selectedImage === "string") {
       setImage(selectedImage);
@@ -199,7 +200,7 @@ export default function Editor({}) {
       };
 
       project.changeCanvasDimensions(realWit, realHit, setProject);
-      const newLayer = project.createLayer(imageData);
+      const newLayer = project.createLayer(imageData, file, project.id);
       // Add the layer to the project
       console.log(newLayer.sprite.width, newLayer.sprite.height);
       project.addLayer(newLayer, setProject);

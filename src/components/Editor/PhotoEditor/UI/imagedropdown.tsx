@@ -29,9 +29,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
   setImgName,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const openIsChanging = () => {
-    console.log("open is changing");
-  };
+  const openIsChanging = () => {};
   const { project, setProject } = useProjectContext();
 
   useEffect(() => {

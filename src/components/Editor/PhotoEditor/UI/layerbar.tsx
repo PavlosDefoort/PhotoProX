@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
-import { CropIcon } from "@radix-ui/react-icons";
+import React, { useEffect } from "react";
+import { CropIcon, EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -20,24 +20,34 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import ControlCameraIcon from "@mui/icons-material/ControlCamera";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useProjectContext } from "@/pages/editor";
+import { EditorProject, Project } from "@/utils/interfaces";
+import { db } from "../../../../../app/firebase";
 
-interface ToolBarProps {
+interface LayerBarProps {
   imgSrc: string;
   downloadImage: () => void;
   toggleThirds: () => void;
 }
 
-const ToolBar: React.FC<ToolBarProps> = ({
+const LayerBar: React.FC<LayerBarProps> = ({
   imgSrc,
   downloadImage,
   toggleThirds,
 }) => {
   const [open, setOpen] = React.useState(false);
   const { project, setProject } = useProjectContext();
+
+  const toggleLayerVisibility = (layerId: string) => {};
+
+  useEffect(() => {
+    // Output all layer.visible values
+    console.log(project.layers.map((layer) => layer.visible));
+  }, [project]);
+
   return (
     <aside
       id="logo-sidebar"
-      className="animate-fade animate-once animate-ease-out fixed top-0 left-0 z-30 w-10 h-screen transition-transform -translate-x-full sm:translate-x-0 border-r-2 border-[#cdcdcd] dark:border-[#252525]"
+      className="animate-fade animate-once animate-ease-out fixed top-0 right-0 z-30 w-40 h-screen transition-transform -translate-x-full sm:translate-x-0 border-r-2 border-[#cdcdcd] dark:border-[#252525]"
       aria-label="Sidebar"
     >
       <div className="h-full py-6 overflow-y-auto bg-navbarBackground dark:bg-navbarBackground ">
@@ -45,55 +55,48 @@ const ToolBar: React.FC<ToolBarProps> = ({
           <div className="animate-fade animate-once animate-ease-linear mt-8">
             <div>
               <ul className="space-y-6 font-medium ">
-                <li className="flex justify-center items-center">
-                  <Popover open={open}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        className="w-6 flex flex-row items-center justify-center bg-navbarBackground dark:bg-navbarBackground hover:bg-buttonHover dark:hover:bg-buttonHover"
-                        variant="outline"
-                        onMouseEnter={() => setOpen(true)}
-                        onMouseLeave={() => setOpen(false)}
-                      >
-                        <span>
-                          <MoveIcon
-                            aria-hidden="true"
-                            className="w-6 h-6 text-gray-500 dark:text-gray-100"
-                            onClick={() => toggleThirds()}
-                          ></MoveIcon>
-                        </span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64">
-                      <div className="grid gap-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium leading-none">
-                            Size & Position
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            Perform various transformations
-                          </p>
-                        </div>
-                        <div className="grid gap-4">
-                          <div className="grid grid-cols-2 items-center">
-                            <span className="flex flex-row items-center space-x-1 col-span-1">
-                              <MoveIcon className="w-6 h-6" />
-                              <Label htmlFor="width">Move</Label>
-                            </span>
+                <li className="flex justify-center items-center">Layers</li>
 
-                            <DropdownMenuShortcut>V</DropdownMenuShortcut>
-                          </div>
-                          <div className="grid grid-cols-2 items-center">
-                            <span className="flex flex-row items-center space-x-1 col-span-1">
-                              <TransformIcon className="w-6 h-6" />
-                              <Label htmlFor="width">Transform</Label>
-                            </span>
-                            <DropdownMenuShortcut>Ctrl+T</DropdownMenuShortcut>
-                          </div>
+                {project.layers
+                  .slice()
+                  .reverse()
+                  .map((layer) => (
+                    <li key={layer.id}>
+                      {layer.visible ? (
+                        <div>
+                          <EyeOpenIcon
+                            onClick={() =>
+                              project.hideLayer(
+                                layer.id,
+                                project.container,
+                                setProject
+                              )
+                            }
+                          />
                         </div>
+                      ) : (
+                        <div>
+                          <EyeClosedIcon
+                            onClick={() =>
+                              project.showLayer(
+                                layer.id,
+                                project.container,
+                                setProject
+                              )
+                            }
+                          />
+                        </div>
+                      )}
+                      <span className="text-xs">Layer {layer.zIndex}</span>
+                      <div className="w-20 h-20 bg-blue-500 relative">
+                        <img
+                          src={layer.imageData.src}
+                          alt="Image"
+                          className="object-cover w-full h-full"
+                        />
                       </div>
-                    </PopoverContent>
-                  </Popover>
-                </li>
+                    </li>
+                  ))}
 
                 {/* <li>
                   <a className="flex items-center justify-center text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700">
@@ -148,4 +151,4 @@ const ToolBar: React.FC<ToolBarProps> = ({
     </aside>
   );
 };
-export default ToolBar;
+export default LayerBar;

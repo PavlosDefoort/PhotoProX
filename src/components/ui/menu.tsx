@@ -34,12 +34,16 @@ const MenubarDemo = () => {
         img.onload = function () {
           const width = img.width;
           const height = img.height;
-          const newLayer = project.createLayer({
-            src: img.src,
-            imageWidth: width,
-            imageHeight: height,
-            name: selectedFile.name,
-          });
+          const newLayer = project.createLayer(
+            {
+              src: img.src,
+              imageWidth: width,
+              imageHeight: height,
+              name: selectedFile.name,
+            },
+            selectedFile,
+            project.id
+          );
 
           project.addLayer(newLayer, setProject);
         };
@@ -54,7 +58,6 @@ const MenubarDemo = () => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check if Ctrl (Cmd on macOS) + L is pressed
-      console.log(event.key);
       if ((event.ctrlKey || event.metaKey) && event.key === "l") {
         event.preventDefault(); // Prevent browser's default behavior
         fileInputRef.current?.click();
