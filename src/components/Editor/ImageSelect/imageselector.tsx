@@ -20,6 +20,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import { Poppins } from "next/font/google";
 import Tooltip from "@mui/material/Tooltip";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { storage } from "../../../../app/firebase";
 
 // Initialize Poppins font
 const poppins = Poppins({
@@ -34,7 +36,8 @@ type ImageSelectHandler = (
   realWit: number,
   realHit: number,
   fileName: string,
-  fileSize: number
+  fileSize: number,
+  file: File
 ) => void;
 
 interface ImageSelectorProps {
@@ -90,6 +93,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   const setPhoto = useCallback(
     async (file: File) => {
       // Your setPhoto logic
+      console.log(file);
       const target = file;
       const reader = new FileReader();
       let result: string | ArrayBuffer | null;
@@ -116,7 +120,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
             naturalWidth,
             naturalHeight,
             target.name,
-            target.size
+            target.size,
+            file
           );
         });
 

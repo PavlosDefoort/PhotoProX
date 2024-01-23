@@ -21,6 +21,7 @@ import ControlCameraIcon from "@mui/icons-material/ControlCamera";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useProjectContext } from "@/pages/editor";
 import { EditorProject, Project } from "@/utils/interfaces";
+import { db } from "../../../../../app/firebase";
 
 interface LayerBarProps {
   imgSrc: string;

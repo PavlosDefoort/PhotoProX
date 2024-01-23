@@ -14,6 +14,7 @@ import BottomBar from "./UI/bottombar";
 import ApplyCanvas from "@/components/Editor/PhotoEditor/applyCanvas";
 import PinchHandler from "./pinchLogic";
 import { EditorProject } from "@/utils/interfaces";
+
 import {
   Application,
   Container,
@@ -50,6 +51,7 @@ import {
 import { Newsreader } from "next/font/google";
 import { set } from "lodash";
 import * as ContextMenu from "@radix-ui/react-context-menu";
+import { ref, uploadBytesResumable } from "firebase/storage";
 import {
   DotFilledIcon,
   CheckIcon,
@@ -58,6 +60,8 @@ import {
 import { ConstructionIcon } from "lucide-react";
 import { useProjectContext } from "@/pages/editor";
 import LayerBar from "./UI/layerbar";
+import { db, storage } from "../../../../app/firebase";
+import { addDoc, collection } from "firebase/firestore";
 
 const SideBar = dynamic(() => import("./UI/sidebar"), {
   loading: () => <p>loading</p>,
@@ -261,6 +265,23 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   //   project.settings.canvasSettings.width,
   //   project.settings.canvasSettings.height,
   // ]);
+
+  useEffect(() => {
+    const addProject = async (e: any) => {
+      await addDoc(collection(db, "projects"), {
+        // layers: project.layers,
+        id: project.id,
+        settings: project.settings,
+        date: new Date(),
+      });
+    };
+
+    if (project.layers.length > 0) {
+      addProject(project);
+      const storageRef = ref(storage, `image/${project.id}`);
+      // Add image to firebase storage
+    }
+  }, [project]);
 
   useEffect(() => {
     setWindowWidth(window.innerWidth);

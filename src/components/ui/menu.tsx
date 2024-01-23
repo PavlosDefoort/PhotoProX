@@ -34,12 +34,16 @@ const MenubarDemo = () => {
         img.onload = function () {
           const width = img.width;
           const height = img.height;
-          const newLayer = project.createLayer({
-            src: img.src,
-            imageWidth: width,
-            imageHeight: height,
-            name: selectedFile.name,
-          });
+          const newLayer = project.createLayer(
+            {
+              src: img.src,
+              imageWidth: width,
+              imageHeight: height,
+              name: selectedFile.name,
+            },
+            selectedFile,
+            project.id
+          );
 
           project.addLayer(newLayer, setProject);
         };

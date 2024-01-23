@@ -234,10 +234,10 @@ const ApplyCanvas = ({
       //Only show layers that are visible
       const visibleLayers = project.layers.filter((layer) => layer.visible);
       const layers = visibleLayers;
-      console.log("layers", layers);
+
       layers.forEach((layer) => {
         // Add the layer to container if it's not there
-        console.log("layer", layer.visible);
+
         app.stage.eventMode = "static";
         app.stage.on("pointerup", (event: FederatedPointerEvent) =>
           onDragEnd(event)
@@ -303,11 +303,10 @@ const ApplyCanvas = ({
             (child) => child.name === layer.id && child.visible
           )
         ) {
-          console.log("adding layer");
           container.addChild(layer.sprite);
         }
       });
-      console.log("hereeee");
+
       return () => {
         app.stage.removeAllListeners();
         layers.forEach((layer) => {
