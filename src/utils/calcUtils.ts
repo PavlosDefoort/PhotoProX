@@ -129,6 +129,7 @@ export function fitImageToScreen(
   const heightRatio = new Decimal(canvasHeight).dividedBy(newHeight).toNumber();
 
   const newScale = Decimal.min(widthRatio, heightRatio).toDecimalPlaces(2);
+  console.log("newScale", newScale.toNumber());
 
   return newScale.toNumber();
 }
