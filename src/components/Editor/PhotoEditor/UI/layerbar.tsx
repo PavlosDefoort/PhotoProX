@@ -22,17 +22,20 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useProjectContext } from "@/pages/editor";
 import { EditorProject, Project } from "@/utils/interfaces";
 import { db } from "../../../../../app/firebase";
+import { Container } from "pixi.js";
 
 interface LayerBarProps {
   imgSrc: string;
   downloadImage: () => void;
   toggleThirds: () => void;
+  containerRef: React.MutableRefObject<Container | null>;
 }
 
 const LayerBar: React.FC<LayerBarProps> = ({
   imgSrc,
   downloadImage,
   toggleThirds,
+  containerRef,
 }) => {
   const [open, setOpen] = React.useState(false);
   const { project, setProject } = useProjectContext();
@@ -54,7 +57,7 @@ const LayerBar: React.FC<LayerBarProps> = ({
         {imgSrc && (
           <div className="animate-fade animate-once animate-ease-linear mt-8">
             <div>
-              <ul className="space-y-6 font-medium ">
+              <ul className="space-y-6 font-medium text-black dark:text-white ">
                 <li className="flex justify-center items-center">Layers</li>
 
                 {project.layers
@@ -68,7 +71,7 @@ const LayerBar: React.FC<LayerBarProps> = ({
                             onClick={() =>
                               project.hideLayer(
                                 layer.id,
-                                project.container,
+                                containerRef.current,
                                 setProject
                               )
                             }
@@ -80,7 +83,7 @@ const LayerBar: React.FC<LayerBarProps> = ({
                             onClick={() =>
                               project.showLayer(
                                 layer.id,
-                                project.container,
+                                containerRef.current,
                                 setProject
                               )
                             }

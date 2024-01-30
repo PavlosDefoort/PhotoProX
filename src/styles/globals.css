@@ -9,7 +9,7 @@
 @layer base {
   :root {
     --hover: 0, 0%, 94%;
-    --navbar-background: 0, 0%, 97%;
+    --navbar-background: 0, 0%, 100%;
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -35,7 +35,7 @@
   .dark {
     --hover: 0, 0%, 25%;
     --navbar-background: 0, 0%, 21%;
-    --background: 0 0% 18%;
+    --background: 0 0% 20%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;

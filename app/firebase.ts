@@ -10,6 +10,8 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
+  User,
+  Auth,
 } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -28,38 +30,17 @@ const firebaseConfig = {
 };
 
 let app;
+let user: User | null = null;
 let analytics;
 let db: Firestore;
+let auth: Auth;
 let storage: FirebaseStorage;
 
 // Check if running in a browser environment
 if (typeof window !== "undefined") {
   // Initialize Firebase only in the browser
   app = initializeApp(firebaseConfig);
-  const auth = getAuth();
-  const provider = new GoogleAuthProvider();
-  signInWithPopup(auth, provider)
-    .then((result) => {
-      // This gives you a Google Access Token. You can use it to access the Google API.
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const token = credential?.accessToken;
-      // The signed-in user info.
-      const user = result.user;
-      console.log(user);
-      // IdP data available using getAdditionalUserInfo(result)
-      // ...
-    })
-    .catch((error) => {
-      // Handle Errors here.
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      // The email of the user's account used.
-      const email = error.customData.email;
-      // The AuthCredential type that was used.
-      const credential = GoogleAuthProvider.credentialFromError(error);
-      console.log(error);
-      // ...
-    });
+  auth = getAuth(app);
   analytics = getAnalytics(app);
   const appCheck = initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider(
@@ -75,4 +56,4 @@ if (typeof window !== "undefined") {
   db = getFirestore(app);
 }
 
-export { app, analytics, db, storage };
+export { app, analytics, db, storage, user, auth };

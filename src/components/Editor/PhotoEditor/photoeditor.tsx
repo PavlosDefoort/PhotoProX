@@ -62,6 +62,8 @@ import { useProjectContext } from "@/pages/editor";
 import LayerBar from "./UI/layerbar";
 import { db, storage } from "../../../../app/firebase";
 import { addDoc, collection } from "firebase/firestore";
+import { GetInfo } from "@/components/getinfo";
+import { TierResult } from "detect-gpu";
 
 const SideBar = dynamic(() => import("./UI/sidebar"), {
   loading: () => <p>loading</p>,
@@ -81,8 +83,6 @@ const ResizeBar = dynamic(() => import("./UI/resizebar"), {
 
 interface PhotoEditorProps {
   imageData: string;
-  realNaturalWidth: number;
-  realNaturalHeight: number;
   fileName: string;
   fileSize: number;
 }
@@ -103,8 +103,6 @@ type Stack = StackElement[];
 
 const PhotoEditor: React.FC<PhotoEditorProps> = ({
   imageData,
-  realNaturalWidth,
-  realNaturalHeight,
   fileName,
   fileSize,
 }) => {
@@ -117,10 +115,13 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartY, setDragStartY] = useState(0);
   const [scaleFactor, setScaleFactor] = useState(1);
+  const [toolBarLength, setToolBarLength] = useState(40);
+  const [layerBarLength, setLayerBarLength] = useState(160);
+  const [topBarLength, setTopBarLength] = useState(40);
 
   // Add a canvasWidth and height global state to optimize resolution
-  const [canvasWidth, setCanvasWidth] = useState(8000);
-  const [canvasHeight, setCanvasHeight] = useState(4000);
+  const [canvasWidth, setCanvasWidth] = useState(2000);
+  const [canvasHeight, setCanvasHeight] = useState(1000);
   const { darkMode } = useContext(ThemeContext);
   const [undoStack, setUndoStack] = useState<Stack>([]);
   const [redoStack, setRedoStack] = useState<Stack>([]);
@@ -253,35 +254,21 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [windowHeight, setWindowHeight] = useState(0);
   const { project, setProject } = useProjectContext();
 
-  // useEffect(() => {
-  //   if (
-  //     project.settings.canvasSettings.width != null &&
-  //     project.settings.canvasSettings.height != null
-  //   ) {
-  //     setCanvasWidth(project.settings.canvasSettings.width);
-  //     setCanvasHeight(project.settings.canvasSettings.height);
-  //   }
-  // }, [
-  //   project.settings.canvasSettings.width,
-  //   project.settings.canvasSettings.height,
-  // ]);
+  const realNaturalWidth = useRef(project.settings.canvasSettings.width);
+  const realNaturalHeight = useRef(project.settings.canvasSettings.height);
 
   useEffect(() => {
-    const addProject = async (e: any) => {
-      await addDoc(collection(db, "projects"), {
-        // layers: project.layers,
-        id: project.id,
-        settings: project.settings,
-        date: new Date(),
-      });
-    };
-
-    if (project.layers.length > 0) {
-      addProject(project);
-      const storageRef = ref(storage, `image/${project.id}`);
-      // Add image to firebase storage
+    if (
+      project.settings.canvasSettings.width != null &&
+      project.settings.canvasSettings.height != null
+    ) {
+      realNaturalWidth.current = project.settings.canvasSettings.width;
+      realNaturalHeight.current = project.settings.canvasSettings.height;
     }
-  }, [project]);
+  }, [
+    project.settings.canvasSettings.width,
+    project.settings.canvasSettings.height,
+  ]);
 
   useEffect(() => {
     setWindowWidth(window.innerWidth);
@@ -313,8 +300,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   const handleFitToScreen = () => {
     const roundedScale = fitImageToScreen(
-      realNaturalWidth * scaleX,
-      realNaturalHeight * scaleY,
+      realNaturalWidth.current * scaleX,
+      realNaturalHeight.current * scaleY,
       canvasWidth,
       canvasHeight,
       rotateValue
@@ -332,6 +319,11 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   };
 
   // Make a function to let the user drag on the canvas to move the image
+  useEffect(() => {
+    if (project) {
+      project.renameProject(fileName, setProject);
+    }
+  }, [fileName]);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -383,8 +375,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const handleModeChange = (mode: string) => {
     setEditingMode(mode);
     const fitToScreen = fitImageToScreen(
-      realNaturalWidth * scaleX,
-      realNaturalHeight * scaleY,
+      realNaturalWidth.current * scaleX,
+      realNaturalHeight.current * scaleY,
       canvasWidth,
       canvasHeight,
       rotateValue
@@ -402,21 +394,21 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
       // Get the width of the rotated image
       const rotatedWidth = WidthRotate(
-        realNaturalWidth * scaleX,
-        realNaturalHeight * scaleY,
+        realNaturalWidth.current * scaleX,
+        realNaturalHeight.current * scaleY,
         rotateValue
       );
 
       // Get the height of the rotated image
       const rotatedHeight = HeightRotate(
-        realNaturalWidth * scaleX,
-        realNaturalHeight * scaleY,
+        realNaturalWidth.current * scaleX,
+        realNaturalHeight.current * scaleY,
         rotateValue
       );
 
       // Height and width technically does not need to be set due to the reference, but it is good practice to do so
-      image.width = realNaturalWidth;
-      image.height = realNaturalHeight;
+      image.width = realNaturalWidth.current;
+      image.height = realNaturalHeight.current;
 
       // Scale the image to fit the canvas
       image.scale.set(scaleX * scaleXSign, scaleY * scaleYSign);
@@ -479,8 +471,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       app.stage.addChild(image);
 
       const scale = fitImageToScreen(
-        realNaturalWidth,
-        realNaturalHeight,
+        realNaturalWidth.current,
+        realNaturalHeight.current,
         canvasWidth,
         canvasHeight,
         rotateValue
@@ -490,8 +482,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       setZoomValue(scale + 0.00001);
     }
   };
-
-  useEffect(() => {}, [rendering]);
 
   useEffect(() => {
     const handleScroll = (event: WheelEvent) => {
@@ -506,14 +496,14 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
         // // Adjust the width and height based on the rotation (absolute rotation matrix)
         const newWidth = WidthRotate(
-          realNaturalWidth * scaleX,
-          realNaturalHeight * scaleY,
+          realNaturalWidth.current * scaleX,
+          realNaturalHeight.current * scaleY,
           rotateValue
         );
 
         const newHeight = HeightRotate(
-          realNaturalWidth * scaleX,
-          realNaturalHeight * scaleY,
+          realNaturalWidth.current * scaleX,
+          realNaturalHeight.current * scaleY,
           rotateValue
         );
 
@@ -567,8 +557,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     fakeX,
     isZooming,
     zoomValue,
-    realNaturalHeight,
-    realNaturalWidth,
     rotateValue,
     canvasWidth,
     canvasHeight,
@@ -603,28 +591,23 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   useEffect(() => {
     const newZoom = fitImageToScreen(
-      realNaturalWidth * scaleX,
-      realNaturalHeight * scaleY,
+      realNaturalWidth.current * scaleX,
+      realNaturalHeight.current * scaleY,
       canvasWidth,
       canvasHeight,
       rotateValue
     );
     // setZoomValue(clamp(newZoom, 0.1, 4));
-  }, [
-    scaleX,
-    scaleY,
-    canvasHeight,
-    canvasWidth,
-    rotateValue,
-    realNaturalHeight,
-    realNaturalWidth,
-  ]);
+  }, [scaleX, scaleY, canvasHeight, canvasWidth, rotateValue]);
 
   useEffect(() => {
     // set the image source to the imageData prop
 
     setImgSrc(imageData);
-    const maxScale = calculateMaxScale(realNaturalWidth, realNaturalHeight);
+    const maxScale = calculateMaxScale(
+      realNaturalWidth.current,
+      realNaturalHeight.current
+    );
     let scale;
     if (firstLoad && maxScale < 1) {
       setScaleX(maxScale);
@@ -632,8 +615,10 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     }
 
     scale = fitImageToScreen(
-      realNaturalWidth * (firstLoad && maxScale < 1 ? maxScale : scaleX),
-      realNaturalHeight * (firstLoad && maxScale < 1 ? maxScale : scaleY),
+      realNaturalWidth.current *
+        (firstLoad && maxScale < 1 ? maxScale : scaleX),
+      realNaturalHeight.current *
+        (firstLoad && maxScale < 1 ? maxScale : scaleY),
       canvasWidth,
       canvasHeight,
       rotateValue
@@ -643,21 +628,27 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
     if (
       imageData.length > 0 &&
-      realNaturalWidth > 0 &&
-      realNaturalHeight > 0 &&
+      realNaturalWidth.current > 0 &&
+      realNaturalHeight.current > 0 &&
       fileName.length > 0 &&
       (fileSize / 3) * 4 < 4
     ) {
       localStorage.setItem("imageData", imageData);
-      localStorage.setItem("realNaturalWidth", realNaturalWidth.toString());
-      localStorage.setItem("realNaturalHeight", realNaturalHeight.toString());
+      localStorage.setItem(
+        "realNaturalWidth.current",
+        realNaturalWidth.current.toString()
+      );
+      localStorage.setItem(
+        "realNaturalHeight.current",
+        realNaturalHeight.current.toString()
+      );
       setFirstLoad(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     imageData,
-    realNaturalWidth,
-    realNaturalHeight,
+    realNaturalWidth.current,
+    realNaturalHeight.current,
     rotateValue,
     fileName,
     fileSize,
@@ -668,15 +659,15 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   useEffect(() => {
     const calculateAspectRatioFit = () => {
-      const targetRatio = realNaturalWidth / realNaturalHeight;
+      const targetRatio = realNaturalWidth.current / realNaturalHeight.current;
       let newWidth, newHeight;
 
-      if (realNaturalWidth / realNaturalHeight > targetRatio) {
-        newWidth = realNaturalHeight * targetRatio;
-        newHeight = realNaturalHeight;
+      if (realNaturalWidth.current / realNaturalHeight.current > targetRatio) {
+        newWidth = realNaturalHeight.current * targetRatio;
+        newHeight = realNaturalHeight.current;
       } else {
-        newWidth = realNaturalWidth;
-        newHeight = realNaturalWidth / targetRatio;
+        newWidth = realNaturalWidth.current;
+        newHeight = realNaturalWidth.current / targetRatio;
       }
 
       // setCanvasWidth(newWidth);
@@ -686,7 +677,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       // if (app) app.renderer.resize(newWidth, newHeight);
     };
     calculateAspectRatioFit();
-  }, [realNaturalWidth, realNaturalHeight]);
+  }, []);
 
   const previousZoomRef = useRef(zoomValue);
   const previousFakeYRef = useRef(fakeY);
@@ -998,8 +989,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
           setScaleY={setScaleY}
           scaleX={scaleX}
           scaleY={scaleY}
-          imageWidth={realNaturalWidth}
-          imageHeight={realNaturalHeight}
+          imageWidth={realNaturalWidth.current}
+          imageHeight={realNaturalHeight.current}
           useRatio={useRatio}
           setUseRatio={setUseRatio}
         />
@@ -1009,19 +1000,48 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       content = <SideBar changeActive={handleModeChange} />;
   }
 
-  useEffect(() => {
-    const factor = 5;
-    const adjustWidth = (window.innerWidth - 80) * factor;
-    const adjustHeight = (window.innerHeight - 40) * factor;
-    setCanvasWidth(adjustWidth);
-    setCanvasHeight(adjustHeight);
-  }, [windowWidth, windowHeight]);
+  const [userGPU, setUserGPU] = useState<Object>({});
+  const [gpuFactor, setGpuFactor] = useState(1);
 
   useEffect(() => {
-    if (project) {
-      project.renameProject(fileName, setProject);
+    console.log(gpuFactor);
+    if (project.layers.length > 0) {
+      const adjustWidth = (windowWidth - 200) * gpuFactor;
+      const adjustHeight = (windowHeight - 40) * gpuFactor;
+      setCanvasWidth(adjustWidth);
+      setCanvasHeight(adjustHeight);
     }
-  }, [fileName]);
+  }, [gpuFactor, windowWidth, windowHeight, project]);
+
+  useEffect(() => {
+    GetInfo().then((gpu: TierResult) => {
+      console.log(gpu);
+      if (gpu.tier === 0) {
+        setGpuFactor(1);
+      } else if (gpu.tier === 1) {
+        setGpuFactor(1);
+      } else if (gpu.tier === 2 || gpu.fps! <= 100) {
+        setGpuFactor(1.25);
+      } else if (gpu.tier === 3) {
+        const fpsFactor = clamp(gpu.fps! / 100, 1.25, 5);
+        setGpuFactor(fpsFactor);
+      } else {
+        setGpuFactor(1);
+      }
+    });
+  }, []);
+
+  const [shiftX, setShiftX] = useState(0);
+  const [shiftY, setShiftY] = useState(0);
+
+  useEffect(() => {
+    if (layerBarLength > toolBarLength) {
+      setShiftX((toolBarLength - layerBarLength) / 2);
+    } else {
+      setShiftX(-(toolBarLength - layerBarLength) / 2);
+    }
+    setShiftY(topBarLength / 2);
+  }, [layerBarLength, toolBarLength, topBarLength]);
 
   return (
     <div>
@@ -1029,8 +1049,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         imgName={imgName}
         setFileName={setImgName}
         zoomValue={zoomValue.toFixed(2)}
-        width={realNaturalWidth}
-        height={realNaturalHeight}
+        width={realNaturalWidth.current}
+        height={realNaturalHeight.current}
         canvasWidth={canvasWidth}
         canvasHeight={canvasHeight}
         setZoomValue={setZoomValue}
@@ -1039,6 +1059,10 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
         rotateValue={rotateValue}
         scaleX={scaleX}
         scaleY={scaleY}
+        appRef={appRef}
+        containerRef={containerRef}
+        maskRef={maskRef}
+        canvasRef={canvasRef}
       />
       {imgSrc && (
         <div>
@@ -1051,19 +1075,10 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
             imgSrc={imgSrc}
             downloadImage={handleDownload}
             toggleThirds={handleThirds}
+            containerRef={containerRef}
           />
         </div>
       )}
-
-      {/* {imgSrc && (
-        <aside
-          id="logo-sidebar"
-          className="animate-fade animate-once animate-ease-out fixed top-0 left-[40px] z-30 w-[240px] h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-500"
-          aria-label="Sidebar"
-        >
-          {content}
-        </aside>
-      )} */}
 
       {rendering && (
         <Dialog open={rendering}>
@@ -1088,11 +1103,15 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 className="flex items-center justify-center "
                 style={{
                   position: "fixed",
-                  top: `calc(50% + 18px)`,
-                  left: `calc(50%)`,
+                  top: `calc(50% + ${shiftY}px)`,
+                  left: `calc(50% + ${shiftX}px)`,
                   transform: `translate(-50%, -50%)`,
-                  width: realNaturalWidth ? `${windowWidth - 80}px` : "100%",
-                  height: realNaturalHeight ? `${windowHeight - 40}px` : "100%",
+                  width: realNaturalWidth.current
+                    ? `${windowWidth - (toolBarLength + layerBarLength)}px`
+                    : "100%",
+                  height: realNaturalHeight.current
+                    ? `${windowHeight - topBarLength}px`
+                    : "100%",
                 }}
               >
                 <canvas
@@ -1102,9 +1121,11 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                   style={{
                     display: "block",
                     position: "absolute",
-                    width: realNaturalWidth ? `${windowWidth - 80}px` : "100%",
-                    height: realNaturalHeight
-                      ? `${windowHeight - 40}px`
+                    width: realNaturalWidth.current
+                      ? `${windowWidth - (toolBarLength + layerBarLength)}px`
+                      : "100%",
+                    height: realNaturalHeight.current
+                      ? `${windowHeight - topBarLength}px`
                       : "100%",
                     zIndex: -1,
                   }}
@@ -1125,7 +1146,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 project?.removeLayer(
                   project.target!.id,
                   setProject,
-                  project.container
+                  containerRef.current!
                 )
               }
             >

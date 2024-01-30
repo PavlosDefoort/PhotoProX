@@ -20,7 +20,7 @@ export default function Home() {
       <div className="animate-jump absolute top-4 left-12 flex">
         <a href="https://github.com/PavlosDefoort/PhotoProX" className="pr-4">
           <svg
-            className="w-6 h-6  text-gray-800 dark:text-white hover:animate-bounce"
+            className="w-6 h-6  text-gray-800 dark:text-white hover:animate-bounce "
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"

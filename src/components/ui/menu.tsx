@@ -17,10 +17,16 @@ import { useProjectContext } from "@/pages/editor";
 import { ImageLayer, initialEditingParameters } from "@/utils/interfaces";
 import { ChangeEvent, useEffect, useRef } from "react";
 import { HamburgerMenuIcon } from "@radix-ui/react-icons";
+import { useAuth } from "../../../app/authcontext";
+import { Poppins } from "next/font/google";
 
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
 const MenubarDemo = () => {
   const { project, setProject } = useProjectContext();
-
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -34,18 +40,21 @@ const MenubarDemo = () => {
         img.onload = function () {
           const width = img.width;
           const height = img.height;
-          const newLayer = project.createLayer(
-            {
-              src: img.src,
-              imageWidth: width,
-              imageHeight: height,
-              name: selectedFile.name,
-            },
-            selectedFile,
-            project.id
-          );
-
-          project.addLayer(newLayer, setProject);
+          const newLayer = project
+            .createLayer(
+              {
+                src: img.src,
+                imageWidth: width,
+                imageHeight: height,
+                name: selectedFile.name,
+              },
+              selectedFile,
+              project.id,
+              user?.uid!
+            )
+            .then((layer) => {
+              project.addLayer(layer, setProject);
+            });
         };
 
         img.src = e.target!.result as string;
@@ -94,8 +103,9 @@ const MenubarDemo = () => {
   };
 
   return (
-    <Menubar className="h-7 w-9 border-0 flex justify-center items-center hover:bg-buttonHover dark:hover:bg-buttonHover ">
+    <Menubar className="h-2 flex justify-center items-center border-0 bg-navbarBackground dark:bg-navbarBackground">
       <input
+        className="hidden"
         id="file-input"
         type="file"
         accept=".png,.jpg,.jpeg,.gif,.svg"
@@ -103,12 +113,13 @@ const MenubarDemo = () => {
         ref={fileInputRef}
       />
       <MenubarMenu>
-        <MenubarTrigger>
+        <MenubarTrigger className="hover:bg-buttonHover dark:hover:bg-buttonHover">
           {" "}
-          <HamburgerMenuIcon className=" mr-1 text-gray-600 dark:text-gray-100" />
+          File
+          {/* <HamburgerMenuIcon className=" mr-1 text-gray-600 dark:text-gray-100" /> */}
         </MenubarTrigger>
 
-        <MenubarContent>
+        <MenubarContent className={`${poppins.className}`}>
           <MenubarItem onClick={onLayerClick}>
             New Layer
             <MenubarShortcut>Ctrl+L</MenubarShortcut>
@@ -141,9 +152,11 @@ const MenubarDemo = () => {
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
-      {/* <MenubarMenu>
-        <MenubarTrigger>Edit</MenubarTrigger>
-        <MenubarContent>
+      <MenubarMenu>
+        <MenubarTrigger className="hover:bg-buttonHover dark:hover:bg-buttonHover">
+          Edit
+        </MenubarTrigger>
+        <MenubarContent className={`${poppins.className}`}>
           <MenubarItem>
             Undo <MenubarShortcut>⌘Z</MenubarShortcut>
           </MenubarItem>
@@ -168,8 +181,10 @@ const MenubarDemo = () => {
         </MenubarContent>
       </MenubarMenu>
       <MenubarMenu>
-        <MenubarTrigger>View</MenubarTrigger>
-        <MenubarContent>
+        <MenubarTrigger className="hover:bg-buttonHover dark:hover:bg-buttonHover">
+          View
+        </MenubarTrigger>
+        <MenubarContent className={`${poppins.className}`}>
           <MenubarCheckboxItem>Always Show Bookmarks Bar</MenubarCheckboxItem>
           <MenubarCheckboxItem checked>
             Always Show Full URLs
@@ -188,8 +203,10 @@ const MenubarDemo = () => {
         </MenubarContent>
       </MenubarMenu>
       <MenubarMenu>
-        <MenubarTrigger>Profiles</MenubarTrigger>
-        <MenubarContent>
+        <MenubarTrigger className="hover:bg-buttonHover dark:hover:bg-buttonHover">
+          Profiles
+        </MenubarTrigger>
+        <MenubarContent className={`${poppins.className}`}>
           <MenubarRadioGroup value="benoit">
             <MenubarRadioItem value="andy">Andy</MenubarRadioItem>
             <MenubarRadioItem value="benoit">Benoit</MenubarRadioItem>
@@ -199,8 +216,8 @@ const MenubarDemo = () => {
           <MenubarItem inset>Edit...</MenubarItem>
           <MenubarSeparator />
           <MenubarItem inset>Add Profile...</MenubarItem>
-        </MenubarContent> 
-      </MenubarMenu>*/}
+        </MenubarContent>
+      </MenubarMenu>
     </Menubar>
   );
 };

@@ -4,6 +4,7 @@ import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import PhotoSizeSelectLargeIcon from "@mui/icons-material/PhotoSizeSelectLarge";
 import Brightness6Icon from "@mui/icons-material/Brightness6";
+import { Poppins } from "next/font/google";
 
 interface SideBarProps {
   changeActive: (mode: string) => void;

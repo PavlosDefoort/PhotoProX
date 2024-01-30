@@ -57,8 +57,8 @@ interface ApplyCanvasProps {
   fakeY: number;
   fakeX: number;
   rotateValue: number;
-  realNaturalWidth: number;
-  realNaturalHeight: number;
+  realNaturalWidth: React.MutableRefObject<number>;
+  realNaturalHeight: React.MutableRefObject<number>;
   canvasHeight: number;
   canvasWidth: number;
   imageProperties: ImageProperties;
@@ -108,24 +108,21 @@ const ApplyCanvas = ({
       if (
         appRef.current &&
         !containerRef.current &&
-        project.settings.canvasSettings.width &&
-        project.settings.canvasSettings.height
+        realNaturalWidth.current > 1 &&
+        realNaturalHeight.current > 1
       ) {
+        console.log("Creating container", realNaturalWidth.current);
         containerRef.current = new Container();
-        containerRef.current.width = project.settings.canvasSettings.width;
-        containerRef.current.height = project.settings.canvasSettings.height;
+        containerRef.current.width = realNaturalWidth.current;
+        containerRef.current.height = realNaturalHeight.current;
         containerRef.current.pivot.set(
-          project.settings.canvasSettings.width / 2,
-          project.settings.canvasSettings.height / 2
+          realNaturalWidth.current / 2,
+          realNaturalHeight.current / 2
         );
         const background = new Graphics();
         const squareSize = 20;
-        const numRows = Math.floor(
-          project.settings.canvasSettings.height / squareSize
-        );
-        const numCols = Math.floor(
-          project.settings.canvasSettings.width / squareSize
-        );
+        const numRows = Math.floor(realNaturalHeight.current / squareSize);
+        const numCols = Math.floor(realNaturalWidth.current / squareSize);
         const colors = [0xffffff, 0xe5e5e5]; // Colors for the checkerboard pattern
 
         for (let row = 0; row < numRows; row++) {
@@ -151,8 +148,8 @@ const ApplyCanvas = ({
     const createMaskIfNeeded = () => {
       if (
         !maskRef.current &&
-        project.settings.canvasSettings.width &&
-        project.settings.canvasSettings.height &&
+        realNaturalWidth.current &&
+        realNaturalHeight.current &&
         containerRef.current
       ) {
         maskRef.current = new Graphics();
@@ -161,8 +158,8 @@ const ApplyCanvas = ({
         maskRef.current.drawRect(
           0,
           0,
-          project.settings.canvasSettings.width,
-          project.settings.canvasSettings.height
+          realNaturalWidth.current,
+          realNaturalHeight.current
         );
         maskRef.current.endFill();
         containerRef.current.addChild(maskRef.current);
@@ -198,8 +195,8 @@ const ApplyCanvas = ({
     }
 
     if (
-      canvasHeight !== appRef.current.renderer.height ||
-      canvasWidth !== appRef.current.renderer.width
+      Math.round(canvasHeight) !== appRef.current.renderer.height ||
+      Math.round(canvasWidth) !== appRef.current.renderer.width
     ) {
       appRef.current.renderer.resize(canvasWidth, canvasHeight);
     }
@@ -210,6 +207,7 @@ const ApplyCanvas = ({
     // app.stage.removeChildren();
     // Check if there's a container
     if (!containerRef.current) {
+      console.log("Creating container");
       createContainerIfNeeded();
     }
     // Check if there's a mask
@@ -219,11 +217,9 @@ const ApplyCanvas = ({
 
     // Check if there's a new layer in project that's not in the app
 
-    const container = containerRef.current;
+    const container = containerRef.current!;
     // Add container to project
-    if (container && !project.container) {
-      project.container = container;
-    }
+
     const mask = maskRef.current;
     let dragTarget: Sprite | null = null;
     let dragOffset: PIXI.Point | null = null; // Store the initial offset when dragging starts
@@ -232,12 +228,12 @@ const ApplyCanvas = ({
       container.position.set(canvasWidth / 2 + fakeX, canvasHeight / 2 + fakeY);
       container.scale.set(zoomValue * scaleX, zoomValue * scaleY);
       //Only show layers that are visible
-      const visibleLayers = project.layers.filter((layer) => layer.visible);
-      const layers = visibleLayers;
+      // const visibleLayers = project.layers.filter((layer) => layer.visible);
+      const layers = project.layers;
 
       layers.forEach((layer) => {
         // Add the layer to container if it's not there
-
+        console.log(layer.sprite.visible);
         app.stage.eventMode = "static";
         app.stage.on("pointerup", (event: FederatedPointerEvent) =>
           onDragEnd(event)
@@ -250,6 +246,10 @@ const ApplyCanvas = ({
         layer.sprite.rotation = rotateValue * (Math.PI / 180);
         layer.sprite.eventMode = "static";
         layer.sprite.cursor = "grab";
+        layer.sprite.visible = layer.visible;
+
+        layer.sprite.calculateVertices();
+        console.log(layer.sprite.getVertexData());
 
         layer.sprite.on("pointerdown", (event: FederatedPointerEvent) => {
           project.target = layer;
@@ -263,6 +263,7 @@ const ApplyCanvas = ({
             // Account for zoom
             const zoomAdjustedDeltaX =
               (newPosition.x - dragOffset.x) / zoomValue;
+            console.log(zoomAdjustedDeltaX);
             const zoomAdjustedDeltaY =
               (newPosition.y - dragOffset.y) / zoomValue;
 
@@ -303,6 +304,7 @@ const ApplyCanvas = ({
             (child) => child.name === layer.id && child.visible
           )
         ) {
+          console.log(container.children);
           container.addChild(layer.sprite);
         }
       });

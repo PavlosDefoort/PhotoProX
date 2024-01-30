@@ -19,6 +19,7 @@ import {
 } from "@/utils/interfaces";
 import { TYPES, SCALE_MODES, Sprite } from "pixi.js";
 import { v4 as uuidv4 } from "uuid";
+import { useAuth } from "../../app/authcontext";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -133,10 +134,10 @@ export default function Editor({}) {
   const [fileSize, setFileSize] = useState(0);
   const [userGPU, setUserGPU] = useState<Object>({});
   const [theme, setTheme] = useState(darkTheme);
+  const { user } = useAuth();
 
   useEffect(() => {
     GetInfo().then((gpu) => {
-      console.log(gpu);
       setUserGPU(gpu);
     });
   }, []);
@@ -149,25 +150,25 @@ export default function Editor({}) {
     }
   }, [darkMode]);
 
-  useEffect(() => {
-    const storedImage = localStorage.getItem("imageData");
-    const storedWidth = localStorage.getItem("realNaturalWidth");
-    const storedHeight = localStorage.getItem("realNaturalHeight");
-    if (storedImage !== null && storedImage.length > 0 && agree) {
-      setImage(storedImage);
-      setRealWidth(parseInt(storedWidth!));
-      setRealHeight(parseInt(storedHeight!));
-      setFileName(localStorage.getItem("imageName")!);
-    }
-  }, [agree]);
+  // useEffect(() => {
+  //   const storedImage = localStorage.getItem("imageData");
+  //   const storedWidth = localStorage.getItem("realNaturalWidth");
+  //   const storedHeight = localStorage.getItem("realNaturalHeight");
+  //   if (storedImage !== null && storedImage.length > 0 && agree) {
+  //     setImage(storedImage);
+  //     setRealWidth(parseInt(storedWidth!));
+  //     setRealHeight(parseInt(storedHeight!));
+  //     setFileName(localStorage.getItem("imageName")!);
+  //   }
+  // }, [agree]);
 
-  useEffect(() => {
-    const storedImage = localStorage.getItem("imageData");
-    if (storedImage !== null && storedImage.length > 0) {
-      setPossibleImage(storedImage);
-      setOpen(true);
-    }
-  }, []);
+  // useEffect(() => {
+  //   const storedImage = localStorage.getItem("imageData");
+  //   if (storedImage !== null && storedImage.length > 0) {
+  //     setPossibleImage(storedImage);
+  //     setOpen(true);
+  //   }
+  // }, []);
 
   /// Create a function that will remove the file extension from the string
 
@@ -198,13 +199,22 @@ export default function Editor({}) {
         imageHeight: realHit,
         imageWidth: realWit,
       };
-
       project.changeCanvasDimensions(realWit, realHit, setProject);
-      const newLayer = project.createLayer(imageData, file, project.id);
+      try {
+        project
+          .createLayer(imageData, file, project.id, user?.uid!)
+          .then((layer: ImageLayer) => {
+            project.addLayer(layer, setProject);
+          });
+        // Now you can use the 'newLayer' object after it's resolved
+      } catch (error) {
+        // Handle any errors that may occur during the async operation
+        console.error("Error creating layer:", error);
+      }
+
       // Add the layer to the project
-      console.log(newLayer.sprite.width, newLayer.sprite.height);
-      project.addLayer(newLayer, setProject);
     }
+
     setWidth(natWidth);
     setHeight(natHeight);
     setRealWidth(realWit);
@@ -213,11 +223,6 @@ export default function Editor({}) {
     setFileName(newName);
     setFileSize(toNumber((fileSize / 1024 / 1024).toFixed(2)));
   };
-
-  useEffect(() => {
-    console.log("Project:", project);
-    console.log(fileName);
-  }, [project, fileName]);
 
   const previousAgreement = () => {
     setAgree(true);
@@ -245,8 +250,6 @@ export default function Editor({}) {
         <ProjectContext.Provider value={{ project, setProject }}>
           <PhotoEditor
             imageData={image}
-            realNaturalWidth={realWidth}
-            realNaturalHeight={realHeight}
             fileName={fileName}
             fileSize={fileSize}
           />

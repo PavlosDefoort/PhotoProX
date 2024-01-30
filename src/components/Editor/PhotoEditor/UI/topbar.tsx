@@ -1,12 +1,16 @@
-import React from "react";
+import React, { use, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DividerVerticalIcon,
   DownloadIcon,
   HomeIcon,
 } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
+import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { NavigationMenuDemo } from "./navigationmenu";
+
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import ListSubheader from "@mui/material/ListSubheader";
@@ -17,6 +21,19 @@ import { fillImageToScreen, fitImageToScreen, clamp } from "@/utils/calcUtils";
 import { set } from "lodash";
 import ImageDropDown from "./imagedropdown";
 import MenubarDemo from "@/components/ui/menu";
+import { useAuth } from "../../../../../app/authcontext";
+import { auth } from "../../../../../app/firebase";
+import { toast } from "sonner";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
+import { NavigationMenuTrigger } from "@radix-ui/react-navigation-menu";
+import { Application, Container, Graphics } from "pixi.js";
+import { Poppins } from "next/font/google";
 interface TopBarProps {
   imgName: string;
   zoomValue: string;
@@ -31,9 +48,18 @@ interface TopBarProps {
   setFileName: (value: string) => void;
   scaleX: number;
   scaleY: number;
+  appRef: React.MutableRefObject<Application | null>;
+  containerRef: React.MutableRefObject<Container | null>;
+  maskRef: React.MutableRefObject<Graphics | null>;
+  canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
 }
 const DynamicComponent = dynamic(() => import("./dropdown"), {
   ssr: false,
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const DynamicImageDropDown = dynamic(() => import("./imagedropdown"), {
@@ -53,7 +79,12 @@ const TopBar: React.FC<TopBarProps> = ({
   scaleX,
   scaleY,
   setFileName,
+  appRef,
+  containerRef,
+  maskRef,
+  canvasRef,
 }) => {
+  const { user, loading } = useAuth();
   const requestFill = () => {
     const newScale = fillImageToScreen(
       width * scaleX,
@@ -138,8 +169,44 @@ const TopBar: React.FC<TopBarProps> = ({
       document.removeEventListener("keydown", checkZoom);
     };
   });
+  const handleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      // User is signed in
+    } catch (error) {
+      // Handle errors
+      console.error("Error signing in:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Check if user is signed in and has a display name
+    if (
+      user &&
+      user.displayName &&
+      localStorage.getItem("welcome") !== "true"
+    ) {
+      toast(`Welcome ${user.displayName}`, {
+        description:
+          "Explore our powerful photo editor and unleash your creativity.",
+        action: {
+          label: "Got it!",
+          onClick: () => console.log("Undo"),
+        },
+      });
+      localStorage.setItem("welcome", "true");
+    }
+  }, [user]);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
   return (
-    <nav className="fixed top-0 z-40 w-full h-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-between p-2">
+    <nav
+      className={`fixed top-0 z-40 w-full h-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-between p-2 ${poppins.className}`}
+    >
       <div className="flex items-center h-full text-black dark:text-white">
         <Link href="/">
           <HomeIcon className="hover:animate-bounce w-5 h-5" />
@@ -151,12 +218,27 @@ const TopBar: React.FC<TopBarProps> = ({
           /> */}
         </Link>
         <DividerVerticalIcon className="w-6 h-6 text-[#cdcdcd] dark:text-gray-500" />
+        {user ? (
+          <NavigationMenuDemo />
+        ) : (
+          <div className="flex flex-row items-center justify-center text-sm ml-2">
+            <button onClick={handleSignIn}>Sign In with Google</button>
+          </div>
+        )}
+        <DividerVerticalIcon className="w-6 h-6 text-[#cdcdcd] dark:text-gray-500" />
         <MenubarDemo />
       </div>
 
       <div className="pl-16 flex items-center h-full text-black dark:text-white text-xs">
         <h1 className="mx-2">
-          <ImageDropDown imgName={imgName} setImgName={setFileName} />
+          <ImageDropDown
+            imgName={imgName}
+            setImgName={setFileName}
+            appRef={appRef}
+            containerRef={containerRef}
+            maskRef={maskRef}
+            canvasRef={canvasRef}
+          />
         </h1>
 
         <DynamicComponent

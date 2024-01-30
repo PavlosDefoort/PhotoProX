@@ -20,13 +20,17 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import ControlCameraIcon from "@mui/icons-material/ControlCamera";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useProjectContext } from "@/pages/editor";
+import { Poppins } from "next/font/google";
 
 interface ToolBarProps {
   imgSrc: string;
   downloadImage: () => void;
   toggleThirds: () => void;
 }
-
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
 const ToolBar: React.FC<ToolBarProps> = ({
   imgSrc,
   downloadImage,
@@ -37,7 +41,7 @@ const ToolBar: React.FC<ToolBarProps> = ({
   return (
     <aside
       id="logo-sidebar"
-      className="animate-fade animate-once animate-ease-out fixed top-0 left-0 z-30 w-10 h-screen transition-transform -translate-x-full sm:translate-x-0 border-r-2 border-[#cdcdcd] dark:border-[#252525]"
+      className={`animate-fade animate-once animate-ease-out fixed top-0 left-0 z-30 w-10 h-screen transition-transform -translate-x-full sm:translate-x-0 border-r-2 border-[#cdcdcd] dark:border-[#252525]`}
       aria-label="Sidebar"
     >
       <div className="h-full py-6 overflow-y-auto bg-navbarBackground dark:bg-navbarBackground ">
@@ -63,7 +67,7 @@ const ToolBar: React.FC<ToolBarProps> = ({
                         </span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-64">
+                    <PopoverContent className={`w-72 ${poppins.className}`}>
                       <div className="grid gap-4">
                         <div className="space-y-2">
                           <h4 className="font-medium leading-none">

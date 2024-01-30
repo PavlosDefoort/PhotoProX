@@ -1,5 +1,11 @@
 // A file to store all the interfaces used in the project
-import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import {
+  StorageReference,
+  UploadMetadata,
+  getDownloadURL,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
 import { Edit } from "lucide-react";
 import {
   TYPES,
@@ -10,12 +16,36 @@ import {
   MIPMAP_MODES,
   Container,
   DisplayObject,
+  SpriteSource,
+  IBaseTextureOptions,
 } from "pixi.js";
 import { v4 as uuidv4 } from "uuid";
 import { storage } from "../../app/firebase";
+import { Timestamp } from "firebase/firestore";
+import { useRef } from "react";
+
+export class MySprite extends Sprite {
+  getVertexData(): Float32Array | undefined {
+    // Access the protected vertexData property
+    return this.vertexData;
+  }
+  static from(
+    source: SpriteSource,
+    options?: IBaseTextureOptions<any> | undefined
+  ): MySprite {
+    // Call the original PIXI.Sprite.from method to create a sprite
+    const sprite = super.from(source, options);
+
+    // Convert the sprite to a CustomSprite instance
+    const customSprite = new MySprite(sprite.texture);
+
+    // Add any custom logic here if needed
+    return customSprite;
+  }
+}
 
 export interface ImageData {
-  src: string;
+  src?: string;
   imageWidth: number;
   imageHeight: number;
   name: string;
@@ -48,7 +78,7 @@ export interface ImageLayer {
   imageData: ImageData;
   zIndex: number;
   editingParameters: EditingParameters;
-  sprite: Sprite;
+  sprite: MySprite;
   visible: boolean;
 }
 
@@ -74,8 +104,8 @@ export interface ProjectSettings {
 // }
 
 export interface CanvasSettings {
-  width: number | null;
-  height: number | null;
+  width: number;
+  height: number;
   antialias: boolean;
 }
 
@@ -111,8 +141,8 @@ export const initialSettings: ProjectSettings = {
   colorMode: TYPES.UNSIGNED_BYTE,
   scaleMode: SCALE_MODES.LINEAR,
   canvasSettings: {
-    width: null,
-    height: null,
+    width: 1,
+    height: 1,
     antialias: false,
   },
 };
@@ -248,14 +278,40 @@ class LayerManager {
     this.checkZIndex();
   };
 
-  createLayer = (
+  createLayer = async (
     width: number,
     height: number,
     imageData: ImageData,
     file: File,
-    projectId: string
+    projectId: string,
+    userId: string,
+    alreadyUploaded: boolean = false
   ) => {
-    const newSprite = Sprite.from(imageData.src, {
+    // Convert the file to an image source
+    // const convertImageToSrc = (file: File): Promise<string> => {
+    //   return new Promise((resolve, reject) => {
+    //     if (!file) {
+    //       reject("No file provided");
+    //       return;
+    //     }
+
+    //     const reader = new FileReader();
+
+    //     reader.onload = () => {
+    //       resolve(reader.result as string);
+    //     };
+
+    //     reader.onerror = (error) => {
+    //       reject(error);
+    //     };
+
+    //     // Read the file as a data URL
+    //     reader.readAsDataURL(file);
+    //   });
+    // };
+    // const src = await convertImageToSrc(file);
+
+    const newSprite = MySprite.from(imageData.src!, {
       resolution: 1,
       type: TYPES.UNSIGNED_BYTE,
       format: FORMATS.RGBA,
@@ -279,38 +335,62 @@ class LayerManager {
       sprite: newSprite,
       visible: true,
     };
-    const storageRef = ref(storage, `${projectId}/${newId}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        // Observe state change events such as progress, pause, and resume
-        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log("Upload is " + progress + "% done");
-        switch (snapshot.state) {
-          case "paused":
-            console.log("Upload is paused");
-            break;
-          case "running":
-            console.log("Upload is running");
-            break;
-        }
-      },
-      (error) => {
-        // Handle unsuccessful uploads
-      },
-      () => {
-        // Handle successful uploads on complete
-        // For instance, get the download URL: https://firebasestorage.googleapis.com/...
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          console.log("File available at", downloadURL);
-        });
-      }
-    );
+    console.log(newSprite.getVertexData);
 
-    return newLayer;
+    if (alreadyUploaded) {
+      return newLayer;
+    } else {
+      const uploadFile = async (storageRef: StorageReference, file: File) => {
+        return new Promise((resolve, reject) => {
+          const metaData: UploadMetadata = {
+            customMetadata: {
+              date: Timestamp.now().toDate().toString(),
+            },
+          };
+          const uploadTask = uploadBytesResumable(storageRef, file, metaData);
+
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              const progress =
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log("Upload is " + progress + "% done");
+
+              switch (snapshot.state) {
+                case "paused":
+                  console.log("Upload is paused");
+                  break;
+                case "running":
+                  console.log("Upload is running");
+                  break;
+              }
+            },
+            async (error) => {
+              reject(error); // Reject the promise if there's an error
+            },
+            async () => {
+              try {
+                // Resolve the promise when the upload is complete
+                const downloadURL = await getDownloadURL(
+                  uploadTask.snapshot.ref
+                );
+                console.log("File available at", downloadURL);
+                resolve(downloadURL);
+              } catch (error) {
+                reject(error); // Reject the promise if there's an error getting the download URL
+              }
+            }
+          );
+        });
+      };
+      const storageRef = ref(
+        storage,
+        `${userId}/${projectId}/${imageData.name}`
+      );
+      await uploadFile(storageRef, file);
+
+      return newLayer;
+    }
   };
 
   getLayers = () => {
@@ -326,7 +406,6 @@ export class Project {
   settings: ProjectSettings = initialSettings;
   id: string = uuidv4();
   target: ImageLayer | null = null;
-  container: Container | null = null;
 
   renameProject = (
     name: string,
@@ -393,13 +472,21 @@ export class Project {
     }
   };
 
-  createLayer = (imageData: ImageData, file: File, projectId: string) => {
-    const newLayer = this.layerManager.createLayer(
+  createLayer = async (
+    imageData: ImageData,
+    file: File,
+    projectId: string,
+    userId: string,
+    alreadyUploaded: boolean = false
+  ) => {
+    const newLayer = await this.layerManager.createLayer(
       this.settings.canvasSettings.width!,
       this.settings.canvasSettings.height!,
       imageData,
       file,
-      projectId
+      projectId,
+      userId,
+      alreadyUploaded
     );
     return newLayer;
   };

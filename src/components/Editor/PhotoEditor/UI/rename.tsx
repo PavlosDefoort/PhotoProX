@@ -45,47 +45,48 @@ const SheetSide: React.FC<SheetSideProps> = ({
 
   return (
     <div className="grid grid-cols-2 gap-2 z-[-10]">
-      {SHEET_SIDES.map((side) => (
-        <Sheet key={side} open={open}>
-          <SheetContent side="top">
-            <SheetHeader>
-              <SheetTitle>Rename project</SheetTitle>
-              <SheetDescription>
-                Change your project name. Click save when you are done.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4 text-black dark:text-white">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                  }}
-                  className="col-span-3 bg-buttonHover dark:bg-[#3b3b3b]"
-                />
-              </div>
+      <Sheet open={open} onOpenChange={setOpen}>
+        {/* <SheetTrigger asChild>
+          <Button variant="outline">Open</Button>
+        </SheetTrigger> */}
+        <SheetContent side="top">
+          <SheetHeader>
+            <SheetTitle>Rename project</SheetTitle>
+            <SheetDescription>
+              Change your project name. Click save when you are done.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4 text-black dark:text-white">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                }}
+                className="col-span-3 bg-buttonHover dark:bg-[#3b3b3b]"
+              />
             </div>
-            <SheetFooter>
-              <SheetClose asChild>
-                <Button
-                  type="submit"
-                  onClick={() => {
-                    project.renameProject(name, setProject);
-                    setOpen(!open);
-                  }}
-                >
-                  Save changes
-                </Button>
-              </SheetClose>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-      ))}
+          </div>
+          <SheetFooter>
+            <SheetClose asChild>
+              <Button
+                type="submit"
+                onClick={() => {
+                  project.renameProject(name, setProject);
+                  setOpen(!open);
+                }}
+              >
+                Save changes
+              </Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
