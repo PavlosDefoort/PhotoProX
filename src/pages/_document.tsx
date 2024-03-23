@@ -6,7 +6,7 @@ export default function Document() {
       <Head>
         <meta
           name="description"
-          content="Explore Photoprox for all your photography needs. Find high-quality photos, photography tips, and more."
+          content="PhotoProX is your one-stop shop for web based photo editing. With a wide range of tools, you can create stunning images in no time."
         />
       </Head>
       <body>
