@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Mafs, Coordinates, Plot, Theme } from "mafs";
 import Script from "next/script";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -363,7 +362,7 @@ const DynamicPlot: React.FC<DynamicPlotProps> = ({ layer }) => {
 
       <div className="w-full border-t-2 mt-2 mb-2 border border-[#cdcdcd] dark:border-[#252525]"></div>
 
-      <Mafs
+      {/* <Mafs
         viewBox={{ x: [0, 1], y: [0, 1] }}
         pan={true}
         preserveAspectRatio={false}
@@ -389,7 +388,7 @@ const DynamicPlot: React.FC<DynamicPlotProps> = ({ layer }) => {
           minSamplingDepth={3}
           maxSamplingDepth={7}
         />
-      </Mafs>
+      </Mafs> */}
     </div>
   );
 };

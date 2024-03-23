@@ -19,8 +19,8 @@ const poppins = Poppins({
 export default function Home() {
   return (
     <main className={`${poppins.className} `}>
-      <header className="text-gray-600 body-font ">
-        <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
+      <header className="z-50 text-gray-600 body-font sticky top-0 bg-white shadow border-b  border-gray-500">
+        <div className="container mx-auto flex flex-wrap p-2 flex-col md:flex-row items-center">
           <a className="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -74,8 +74,8 @@ export default function Home() {
               Introducing PhotoProX, the ultimate free web based photo editing
               tool.
             </p>
-            <div className="flex w-full md:justify-start justify-center items-end">
-              <div className="relative mr-4 md:w-full lg:w-full xl:w-1/2 w-2/4">
+            <div className="flex flex-row w-full md:justify-center justify-center items-center">
+              {/* <div className="relative mr-4 md:w-full lg:w-full xl:w-1/2 w-2/4">
                 <label className="leading-7 text-sm text-gray-600">
                   Generative Fill Demo
                 </label>
@@ -85,10 +85,12 @@ export default function Home() {
                   name="hero-field"
                   className="w-full bg-white rounded border bg-opacity-80 border-gray-300 focus:ring-2 focus:ring-indigo-200 focus:bg-gray-100 focus:border-indigo-500 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out"
                 />
-              </div>
-              <button className="inline-flex text-white bg-indigo-500 border-0 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded text-lg">
-                Generate
-              </button>
+              </div> */}
+              <Link href="/editor">
+                <button className="animate-bounce  text-white bg-indigo-500 border-0 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded text-lg">
+                  Start Editing
+                </button>
+              </Link>
             </div>
             <p className="text-sm mt-2 text-gray-500 mb-8 w-full">
               Try out our new generative fill feature. Just type in a prompt and
@@ -394,6 +396,14 @@ export default function Home() {
             >
               <button className="flex mx-auto mt-16 text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">
                 Check out our GitHub
+              </button>
+            </Link>
+            <Link
+              href={"https://github.com/PavlosDefoort/PhotoProX"}
+              target="_blank"
+            >
+              <button className="flex mx-auto mt-16 text-white bg-blue-500 border-0 py-2 px-8 focus:outline-none hover:bg-blue-600 rounded text-lg">
+                Development Build
               </button>
             </Link>
           </div>
