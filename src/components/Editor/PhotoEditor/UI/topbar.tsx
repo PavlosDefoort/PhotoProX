@@ -52,6 +52,8 @@ interface TopBarProps {
   containerRef: React.MutableRefObject<Container | null>;
   maskRef: React.MutableRefObject<Graphics | null>;
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  trigger: boolean;
+  setTrigger: (value: boolean) => void;
 }
 const DynamicComponent = dynamic(() => import("./dropdown"), {
   ssr: false,
@@ -65,6 +67,17 @@ const poppins = Poppins({
 const DynamicImageDropDown = dynamic(() => import("./imagedropdown"), {
   ssr: false,
 });
+
+export const handleSignIn = async () => {
+  const provider = new GoogleAuthProvider();
+  try {
+    await signInWithPopup(auth, provider);
+    // User is signed in
+  } catch (error) {
+    // Handle errors
+    console.error("Error signing in:", error);
+  }
+};
 const TopBar: React.FC<TopBarProps> = ({
   imgName,
   zoomValue,
@@ -83,6 +96,8 @@ const TopBar: React.FC<TopBarProps> = ({
   containerRef,
   maskRef,
   canvasRef,
+  trigger,
+  setTrigger,
 }) => {
   const { user, loading } = useAuth();
   const requestFill = () => {
@@ -169,16 +184,6 @@ const TopBar: React.FC<TopBarProps> = ({
       document.removeEventListener("keydown", checkZoom);
     };
   });
-  const handleSignIn = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      // User is signed in
-    } catch (error) {
-      // Handle errors
-      console.error("Error signing in:", error);
-    }
-  };
 
   useEffect(() => {
     // Check if user is signed in and has a display name
@@ -205,7 +210,7 @@ const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <nav
-      className={`fixed top-0 z-40 w-full h-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-between p-2 ${poppins.className}`}
+      className={`z-40 w-full h-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-between p-2 ${poppins.className}`}
     >
       <div className="flex items-center h-full text-black dark:text-white">
         <Link href="/">
@@ -222,11 +227,11 @@ const TopBar: React.FC<TopBarProps> = ({
           <NavigationMenuDemo />
         ) : (
           <div className="flex flex-row items-center justify-center text-sm ml-2">
-            <button onClick={handleSignIn}>Sign In with Google</button>
+            <Button onClick={handleSignIn}>Sign In with Google</Button>
           </div>
         )}
         <DividerVerticalIcon className="w-6 h-6 text-[#cdcdcd] dark:text-gray-500" />
-        <MenubarDemo />
+        <MenubarDemo trigger={trigger} setTrigger={setTrigger} />
       </div>
 
       <div className="pl-16 flex items-center h-full text-black dark:text-white text-xs">

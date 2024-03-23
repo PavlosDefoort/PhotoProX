@@ -10,12 +10,8 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Test from "@/pages/test";
@@ -26,7 +22,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -44,7 +39,7 @@ import { debounce } from "lodash";
 import { fitImageToScreen, clamp, fillImageToScreen } from "@/utils/calcUtils";
 import { Poppins } from "next/font/google";
 import { app } from "../../../../../app/firebase";
-import { MySprite } from "@/utils/interfaces";
+import { SpriteX } from "@/utils/editorInterfaces";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -137,7 +132,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
       const layers = visibleLayers;
       // Create new instances of the same sprites
       layers.forEach((layer) => {
-        const sprite = MySprite.from(layer.sprite.texture);
+        const sprite = SpriteX.from(layer.sprite.texture);
         layer.sprite = sprite;
         layer.sprite.name = layer.id;
       });
@@ -205,6 +200,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
         newContainerRef.current.mask = newMaskRef.current;
       }
     };
+
     const delayedEffect = debounce(() => {
       if (showResize) {
         if (!newAppRef.current) {
@@ -409,8 +405,13 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
                   value={width}
                   onChange={(e) => {
                     const value = e.target.value;
-                    previousWidth.current = width;
-                    setWidth(value === "" ? 1 : parseInt(value));
+                    // Check if the input is a valid number
+                    if (!isNaN(parseInt(value))) {
+                      previousWidth.current = width;
+                      setWidth(
+                        value === "" ? 1 : clamp(parseInt(value), 1, 10000)
+                      );
+                    }
                   }}
                   className="col-span-3 dark:bg-white dark:text-black"
                 />
@@ -424,8 +425,13 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
                   value={height}
                   onChange={(e) => {
                     const value = e.target.value;
-                    previousHeight.current = height;
-                    setHeight(value === "" ? 1 : parseInt(value));
+                    // Check if the input is a valid number
+                    if (!isNaN(parseInt(value))) {
+                      previousWidth.current = width;
+                      setHeight(
+                        value === "" ? 1 : clamp(parseInt(value), 1, 10000)
+                      );
+                    }
                   }}
                   className="col-span-3 dark:bg-white dark:text-black"
                 />

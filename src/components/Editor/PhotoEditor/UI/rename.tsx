@@ -62,10 +62,30 @@ const SheetSide: React.FC<SheetSideProps> = ({
                 Name
               </Label>
               <Input
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (name === "") {
+                      alert("Name cannot be empty");
+                      return;
+                    } else if (name.length > 20) {
+                      alert("Name should be less than 20 characters");
+                    } else {
+                      setProject((draft) => {
+                        draft.settings.name = name;
+                      });
+                      setOpen(!open);
+                    }
+                  }
+                }}
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => {
+                  //Limit the length of the name to 20 characters
+                  if (e.target.value.length > 20) {
+                    alert("Name should be less than 20 characters");
+                    return;
+                  }
                   setName(e.target.value);
                 }}
                 className="col-span-3 bg-buttonHover dark:bg-[#3b3b3b]"
@@ -77,8 +97,17 @@ const SheetSide: React.FC<SheetSideProps> = ({
               <Button
                 type="submit"
                 onClick={() => {
-                  project.renameProject(name, setProject);
-                  setOpen(!open);
+                  if (name === "") {
+                    alert("Name cannot be empty");
+                    return;
+                  } else if (name.length > 20) {
+                    alert("Name should be less than 20 characters");
+                  } else {
+                    setProject((draft) => {
+                      draft.settings.name = name;
+                    });
+                    setOpen(!open);
+                  }
                 }}
               >
                 Save changes

@@ -14,17 +14,22 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { useProjectContext } from "@/pages/editor";
-import { ImageLayer, initialEditingParameters } from "@/utils/interfaces";
+import { ImageLayer, initialEditingParameters } from "@/utils/editorInterfaces";
 import { ChangeEvent, useEffect, useRef } from "react";
 import { HamburgerMenuIcon } from "@radix-ui/react-icons";
 import { useAuth } from "../../../app/authcontext";
 import { Poppins } from "next/font/google";
+import { produce } from "immer";
 
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
-const MenubarDemo = () => {
+interface MenubarDemoProps {
+  trigger: boolean;
+  setTrigger: (value: boolean) => void;
+}
+const MenubarDemo: React.FC<MenubarDemoProps> = ({ trigger, setTrigger }) => {
   const { project, setProject } = useProjectContext();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -40,21 +45,27 @@ const MenubarDemo = () => {
         img.onload = function () {
           const width = img.width;
           const height = img.height;
-          const newLayer = project
-            .createLayer(
-              {
-                src: img.src,
-                imageWidth: width,
-                imageHeight: height,
-                name: selectedFile.name,
-              },
-              selectedFile,
-              project.id,
-              user?.uid!
-            )
-            .then((layer) => {
-              project.addLayer(layer, setProject);
+          const newLayer = project.layerManager.createLayer(
+            width,
+            height,
+            {
+              src: img.src,
+              imageWidth: width,
+              imageHeight: height,
+              name: selectedFile.name,
+            },
+            selectedFile,
+            project.id,
+            user?.uid!
+          );
+          setProject((draft) => {
+            // Create a new project object so that the state updates
+            draft.layerManager.addLayer({
+              ...newLayer,
+              type: "image", // Add the missing 'type' property
             });
+          });
+          setTrigger(!trigger);
         };
 
         img.src = e.target!.result as string;
@@ -88,18 +99,18 @@ const MenubarDemo = () => {
 
   const onNewLayer = () => {};
 
-  useEffect(() => {
-    console.log(project?.layers);
-  }, [project?.layers]);
-
   const onLayerRemove = () => {
-    project.moveLayerBack(project.layers[1].id, setProject);
+    setProject((draft) =>
+      draft.layerManager.moveLayerBack(draft.layerManager.layers[1].id)
+    );
     // project.removeLayer(project.layers[1].id, setProject);
     // Possible solution, pass the containerRef to the project
   };
 
   const onLayerSwap = () => {
-    project.moveLayerUp(project.layers[0].id, setProject);
+    setProject((draft) => {
+      draft.layerManager.moveLayerUp(draft.layerManager.layers[0].id);
+    });
   };
 
   return (

@@ -17,6 +17,9 @@ module.exports = {
       },
     },
     extend: {
+      cursor: {
+        fancy: "url('/public/7352178 (1).png'), pointer",
+      },
       colors: {
         ...mauve,
         ...violet,
@@ -72,5 +75,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animated"), require("tailwindcss-animate")],
 };

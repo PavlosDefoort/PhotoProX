@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useCallback,
   useContext,
+  useMemo,
 } from "react";
 import dynamic from "next/dynamic";
 import Decimal from "decimal.js";
@@ -13,7 +14,7 @@ import ToolBar from "./UI/toolbar";
 import BottomBar from "./UI/bottombar";
 import ApplyCanvas from "@/components/Editor/PhotoEditor/applyCanvas";
 import PinchHandler from "./pinchLogic";
-import { EditorProject } from "@/utils/interfaces";
+import { EditorProject, ImageLayer } from "@/utils/editorInterfaces";
 
 import {
   Application,
@@ -47,10 +48,31 @@ import {
   calculateZoomPan,
   fitImageToScreen,
   calculateMaxScale,
+  analyseImageLuminance,
+  convertFloat32ArrayToNumberArray,
+  sortIntensityArray,
+  takeSamples,
+  analyseImageRedIntensities,
 } from "@/utils/calcUtils";
 import { Newsreader } from "next/font/google";
 import { set } from "lodash";
-import * as ContextMenu from "@radix-ui/react-context-menu";
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuGroup,
+  ContextMenuPortal,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { ref, uploadBytesResumable } from "firebase/storage";
 import {
   DotFilledIcon,
@@ -64,6 +86,9 @@ import { db, storage } from "../../../../app/firebase";
 import { addDoc, collection } from "firebase/firestore";
 import { GetInfo } from "@/components/getinfo";
 import { TierResult } from "detect-gpu";
+import TopBarTwo from "./UI/transformbar";
+import Anime from "@/pages/gallery/anime";
+import LuminanceHistogram from "./UI/histogram";
 
 const SideBar = dynamic(() => import("./UI/sidebar"), {
   loading: () => <p>loading</p>,
@@ -118,6 +143,8 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [toolBarLength, setToolBarLength] = useState(40);
   const [layerBarLength, setLayerBarLength] = useState(160);
   const [topBarLength, setTopBarLength] = useState(40);
+  const [positionX, setPositionX] = useState(0);
+  const [positionY, setPositionY] = useState(0);
 
   // Add a canvasWidth and height global state to optimize resolution
   const [canvasWidth, setCanvasWidth] = useState(2000);
@@ -139,9 +166,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [scaleY, setScaleY] = useState(1);
   const [useRatio, setUseRatio] = useState(true);
   const [imgName, setImgName] = useState("");
-  const [bookmarksChecked, setBookmarksChecked] = React.useState(true);
-  const [urlsChecked, setUrlsChecked] = React.useState(false);
-  const [person, setPerson] = React.useState("pedro");
+  const [bookmarksChecked, setBookmarksChecked] = useState(true);
+  const [urlsChecked, setUrlsChecked] = useState(false);
+  const [person, setPerson] = useState("pedro");
 
   interface ImageProperties {
     contrast: { value: number; multiply: boolean; enabled?: boolean };
@@ -252,10 +279,11 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const imgRef = useRef(null);
   const target = useRef<HTMLDivElement | null>(null);
   const [windowHeight, setWindowHeight] = useState(0);
-  const { project, setProject } = useProjectContext();
+  const { project, setProject, trigger, setTrigger } = useProjectContext();
 
   const realNaturalWidth = useRef(project.settings.canvasSettings.width);
   const realNaturalHeight = useRef(project.settings.canvasSettings.height);
+  const [showTransform, setShowTransform] = useState(false);
 
   useEffect(() => {
     if (
@@ -285,17 +313,27 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
       setDeltaWidth(changeInWidth);
     };
-
+    const stageContainer = document.getElementById("stage-container");
     const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setWindowHeight(window.innerHeight);
+      if (stageContainer) {
+        setWindowWidth(stageContainer.clientWidth);
+        setWindowHeight(stageContainer.clientHeight);
+      }
     };
 
-    window.addEventListener("resize", handleResize);
-    calculateDeltaWidth();
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    // Check if the element exists before adding the event listener
+    if (stageContainer) {
+      // Create a new ResizeObserver instance
+      const resizeObserver = new ResizeObserver(handleResize);
+
+      // Start observing the target element
+      resizeObserver.observe(stageContainer);
+
+      // Stop observing on cleanup
+      return () => {
+        resizeObserver.unobserve(stageContainer);
+      };
+    }
   }, [windowWidth]);
 
   const handleFitToScreen = () => {
@@ -321,7 +359,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   // Make a function to let the user drag on the canvas to move the image
   useEffect(() => {
     if (project) {
-      project.renameProject(fileName, setProject);
+      // Take the first 20 characters of the file name
+      const first20 = fileName.slice(0, 20);
+
+      setProject((draft) => {
+        draft.settings.name = first20;
+      });
     }
   }, [fileName]);
 
@@ -587,6 +630,10 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     scaleYSign,
     scaleX,
     scaleY,
+    setPositionX,
+    setPositionY,
+    trigger,
+    showTransform,
   });
 
   useEffect(() => {
@@ -1004,10 +1051,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [gpuFactor, setGpuFactor] = useState(1);
 
   useEffect(() => {
-    console.log(gpuFactor);
-    if (project.layers.length > 0) {
-      const adjustWidth = (windowWidth - 200) * gpuFactor;
-      const adjustHeight = (windowHeight - 40) * gpuFactor;
+    if (project.layerManager.layers.length > 0) {
+      const adjustWidth = (windowWidth ? windowWidth : 0) * gpuFactor;
+      const adjustHeight = (windowHeight ? windowHeight : 0) * gpuFactor;
       setCanvasWidth(adjustWidth);
       setCanvasHeight(adjustHeight);
     }
@@ -1015,7 +1061,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   useEffect(() => {
     GetInfo().then((gpu: TierResult) => {
-      console.log(gpu);
       if (gpu.tier === 0) {
         setGpuFactor(1);
       } else if (gpu.tier === 1) {
@@ -1023,7 +1068,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       } else if (gpu.tier === 2 || gpu.fps! <= 100) {
         setGpuFactor(1.25);
       } else if (gpu.tier === 3) {
-        const fpsFactor = clamp(gpu.fps! / 100, 1.25, 5);
+        const fpsFactor = clamp(gpu.fps! / 100, 1.25, 2);
         setGpuFactor(fpsFactor);
       } else {
         setGpuFactor(1);
@@ -1043,55 +1088,64 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     setShiftY(topBarLength / 2);
   }, [layerBarLength, toolBarLength, topBarLength]);
 
+  const [bins, setBins] = useState<number[]>([] as number[]);
+  const [frequencies, setFrequencies] = useState<number[]>([] as number[]);
+
+  useEffect(() => {
+    if (appRef.current && project.layerManager.layers.length > 0) {
+    }
+  }, [project.layerManager.layers.length]);
+
   return (
-    <div>
-      <TopBar
-        imgName={imgName}
-        setFileName={setImgName}
-        zoomValue={zoomValue.toFixed(2)}
-        width={realNaturalWidth.current}
-        height={realNaturalHeight.current}
-        canvasWidth={canvasWidth}
-        canvasHeight={canvasHeight}
-        setZoomValue={setZoomValue}
-        setFakeX={setFakeX}
-        setFakeY={setFakeY}
-        rotateValue={rotateValue}
-        scaleX={scaleX}
-        scaleY={scaleY}
-        appRef={appRef}
-        containerRef={containerRef}
-        maskRef={maskRef}
-        canvasRef={canvasRef}
-      />
-      {imgSrc && (
+    <div className="h-full">
+      <div className="flex flex-col h-full w-full overflow-hidden">
         <div>
+          <TopBar
+            imgName={imgName}
+            setFileName={setImgName}
+            zoomValue={zoomValue.toFixed(2)}
+            width={realNaturalWidth.current}
+            height={realNaturalHeight.current}
+            canvasWidth={canvasWidth}
+            canvasHeight={canvasHeight}
+            setZoomValue={setZoomValue}
+            setFakeX={setFakeX}
+            setFakeY={setFakeY}
+            rotateValue={rotateValue}
+            scaleX={scaleX}
+            scaleY={scaleY}
+            appRef={appRef}
+            containerRef={containerRef}
+            maskRef={maskRef}
+            canvasRef={canvasRef}
+            trigger={trigger}
+            setTrigger={setTrigger}
+          />
+        </div>
+
+        <div className="flex flex-row h-full justify-between">
           <ToolBar
             imgSrc={imgSrc}
             downloadImage={handleDownload}
             toggleThirds={handleThirds}
+            setShowTransform={setShowTransform}
+            showTransform={showTransform}
           />
-          <LayerBar
-            imgSrc={imgSrc}
-            downloadImage={handleDownload}
-            toggleThirds={handleThirds}
-            containerRef={containerRef}
-          />
-        </div>
-      )}
+          <div className="flex-grow flex flex-col h-full bg-slate-300">
+            <TopBarTwo
+              rotateValue={rotateValue}
+              setRotateValue={setRotateValue}
+              scaleXSign={scaleXSign}
+              scaleYSign={scaleYSign}
+              setScaleXSign={setScaleXSign}
+              setScaleYSign={setScaleYSign}
+              showTransform={showTransform}
+              setShowTransform={setShowTransform}
+              positionX={positionX}
+              positionY={positionY}
+            />
 
-      {rendering && (
-        <Dialog open={rendering}>
-          <DialogContentText id="render-dialog">
-            Rendering Image...
-          </DialogContentText>
-        </Dialog>
-      )}
-
-      <ContextMenu.Root>
-        <ContextMenu.Trigger className="">
-          <div className=" ">
-            <div className="">
+            <div className="flex-grow w-full">
               <PinchHandler
                 setZoomValue={setZoomValue}
                 setIsZooming={setIsZooming}
@@ -1100,163 +1154,69 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               <div
                 id="stage-container"
                 ref={target}
-                className="flex items-center justify-center "
-                style={{
-                  position: "fixed",
-                  top: `calc(50% + ${shiftY}px)`,
-                  left: `calc(50% + ${shiftX}px)`,
-                  transform: `translate(-50%, -50%)`,
-                  width: realNaturalWidth.current
-                    ? `${windowWidth - (toolBarLength + layerBarLength)}px`
-                    : "100%",
-                  height: realNaturalHeight.current
-                    ? `${windowHeight - topBarLength}px`
-                    : "100%",
-                }}
+                className="w-full h-full relative"
               >
                 <canvas
                   id="canvas"
                   ref={canvasRef}
-                  className=""
-                  style={{
-                    display: "block",
-                    position: "absolute",
-                    width: realNaturalWidth.current
-                      ? `${windowWidth - (toolBarLength + layerBarLength)}px`
-                      : "100%",
-                    height: realNaturalHeight.current
-                      ? `${windowHeight - topBarLength}px`
-                      : "100%",
-                    zIndex: -1,
-                  }}
+                  className="w-full h-full absolute top-0 left-0"
                 ></canvas>
               </div>
             </div>
           </div>
-        </ContextMenu.Trigger>
-        <ContextMenu.Portal>
-          <ContextMenu.Content
-            className="min-w-[220px] bg-navbarBackground dark:bg-navbarBackground rounded-md overflow-hidden p-[5px] shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)]"
-            // sideOffset={5}
-            // align="end"
-          >
-            <ContextMenu.Item
-              className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
-              onClick={() =>
-                project?.removeLayer(
-                  project.target!.id,
-                  setProject,
-                  containerRef.current!
-                )
-              }
-            >
-              Copy{" "}
-              <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
-                Ctrl+C
-              </div>
-            </ContextMenu.Item>
-            <ContextMenu.Item
-              className="group text-[13px] leading-none text-violet11  rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
-              disabled
-            >
-              Paste{" "}
-              <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
-                Ctrl+V
-              </div>
-            </ContextMenu.Item>
-            <ContextMenu.Item className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
-              Reload{" "}
-              <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
-                ⌘+R
-              </div>
-            </ContextMenu.Item>
-            <ContextMenu.Sub>
-              <ContextMenu.SubTrigger className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[state=open]:bg-violet4 dark:data-[state=open]:bg-violet9 data-[state=open]:text-violet11 data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1 data-[highlighted]:data-[state=open]:bg-violet9 data-[highlighted]:data-[state=open]:text-violet1">
-                More Tools
-                <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
-                  <ChevronRightIcon />
-                </div>
-              </ContextMenu.SubTrigger>
-              <ContextMenu.Portal>
-                <ContextMenu.SubContent
-                  className="min-w-[220px] bg-navbarBackground dark:bg-navbarBackground rounded-md overflow-hidden p-[5px] shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)]"
-                  sideOffset={2}
-                  alignOffset={-5}
-                >
-                  <ContextMenu.Item className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
-                    Save Page As…{" "}
-                    <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
-                      ⌘+S
-                    </div>
-                  </ContextMenu.Item>
-                  <ContextMenu.Item className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
-                    Create Shortcut…
-                  </ContextMenu.Item>
-                  <ContextMenu.Item className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
-                    Name Window…
-                  </ContextMenu.Item>
-                  <ContextMenu.Separator className="h-[1px] bg-violet6 m-[5px]" />
-                  <ContextMenu.Item className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1">
-                    Developer Tools
-                  </ContextMenu.Item>
-                </ContextMenu.SubContent>
-              </ContextMenu.Portal>
-            </ContextMenu.Sub>
 
-            <ContextMenu.Separator className="h-[1px] bg-violet6 m-[5px]" />
+          <LayerBar
+            imgSrc={imgSrc}
+            downloadImage={handleDownload}
+            toggleThirds={handleThirds}
+            containerRef={containerRef}
+            trigger={trigger}
+            setTrigger={setTrigger}
+            appRef={appRef}
+          />
+        </div>
+      </div>
 
-            <ContextMenu.CheckboxItem
-              className="group text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
-              checked={bookmarksChecked}
-              onCheckedChange={setBookmarksChecked}
-            >
-              <ContextMenu.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
-                <CheckIcon />
-              </ContextMenu.ItemIndicator>
-              Show Bookmarks{" "}
-              <div className="ml-auto pl-5 text-mauve11 group-data-[highlighted]:text-white group-data-[disabled]:text-mauve8">
-                ⌘+B
-              </div>
-            </ContextMenu.CheckboxItem>
-            <ContextMenu.CheckboxItem
-              className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
-              checked={urlsChecked}
-              onCheckedChange={setUrlsChecked}
-            >
-              <ContextMenu.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
-                <CheckIcon />
-              </ContextMenu.ItemIndicator>
-              Show Full URLs
-            </ContextMenu.CheckboxItem>
-
-            <ContextMenu.Separator className="h-[1px] bg-violet6 m-[5px]" />
-
-            <ContextMenu.Label className="pl-[25px] text-xs leading-[25px] text-mauve11 dark:text-mauve8">
-              People
-            </ContextMenu.Label>
-            <ContextMenu.RadioGroup value={person} onValueChange={setPerson}>
-              <ContextMenu.RadioItem
-                className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
-                value="pedro"
-              >
-                <ContextMenu.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
-                  <DotFilledIcon />
-                </ContextMenu.ItemIndicator>
-                Pedro Duarte
-              </ContextMenu.RadioItem>
-              <ContextMenu.RadioItem
-                className="text-[13px] leading-none text-violet11 dark:text-violet3 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
-                value="colm"
-              >
-                <ContextMenu.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
-                  <DotFilledIcon />
-                </ContextMenu.ItemIndicator>
-                Colm Tuite
-              </ContextMenu.RadioItem>
-            </ContextMenu.RadioGroup>
-          </ContextMenu.Content>
-        </ContextMenu.Portal>
-      </ContextMenu.Root>
+      {rendering && (
+        <Dialog open={rendering}>
+          <DialogContentText id="render-dialog">
+            Rendering Image...
+          </DialogContentText>
+        </Dialog>
+      )}
+      {/* <div
+        id="stage-container"
+        ref={target}
+        className="flex items-center justify-center"
+        style={{
+          position: "fixed",
+          top: `calc(50% + ${shiftY}px)`,
+          left: `calc(50% + ${shiftX}px)`,
+          transform: `translate(-50%, -50%)`,
+          width: realNaturalWidth.current
+            ? `${windowWidth - (toolBarLength + layerBarLength)}px`
+            : "100%",
+          height: realNaturalHeight.current
+            ? `${windowHeight - topBarLength}px`
+            : "100%",
+        }}
+      >
+        <canvas
+          id="canvas"
+          ref={canvasRef}
+          className=""
+          style={{
+            display: "block",
+            position: "absolute",
+            width: realNaturalWidth.current
+              ? `${windowWidth - (toolBarLength + layerBarLength)}px`
+              : "100%",
+            height: realNaturalHeight.current
+              ? `${windowHeight - topBarLength}px`
+              : "100%",
+          }}
+        ></canvas>
+      </div> */}
     </div>
   );
 };

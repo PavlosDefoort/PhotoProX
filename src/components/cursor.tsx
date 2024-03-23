@@ -6,30 +6,30 @@ const AnimatedCursor = dynamic(() => import("react-animated-cursor"), {
 });
 
 const MyCursor = () => {
-  const [cursorColor, setCursorColor] = useState("255, 255, 255");
+  const [cursorColor, setCursorColor] = useState("0, 0, 0");
 
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      const { x, y } = event;
-      const element = document.elementFromPoint(x, y);
-      const computedStyle = getComputedStyle(element as Element);
-      const backgroundColor = computedStyle.backgroundColor;
-      console.log(backgroundColor);
+  // useEffect(() => {
+  //   const handleMouseMove = (event: MouseEvent) => {
+  //     const { x, y } = event;
+  //     const element = document.elementFromPoint(x, y);
+  //     const computedStyle = getComputedStyle(element as Element);
+  //     const backgroundColor = computedStyle.backgroundColor;
+  //     console.log(backgroundColor);
 
-      // Logic to determine the cursor color based on the background color
-      if (isDarkColor(backgroundColor)) {
-        setCursorColor("0, 0, 0"); // Black color for dark backgrounds
-      } else {
-        setCursorColor("255, 255, 255"); // White color for light backgrounds
-      }
-    };
+  //     // Logic to determine the cursor color based on the background color
+  //     if (isDarkColor(backgroundColor)) {
+  //       setCursorColor("0, 0, 0"); // Black color for dark backgrounds
+  //     } else {
+  //       setCursorColor("255, 255, 255"); // White color for light backgrounds
+  //     }
+  //   };
 
-    document.addEventListener("mousemove", handleMouseMove);
+  //   document.addEventListener("mousemove", handleMouseMove);
 
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
+  //   return () => {
+  //     document.removeEventListener("mousemove", handleMouseMove);
+  //   };
+  // }, []);
 
   // Function to check if a color is considered dark
   const isDarkColor = (color: string) => {

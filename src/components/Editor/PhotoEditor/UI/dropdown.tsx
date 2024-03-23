@@ -40,7 +40,9 @@ const DropDown: React.FC<DropDownProps> = ({
             className="w-24 dark:bg-navbarBackground bg-navbarBackground border-0 h-5 dark:hover:bg-buttonHover hover:bg-buttonHover"
             variant="outline"
           >
-            <span className="inline-block w-16 text-xs">{zoomValue}%</span>
+            <span className="inline-block w-16 text-xs">
+              {Math.round(Number(zoomValue) * 100)}%
+            </span>
             <ChevronDownIcon className="ml-0.5 w-6" />
           </Button>
         </DropdownMenuTrigger>
