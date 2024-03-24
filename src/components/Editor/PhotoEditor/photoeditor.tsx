@@ -748,6 +748,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   useEffect(() => {
     const app = appRef.current!;
+    console.log(darkMode);
 
     if (app) {
       if (darkMode) {
