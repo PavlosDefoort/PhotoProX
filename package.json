@@ -65,6 +65,7 @@
     "js-easing-functions": "^1.0.3",
     "lodash": "^4.17.21",
     "lucide-react": "^0.268.0",
+    "mafs": "^0.18.4",
     "mathjax": "^3.2.2",
     "mathjs": "^12.4.1",
     "mathlive": "^0.98.6",

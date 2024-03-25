@@ -13,6 +13,7 @@ import { Application, Program, Shader } from "pixi.js";
 import { toast } from "sonner";
 import { ErrorOutline } from "@mui/icons-material";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+import { Mafs, Plot, Coordinates, Theme } from "mafs";
 
 const DynamicLiveMath = dynamic(() => import("./LiveMath"), { ssr: false });
 
@@ -362,7 +363,7 @@ const DynamicPlot: React.FC<DynamicPlotProps> = ({ layer }) => {
 
       <div className="w-full border-t-2 mt-2 mb-2 border border-[#cdcdcd] dark:border-[#252525]"></div>
 
-      {/* <Mafs
+      <Mafs
         viewBox={{ x: [0, 1], y: [0, 1] }}
         pan={true}
         preserveAspectRatio={false}
@@ -388,7 +389,7 @@ const DynamicPlot: React.FC<DynamicPlotProps> = ({ layer }) => {
           minSamplingDepth={3}
           maxSamplingDepth={7}
         />
-      </Mafs> */}
+      </Mafs>
     </div>
   );
 };
