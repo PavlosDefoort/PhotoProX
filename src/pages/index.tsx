@@ -311,9 +311,11 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <button className="flex mx-auto mt-16 text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">
-            Get Started
-          </button>
+          <Link href={"/editor"}>
+            <button className="flex mx-auto mt-16 text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">
+              Get Started
+            </button>
+          </Link>
         </div>
       </section>
       <section className="text-gray-600 body-font">
@@ -376,54 +378,78 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="text-gray-600 body-font bg-gradient-to-r from-blue-200 to-cyan-50">
-        <div className="container px-5 py-24 mx-auto">
+      <section
+        className="text-slate-100 body-font bg-[#475569]"
+        style={{
+          backgroundImage: 'url("/github-mark.svg")',
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+        }}
+      >
+        <div className="z-50 container px-5 py-24 mx-auto">
           <div className="flex flex-col text-center w-full mb-20">
             <div className="flex flex-row justify-center items-center mb-4 space-x-3">
-              <h1 className="sm:text-3xl text-2xl font-medium title-font text-gray-900">
+              <h1 className="sm:text-3xl text-2xl font-medium title-font text-white">
                 Open Source Philosophy
               </h1>
-              <img src="/github-mark.svg" className="w-10 h-10"></img>
             </div>
 
-            <p className="lg:w-2/3 mx-auto leading-relaxed text-base">
-              PhotoProX is built on the principles of open source software. We
-              believe that software should be free and open to everyone.
-            </p>
-            <Link
-              href={"https://github.com/PavlosDefoort/PhotoProX"}
-              target="_blank"
-            >
-              <button className="flex mx-auto mt-16 text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">
-                Check out our GitHub
-              </button>
-            </Link>
-            <Link
-              href={"https://github.com/PavlosDefoort/PhotoProX"}
-              target="_blank"
-            >
-              <button className="flex mx-auto mt-16 text-white bg-blue-500 border-0 py-2 px-8 focus:outline-none hover:bg-blue-600 rounded text-lg">
-                Development Build
-              </button>
-            </Link>
+            <div className="mt-4 mb-16">
+              <p className="lg:w-2/3 mx-auto leading-relaxed text-base">
+                PhotoProX is built on the principles of open source software.
+              </p>
+              <Link
+                href={"https://github.com/PavlosDefoort/PhotoProX"}
+                target="_blank"
+              >
+                <button className="flex mx-auto mt-4 text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">
+                  Check out our GitHub
+                </button>
+              </Link>
+            </div>
+            <div className="mb-16">
+              <p className="lg:w-2/3 mx-auto leading-relaxed text-base">
+                If you have a feature request or a bug report, feel free to
+                submit an issue on our GitHub page.
+              </p>
+              <Link
+                href={"https://github.com/PavlosDefoort/PhotoProX/issues"}
+                target="_blank"
+              >
+                <button className="flex mx-auto mt-4 text-white bg-cyan-500 border-0 py-2 px-8 focus:outline-none hover:bg-cyan-600 rounded text-lg">
+                  Submit a Request
+                </button>
+              </Link>
+            </div>
+            <div className="">
+              <p className="lg:w-2/3 mx-auto leading-relaxed text-base">
+                The development build is available on Github. Feel free to check
+                out what we are working on before it is released!
+              </p>
+              <Link href={"https://photoprox-dev.vercel.app/"} target="_blank">
+                <button className="flex mx-auto mt-4 text-white bg-blue-500 border-0 py-2 px-8 focus:outline-none hover:bg-blue-600 rounded text-lg">
+                  Development Build
+                </button>
+              </Link>
+            </div>
           </div>
-          <div className="flex flex-wrap -m-4 text-center bg-slate-50">
+          <div className="flex flex-wrap -m-4 text-center bg-gray-800 ">
             <div className="p-4 md:w-1/4 sm:w-1/2 w-full ">
               <div className="border-2 border-gray-200 px-4 py-6 rounded-lg">
                 <svg
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
                   className="text-indigo-500 w-12 h-12 mb-3 inline-block"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 15 15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path d="M8 17l4 4 4-4m-4-5v9"></path>
-                  <path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"></path>
+                  <path
+                    d="M6.79286 1.20708L7.14642 1.56063L7.14642 1.56063L6.79286 1.20708ZM1.20708 6.79287L0.853524 6.43931H0.853524L1.20708 6.79287ZM1.20708 8.20708L1.56063 7.85352L1.56063 7.85352L1.20708 8.20708ZM6.79287 13.7929L6.43931 14.1464L6.79287 13.7929ZM8.20708 13.7929L7.85352 13.4393L8.20708 13.7929ZM13.7929 8.20708L14.1464 8.56063L13.7929 8.20708ZM13.7929 6.79286L13.4393 7.14642L13.7929 6.79286ZM8.20708 1.20708L8.56063 0.853524V0.853524L8.20708 1.20708ZM6.43931 0.853525L0.853524 6.43931L1.56063 7.14642L7.14642 1.56063L6.43931 0.853525ZM0.853525 8.56063L6.43931 14.1464L7.14642 13.4393L1.56063 7.85352L0.853525 8.56063ZM8.56063 14.1464L14.1464 8.56063L13.4393 7.85352L7.85352 13.4393L8.56063 14.1464ZM14.1464 6.43931L8.56063 0.853524L7.85352 1.56063L13.4393 7.14642L14.1464 6.43931ZM14.1464 8.56063C14.7322 7.97484 14.7322 7.0251 14.1464 6.43931L13.4393 7.14642C13.6346 7.34168 13.6346 7.65826 13.4393 7.85352L14.1464 8.56063ZM6.43931 14.1464C7.0251 14.7322 7.97485 14.7322 8.56063 14.1464L7.85352 13.4393C7.65826 13.6346 7.34168 13.6346 7.14642 13.4393L6.43931 14.1464ZM0.853524 6.43931C0.267737 7.0251 0.267739 7.97485 0.853525 8.56063L1.56063 7.85352C1.36537 7.65826 1.36537 7.34168 1.56063 7.14642L0.853524 6.43931ZM7.14642 1.56063C7.34168 1.36537 7.65826 1.36537 7.85352 1.56063L8.56063 0.853524C7.97484 0.267737 7.0251 0.267739 6.43931 0.853525L7.14642 1.56063ZM5.14642 2.85352L6.14642 3.85352L6.85352 3.14642L5.85352 2.14642L5.14642 2.85352ZM7.49997 4.99997C7.22383 4.99997 6.99997 4.77611 6.99997 4.49997H5.99997C5.99997 5.3284 6.67154 5.99997 7.49997 5.99997V4.99997ZM7.99997 4.49997C7.99997 4.77611 7.77611 4.99997 7.49997 4.99997V5.99997C8.3284 5.99997 8.99997 5.3284 8.99997 4.49997H7.99997ZM7.49997 3.99997C7.77611 3.99997 7.99997 4.22383 7.99997 4.49997H8.99997C8.99997 3.67154 8.3284 2.99997 7.49997 2.99997V3.99997ZM7.49997 2.99997C6.67154 2.99997 5.99997 3.67154 5.99997 4.49997H6.99997C6.99997 4.22383 7.22383 3.99997 7.49997 3.99997V2.99997ZM8.14642 5.85352L9.64642 7.35352L10.3535 6.64642L8.85352 5.14642L8.14642 5.85352ZM10.5 7.99997C10.2238 7.99997 9.99997 7.77611 9.99997 7.49997H8.99997C8.99997 8.3284 9.67154 8.99997 10.5 8.99997V7.99997ZM11 7.49997C11 7.77611 10.7761 7.99997 10.5 7.99997V8.99997C11.3284 8.99997 12 8.3284 12 7.49997H11ZM10.5 6.99997C10.7761 6.99997 11 7.22383 11 7.49997H12C12 6.67154 11.3284 5.99997 10.5 5.99997V6.99997ZM10.5 5.99997C9.67154 5.99997 8.99997 6.67154 8.99997 7.49997H9.99997C9.99997 7.22383 10.2238 6.99997 10.5 6.99997V5.99997ZM6.99997 5.49997V9.49997H7.99997V5.49997H6.99997ZM7.49997 11C7.22383 11 6.99997 10.7761 6.99997 10.5H5.99997C5.99997 11.3284 6.67154 12 7.49997 12V11ZM7.99997 10.5C7.99997 10.7761 7.77611 11 7.49997 11V12C8.3284 12 8.99997 11.3284 8.99997 10.5H7.99997ZM7.49997 9.99997C7.77611 9.99997 7.99997 10.2238 7.99997 10.5H8.99997C8.99997 9.67154 8.3284 8.99997 7.49997 8.99997V9.99997ZM7.49997 8.99997C6.67154 8.99997 5.99997 9.67154 5.99997 10.5H6.99997C6.99997 10.2238 7.22383 9.99997 7.49997 9.99997V8.99997Z"
+                    fill="rgb(99,102,241)"
+                  />
                 </svg>
-                <h2 className="title-font font-medium text-3xl text-gray-900">
-                  2.7K
+                <h2 className="title-font font-medium text-3xl text-white">
+                  70
                 </h2>
                 <p className="leading-relaxed">Commits</p>
               </div>
@@ -431,20 +457,23 @@ export default function Home() {
             <div className="p-4 md:w-1/4 sm:w-1/2 w-full">
               <div className="border-2 border-gray-200 px-4 py-6 rounded-lg">
                 <svg
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
                   className="text-indigo-500 w-12 h-12 mb-3 inline-block"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"></path>
+                  <path
+                    stroke="currentColor"
+                    stroke-width="2"
+                    d="M11.083 5.104c.35-.8 1.485-.8 1.834 0l1.752 4.022a1 1 0 0 0 .84.597l4.463.342c.9.069 1.255 1.2.556 1.771l-3.33 2.723a1 1 0 0 0-.337 1.016l1.03 4.119c.214.858-.71 1.552-1.474 1.106l-3.913-2.281a1 1 0 0 0-1.008 0L7.583 20.8c-.764.446-1.688-.248-1.474-1.106l1.03-4.119A1 1 0 0 0 6.8 14.56l-3.33-2.723c-.698-.571-.342-1.702.557-1.771l4.462-.342a1 1 0 0 0 .84-.597l1.753-4.022Z"
+                  />
                 </svg>
-                <h2 className="title-font font-medium text-3xl text-gray-900">
-                  1.3K
+
+                <h2 className="title-font font-medium text-3xl text-white">
+                  1
                 </h2>
                 <p className="leading-relaxed">Stars</p>
               </div>
@@ -452,38 +481,93 @@ export default function Home() {
             <div className="p-4 md:w-1/4 sm:w-1/2 w-full">
               <div className="border-2 border-gray-200 px-4 py-6 rounded-lg">
                 <svg
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
                   className="text-indigo-500 w-12 h-12 mb-3 inline-block"
-                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 256 256"
+                  id="git-fork"
                 >
-                  <path d="M3 18v-6a9 9 0 0118 0v6"></path>
-                  <path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"></path>
+                  <rect width="256" height="256" fill="none"></rect>
+                  <circle
+                    cx="128"
+                    cy="188"
+                    r="28"
+                    fill="none"
+                    stroke="rgb(99,102,241)"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="15"
+                  ></circle>
+                  <circle
+                    cx="188"
+                    cy="67.998"
+                    r="28"
+                    fill="none"
+                    stroke="rgb(99,102,241)"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="15"
+                  ></circle>
+                  <circle
+                    cx="68"
+                    cy="67.998"
+                    r="28"
+                    fill="none"
+                    stroke="rgb(99,102,241)"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="15"
+                  ></circle>
+                  <path
+                    fill="none"
+                    stroke="rgb(99,102,241)"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="15"
+                    d="M68,95.99756v8.002a24,24,0,0,0,24.00049,24l72-.00146a24,24,0,0,0,23.99951-24V95.99756"
+                  ></path>
+                  <line
+                    x1="128.002"
+                    x2="128"
+                    y1="128"
+                    y2="160"
+                    fill="rgb(99,102,241)"
+                    stroke="rgb(99,102,241)"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="15"
+                  ></line>
                 </svg>
-                <h2 className="title-font font-medium text-3xl text-gray-900">
-                  74
+                <h2 className="title-font font-medium text-3xl text-white">
+                  0
                 </h2>
-                <p className="leading-relaxed">Files</p>
+                <p className="leading-relaxed">Forks</p>
               </div>
             </div>
             <div className="p-4 md:w-1/4 sm:w-1/2 w-full">
               <div className="border-2 border-gray-200 px-4 py-6 rounded-lg">
                 <svg
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
                   className="text-indigo-500 w-12 h-12 mb-3 inline-block"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <path
+                    stroke="currentColor"
+                    stroke-width="2"
+                    d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"
+                  />
+                  <path
+                    stroke="currentColor"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                  />
                 </svg>
-                <h2 className="title-font font-medium text-3xl text-gray-900">
-                  46
+
+                <h2 className="title-font font-medium text-3xl text-white">
+                  1
                 </h2>
                 <p className="leading-relaxed">Watching</p>
               </div>
