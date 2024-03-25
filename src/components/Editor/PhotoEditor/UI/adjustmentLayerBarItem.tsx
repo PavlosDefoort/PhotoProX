@@ -46,7 +46,7 @@ import { ColorLens, FilterVintage, Waves } from "@mui/icons-material";
 import { AdjustmentFilter, AdvancedBloomFilter } from "pixi-filters";
 import { Application, ColorMatrixFilter } from "pixi.js";
 import LuminanceHistogram from "./histogram";
-// import BezierCurves from "./draggablegraph";
+import BezierCurves from "./draggablegraph";
 import DynamicPlot from "./dynamicplot";
 
 interface AdjustmentLayerBarItemProps {
@@ -773,8 +773,8 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
                   {/* <LuminanceHistogram
                       binEdges={bins}
                       frequencies={frequencies}
-                    /> */}
-                  {/* <BezierCurves histogramData={histogramData} /> */}
+                    />  */}
+                  <BezierCurves histogramData={histogramData} />
                 </div>
               </div>
             </div>

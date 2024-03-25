@@ -5,8 +5,8 @@
 @import "@radix-ui/colors/black-alpha.css";
 @import "@radix-ui/colors/mauve.css";
 @import "@radix-ui/colors/violet.css";
-/* @import "mafs/core.css"; */
-/* @import "katex/dist/katex.min.css"; */
+@import "mafs/core.css";
+@import "katex/dist/katex.min.css";
 
 @layer base {
   :root {
