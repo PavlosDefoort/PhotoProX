@@ -1,40 +1,21 @@
 import { ThemeContext } from "./themeprovider";
-import DarkModeIcon from "@mui/icons-material/DarkMode";
-import LightModeIcon from "@mui/icons-material/LightMode";
-import { Tooltip } from "@mui/material";
-import { useContext, useRef } from "react";
+import { useContext, useEffect } from "react";
 
 const DarkMode = () => {
-  const anchorRef = useRef(null);
-  const { darkMode, toggleDarkMode } = useContext(ThemeContext);
-  return (
-    <div className="animate-jump z-50 absolute top-2 right-12">
-      {/* {darkMode ? (
-        <Tooltip
-          title="See the Sun rise"
-          placement="bottom"
-          id="darktool"
-          ref={anchorRef}
-        >
-          <DarkModeIcon
-            onClick={toggleDarkMode}
-            className="text-white hover:animate-bounce"
-          />
-        </Tooltip>
-      ) : (
-        <Tooltip
-          title="Let the Moon fall"
-          placement="bottom"
-          ref={anchorRef}
-          id="lighttool"
-        >
-          <LightModeIcon
-            onClick={toggleDarkMode}
-            className="text-black hover:animate-bounce"
-          />
-        </Tooltip>
-      )} */}
-    </div>
-  );
+  const { darkMode } = useContext(ThemeContext);
+
+  useEffect(() => {
+    console.log(darkMode);
+    const favicon = document.querySelector(
+      'link[rel="icon"]'
+    ) as HTMLLinkElement;
+    console.log(favicon);
+    if (favicon) {
+      favicon.href = darkMode ? "/darkfavicon.ico" : "/favicon.ico";
+    }
+  }, [darkMode]);
+
+  return null; // This component doesn't render anything visible
 };
+
 export default DarkMode;

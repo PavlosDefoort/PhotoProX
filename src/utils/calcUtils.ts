@@ -1,4 +1,6 @@
+import { red } from "@mui/material/colors";
 import Decimal from "decimal.js";
+import { AnalysisData } from "./editorInterfaces";
 
 export function WidthRotate(
   width: number,
@@ -129,7 +131,6 @@ export function fitImageToScreen(
   const heightRatio = new Decimal(canvasHeight).dividedBy(newHeight).toNumber();
 
   const newScale = Decimal.min(widthRatio, heightRatio).toDecimalPlaces(2);
-  console.log("newScale", newScale.toNumber());
 
   return newScale.toNumber();
 }
@@ -146,3 +147,352 @@ export function fillImageToScreen(
 
   return Math.max(widthRatio, heightRatio);
 }
+
+export const calculateHueAngle = (red: number, green: number, blue: number) => {
+  const hueAngle = Math.atan2(
+    Math.sqrt(3) * (green - blue),
+    2 * red - green - blue
+  );
+
+  let hueDegrees = hueAngle * (180 / Math.PI);
+
+  // Round to the nearest whole number
+  hueDegrees = Math.round(hueDegrees);
+
+  return -hueDegrees;
+};
+
+/**
+ * Calculates the relative luminance of a color based on its RGB values.
+ * @param red - The red component of the color (0-255).
+ * @param green - The green component of the color (0-255).
+ * @param blue - The blue component of the color (0-255).
+ * @returns The relative luminance of the color.
+ */
+const calculateRelativeLuminance = (
+  red: number,
+  green: number,
+  blue: number
+) => {
+  const relativeLuminance = 0.3 * red + 0.59 * green + 0.11 * blue;
+  return relativeLuminance;
+};
+
+export function takeSamples(
+  arr: Uint8Array,
+  sampleSize: number
+): [number[], number[]] {
+  // Sort the luminance values
+  const sortedArr = sortIntensityArray(arr);
+
+  // Find the minimum and maximum values
+  const min = sortedArr[0];
+  const max = sortedArr[arr.length - 1];
+
+  // Calculate the bin width
+  const binWidth = (max - min) / sampleSize;
+
+  // Initialize arrays to store bin edges and frequencies
+  const binEdges: number[] = [];
+  const frequencies: number[] = [];
+
+  // Initialize variables to track current bin
+  let currentBinStart = min;
+  let currentBinEnd = min + binWidth;
+  let currentFrequency = 0;
+
+  // Iterate through sorted luminance values
+  for (const value of sortedArr) {
+    // If the value is within the current bin, increment frequency
+    if (value >= currentBinStart && value < currentBinEnd) {
+      currentFrequency++;
+    } else {
+      // If the value is outside the current bin, store the bin edge and frequency,
+      // and move to the next bin
+      binEdges.push(currentBinStart);
+      frequencies.push(currentFrequency);
+
+      currentBinStart = currentBinEnd;
+      currentBinEnd += binWidth;
+      currentFrequency = 1; // Start counting frequency for new bin
+    }
+  }
+
+  // Store the last bin edge and frequency
+  binEdges.push(currentBinStart);
+  frequencies.push(currentFrequency);
+
+  // Convert the bin edges and frequencies to Uint8Arrays
+
+  return [binEdges, frequencies];
+}
+
+export function takeMultipleSamples(
+  analysis: AnalysisData,
+  sampleSize: number,
+  properties: (keyof AnalysisData)[]
+): Record<string, [number[], number[]]> {
+  const samples: Record<string, [number[], number[]]> = {};
+
+  properties.forEach((property) => {
+    samples[property] = takeSamples(analysis[property], sampleSize);
+  });
+
+  return samples;
+}
+
+export function convertFloat32ArrayToNumberArray(
+  float32Array: Float32Array
+): number[] {
+  // Convert the Float32Array to a regular array of numbers
+  const numberArray = Array.from(float32Array);
+
+  // Convert each number to an integer using Math.floor()
+  return numberArray.map((num) => Math.floor(num));
+}
+
+/**
+ * Sorts the luminance array from lowest to highest using Merge Sort algorithm.
+ *
+ * @param luminanceValues - The array of luminance values.
+ * @returns The sorted array of luminance values.
+ */
+export function sortIntensityArray(luminanceValues: Uint8Array): Uint8Array {
+  mergeSort(luminanceValues, 0, luminanceValues.length - 1);
+  return luminanceValues;
+}
+
+function mergeSort(arr: Uint8Array, left: number, right: number) {
+  if (left >= right) return;
+
+  const mid = left + Math.floor((right - left) / 2);
+
+  // Use insertion sort for small subarrays
+  if (right - left <= 10) {
+    insertionSort(arr, left, right);
+    return;
+  }
+
+  mergeSort(arr, left, mid);
+  mergeSort(arr, mid + 1, right);
+
+  merge(arr, left, mid, right);
+}
+
+function merge(arr: Uint8Array, left: number, mid: number, right: number) {
+  const temp = new Uint8Array(right - left + 1);
+  let i = left,
+    j = mid + 1,
+    k = 0;
+
+  while (i <= mid && j <= right) {
+    if (arr[i] <= arr[j]) {
+      temp[k++] = arr[i++];
+    } else {
+      temp[k++] = arr[j++];
+    }
+  }
+
+  while (i <= mid) {
+    temp[k++] = arr[i++];
+  }
+
+  while (j <= right) {
+    temp[k++] = arr[j++];
+  }
+
+  for (let l = 0; l < temp.length; l++) {
+    arr[left + l] = temp[l];
+  }
+}
+
+function insertionSort(arr: Uint8Array, left: number, right: number) {
+  for (let i = left + 1; i <= right; i++) {
+    const key = arr[i];
+    let j = i - 1;
+
+    while (j >= left && arr[j] > key) {
+      arr[j + 1] = arr[j];
+      j--;
+    }
+
+    arr[j + 1] = key;
+  }
+}
+
+/**
+ * Analyzes the luminance values of an image.
+ *
+ * @param imageData - The image data as a Uint8Array.
+ * @returns An array of luminance values.
+ */
+export const analyseImageLuminance = (imageData: Uint8Array) => {
+  const luminanceValues = new Float32Array(imageData.length / 4);
+  let luminanceIndex = 0;
+
+  for (let i = 0; i < imageData.length; i += 16) {
+    const red1 = imageData[i];
+    const green1 = imageData[i + 1];
+    const blue1 = imageData[i + 2];
+    const luminance1 = calculateRelativeLuminance(red1, green1, blue1);
+    luminanceValues[luminanceIndex++] = luminance1;
+
+    const red2 = imageData[i + 4];
+    const green2 = imageData[i + 5];
+    const blue2 = imageData[i + 6];
+    const luminance2 = calculateRelativeLuminance(red2, green2, blue2);
+    luminanceValues[luminanceIndex++] = luminance2;
+
+    const red3 = imageData[i + 8];
+    const green3 = imageData[i + 9];
+    const blue3 = imageData[i + 10];
+    const luminance3 = calculateRelativeLuminance(red3, green3, blue3);
+    luminanceValues[luminanceIndex++] = luminance3;
+
+    const red4 = imageData[i + 12];
+    const green4 = imageData[i + 13];
+    const blue4 = imageData[i + 14];
+    const luminance4 = calculateRelativeLuminance(red4, green4, blue4);
+    luminanceValues[luminanceIndex++] = luminance4;
+  }
+
+  return luminanceValues;
+};
+
+export const analyseImageRedIntensities = (imageData: Uint8Array) => {
+  const redIntensities = new Float32Array(imageData.length / 4);
+  let redIndex = 0;
+
+  for (let i = 0; i < imageData.length; i += 16) {
+    const red1 = imageData[i];
+    redIntensities[redIndex++] = red1;
+
+    const red2 = imageData[i + 4];
+    redIntensities[redIndex++] = red2;
+
+    const red3 = imageData[i + 8];
+    redIntensities[redIndex++] = red3;
+
+    const red4 = imageData[i + 12];
+    redIntensities[redIndex++] = red4;
+  }
+
+  return redIntensities;
+};
+
+export const analyseImageGreenIntensities = (imageData: Uint8Array) => {
+  const greenIntensities = new Float32Array(imageData.length / 4);
+  let greenIndex = 0;
+
+  for (let i = 0; i < imageData.length; i += 16) {
+    const green1 = imageData[i + 1];
+    greenIntensities[greenIndex++] = green1;
+
+    const green2 = imageData[i + 5];
+    greenIntensities[greenIndex++] = green2;
+
+    const green3 = imageData[i + 9];
+    greenIntensities[greenIndex++] = green3;
+
+    const green4 = imageData[i + 13];
+    greenIntensities[greenIndex++] = green4;
+  }
+
+  return greenIntensities;
+};
+
+export const analyseEverything = (imageData: Uint8Array) => {
+  const numPixels = imageData.length / 4;
+
+  // Choosing to use a Uint8Array for the result to save memory, and since the bins will be integers
+  const result = {
+    luminance: new Uint8Array(numPixels),
+    red: new Uint8Array(numPixels),
+    green: new Uint8Array(numPixels),
+    blue: new Uint8Array(numPixels),
+    alpha: new Uint8Array(numPixels),
+  };
+
+  let resultIndex = 0;
+
+  for (let i = 0; i < imageData.length; i += 4) {
+    const red = imageData[i];
+    const green = imageData[i + 1];
+    const blue = imageData[i + 2];
+    const alpha = imageData[i + 3];
+
+    const relativeLuminance = 0.3 * red + 0.59 * green + 0.11 * blue;
+
+    result.red[resultIndex] = red;
+    result.green[resultIndex] = green;
+    result.blue[resultIndex] = blue;
+    result.alpha[resultIndex] = alpha;
+    result.luminance[resultIndex] = relativeLuminance;
+
+    resultIndex++;
+  }
+
+  return result;
+};
+
+export const analyseImageBlueIntensities = (imageData: Uint8Array) => {
+  const blueIntensities = new Float32Array(imageData.length / 4);
+  let blueIndex = 0;
+
+  for (let i = 0; i < imageData.length; i += 16) {
+    const blue1 = imageData[i + 2];
+    blueIntensities[blueIndex++] = blue1;
+
+    const blue2 = imageData[i + 6];
+    blueIntensities[blueIndex++] = blue2;
+
+    const blue3 = imageData[i + 10];
+    blueIntensities[blueIndex++] = blue3;
+
+    const blue4 = imageData[i + 14];
+    blueIntensities[blueIndex++] = blue4;
+  }
+
+  return blueIntensities;
+};
+
+export const analyseAlphaValues = (imageData: Uint8Array) => {
+  const alphaValues = new Float32Array(imageData.length / 4);
+  let alphaIndex = 0;
+
+  for (let i = 3; i < imageData.length; i += 16) {
+    const alpha1 = imageData[i];
+    alphaValues[alphaIndex++] = alpha1;
+
+    const alpha2 = imageData[i + 4];
+    alphaValues[alphaIndex++] = alpha2;
+
+    const alpha3 = imageData[i + 8];
+    alphaValues[alphaIndex++] = alpha3;
+
+    const alpha4 = imageData[i + 12];
+    alphaValues[alphaIndex++] = alpha4;
+  }
+  console.log("alphaValues", alphaValues);
+
+  return alphaValues;
+};
+
+export const combineIntensity = (imageData: Uint8Array) => {
+  // Create a red, green, and blue intensity array
+  const redIntensities = analyseImageRedIntensities(imageData);
+  const greenIntensities = analyseImageGreenIntensities(imageData);
+  const blueIntensities = analyseImageBlueIntensities(imageData);
+
+  // Combine the red, green, and blue intensity arrays into a single array
+  const combinedIntensities = new Float32Array(redIntensities.length * 3);
+  let combinedIndex = 0;
+  for (let i = 0; i < redIntensities.length; i++) {
+    combinedIntensities[combinedIndex++] = redIntensities[i];
+    combinedIntensities[combinedIndex++] = greenIntensities[i];
+    combinedIntensities[combinedIndex++] = blueIntensities[i];
+  }
+  // Sort the combined intensity array
+
+  return combinedIntensities;
+};

@@ -7,7 +7,8 @@ import { useState, useEffect, useContext, createContext } from "react";
 import { Poppins } from "next/font/google";
 import { create, toNumber } from "lodash";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Project } from "@/utils/interfaces";
+import { Project } from "@/utils/editorInterfaces";
+import { DraftFunction, useImmer } from "use-immer";
 
 import {
   EditingParameters,
@@ -16,10 +17,12 @@ import {
   ImageLayer,
   ProjectSettings,
   initialEditingParameters,
-} from "@/utils/interfaces";
+} from "@/utils/editorInterfaces";
 import { TYPES, SCALE_MODES, Sprite } from "pixi.js";
 import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "../../app/authcontext";
+import { uploadLayer } from "../../app/firebase";
+import { Draft } from "immer";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -116,7 +119,8 @@ export default function Editor({}) {
     },
   };
 
-  const [project, setProject] = useState<Project>(new Project());
+  const [project, setProject] = useImmer<Project>(new Project());
+  const [trigger, setTrigger] = useState(false);
 
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
 
@@ -180,6 +184,10 @@ export default function Editor({}) {
     return splitName.join(".");
   };
 
+  useEffect(() => {
+    console.log(project.layerManager.layers);
+  }, [project.layerManager.layers]);
+
   const handleImageSet = (
     selectedImage: HTMLImageElement | string | ArrayBuffer | null,
     natWidth: number,
@@ -199,13 +207,39 @@ export default function Editor({}) {
         imageHeight: realHit,
         imageWidth: realWit,
       };
-      project.changeCanvasDimensions(realWit, realHit, setProject);
+      console.log(realWit, realHit, "realWit, realHit");
+
       try {
-        project
-          .createLayer(imageData, file, project.id, user?.uid!)
-          .then((layer: ImageLayer) => {
-            project.addLayer(layer, setProject);
-          });
+        const layer = project.layerManager.createLayer(
+          realWit,
+          realHit,
+          imageData,
+          file,
+          project.id,
+          user?.uid!
+        );
+        setProject((draft) => {
+          draft.settings.canvasSettings.width = realWit;
+          draft.settings.canvasSettings.height = realHit;
+
+          const imageLayer: ImageLayer = {
+            id: layer.id,
+            imageData: layer.imageData,
+            zIndex: layer.zIndex,
+            editingParameters: layer.editingParameters,
+            sprite: layer.sprite,
+            visible: layer.visible,
+            type: "image", // Add the 'type' property with the value 'image'
+          };
+
+          draft.layerManager.addLayer(imageLayer);
+          console.log(draft.layerManager.layers, "draft.layerManager.layers");
+          const targetLayer = draft.layerManager.findLayer(layer.id);
+          if (targetLayer) {
+            draft.target = targetLayer as Draft<ImageLayer>;
+          }
+        });
+
         // Now you can use the 'newLayer' object after it's resolved
       } catch (error) {
         // Handle any errors that may occur during the async operation
@@ -222,6 +256,7 @@ export default function Editor({}) {
     const newName = removeExtension(fileName);
     setFileName(newName);
     setFileSize(toNumber((fileSize / 1024 / 1024).toFixed(2)));
+    uploadLayer(file, project.id, user?.uid!);
   };
 
   const previousAgreement = () => {
@@ -235,7 +270,7 @@ export default function Editor({}) {
 
   return (
     <main
-      className={` bg-[#cdcdcd] dark:bg-[#252525] min-h-screen ${poppins.className}`}
+      className={` bg-[#cdcdcd] dark:bg-[#252525] h-screen max-h-screen ${poppins.className}`}
     >
       <ThemeProvider theme={theme}>
         {!agree && possibleImage && open && (
@@ -247,7 +282,9 @@ export default function Editor({}) {
         )}
 
         {!image && <ImageSelector onImageSelect={handleImageSet} />}
-        <ProjectContext.Provider value={{ project, setProject }}>
+        <ProjectContext.Provider
+          value={{ project, setProject, trigger, setTrigger }}
+        >
           <PhotoEditor
             imageData={image}
             fileName={fileName}
@@ -261,11 +298,20 @@ export default function Editor({}) {
 
 interface ProjectContextValue {
   project: Project;
-  setProject: React.Dispatch<React.SetStateAction<Project>>;
+  setProject: (arg: Project | DraftFunction<Project>) => void;
+  trigger: boolean;
+  setTrigger: (value: boolean) => void;
 }
+
 export const ProjectContext = createContext<ProjectContextValue>({
   project: new Project(),
-  setProject: () => {},
+  setProject: (arg: Project | DraftFunction<Project>) => {
+    // Add your implementation here
+  },
+  trigger: false,
+  setTrigger: (value: boolean) => {
+    // Add your implementation here
+  },
 });
 
 export function useProjectContext() {

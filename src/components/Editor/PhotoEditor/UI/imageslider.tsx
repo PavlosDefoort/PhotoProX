@@ -43,9 +43,17 @@ const CarouselDemo: React.FC<CarouselDemoProps> = ({
               {image.name}
             </p>
             <div className="p-1">
-              <Card className="">
-                <CardContent className="flex aspect-square items-center justify-center p-6">
-                  <img src={image.url} alt={`Image ${index + 1}`} />
+              <Card>
+                <CardContent className="flex aspect-square items-center justify-center p-1">
+                  <img
+                    src={image.url}
+                    alt={`Image ${index + 1}`}
+                    style={{
+                      objectFit: "contain",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  />
                 </CardContent>
               </Card>
             </div>

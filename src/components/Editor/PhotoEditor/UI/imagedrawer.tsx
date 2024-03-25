@@ -111,7 +111,7 @@ const DrawerDemo: React.FC<DrawerProps> = ({ open, setOpen }) => {
         setPhotos(sortedPhotos);
       });
     }
-  }, [user, project]);
+  }, [user]);
 
   function onClick(adjustment: number) {
     setGoal(Math.max(200, Math.min(400, goal + adjustment)));
@@ -139,22 +139,22 @@ const DrawerDemo: React.FC<DrawerProps> = ({ open, setOpen }) => {
 
       // Get the dimensions of the image
       const dimensions = await getImageDimensions(file);
-      project
-        .createLayer(
-          {
-            src: dimensions.source,
-            imageWidth: dimensions.width,
-            imageHeight: dimensions.height,
-            name: file.name,
-          },
-          file,
-          project.id,
-          user?.uid!,
-          true
-        )
-        .then((layer) => {
-          project.addLayer(layer, setProject);
-        });
+      // project
+      //   .createLayer(
+      //     {
+      //       src: dimensions.source,
+      //       imageWidth: dimensions.width,
+      //       imageHeight: dimensions.height,
+      //       name: file.name,
+      //     },
+      //     file,
+      //     project.id,
+      //     user?.uid!,
+      //     true
+      //   )
+      //   .then((layer) => {
+      //     project.addLayer(layer, setProject);
+      //   });
 
       // Now you can use dimensions to create your layer
     } catch (error) {
@@ -200,7 +200,7 @@ const DrawerDemo: React.FC<DrawerProps> = ({ open, setOpen }) => {
         <Button variant="outline">Open Drawer</Button>
       </DrawerTrigger> */}
       <DrawerContent className={`${poppins.className}`}>
-        <div className="mx-auto w-full max-w-sm">
+        <div className="mx-auto w-full max-w-sm max-h-screen">
           <DrawerHeader>
             <DrawerTitle className="dark:text-white">Images</DrawerTitle>
             <DrawerDescription className="dark:text-slate-100">

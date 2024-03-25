@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import * as PIXI from "pixi.js";
 import {
   Application,
@@ -19,13 +19,24 @@ import {
   FederatedPointerEvent,
 } from "pixi.js";
 import { WidthRotate, HeightRotate } from "@/utils/calcUtils";
+import { throttle } from "lodash";
 // ... (import other necessary dependencies)
 
 import { AdjustmentFilter } from "pixi-filters";
-import { InteractionEvents, Stage } from "@pixi/react";
+import { InteractionEvents, Stage, render } from "@pixi/react";
 import { on } from "events";
-import { Project } from "@/utils/interfaces";
+import {
+  AdjustmentLayer,
+  ImageLayer,
+  LayerX,
+  Project,
+  SpriteX,
+} from "@/utils/editorInterfaces";
 import { useProjectContext } from "@/pages/editor";
+import { set } from "lodash";
+import { Draft } from "immer";
+import LayerBar from "./UI/layerbar";
+import { analyseImageLuminance } from "@/utils/calcUtils";
 
 interface ImageProperties {
   contrast: { value: number; multiply: boolean; enabled?: boolean };
@@ -72,6 +83,10 @@ interface ApplyCanvasProps {
   scaleX: number;
   scaleY: number;
   spriteRefs: React.MutableRefObject<Sprite[]>;
+  setPositionX: React.Dispatch<React.SetStateAction<number>>;
+  setPositionY: React.Dispatch<React.SetStateAction<number>>;
+  trigger: boolean;
+  showTransform: boolean;
 }
 
 const ApplyCanvas = ({
@@ -97,11 +112,161 @@ const ApplyCanvas = ({
   scaleX,
   scaleY,
   spriteRefs,
+  setPositionX,
+  setPositionY,
+  trigger,
+  showTransform,
 }: ApplyCanvasProps): void => {
   // Create container if needed
 
   // Create mask if needed
   const { project, setProject } = useProjectContext();
+  const throttledSetProject = throttle(setProject, 100); // Adjust the delay as needed
+  const throttledSetPositionX = throttle(setPositionX, 10);
+  const throttledSetPositionY = throttle(setPositionY, 10);
+
+  const renderLayer = useCallback(
+    (layer: LayerX, container: Container, layers: LayerX[]) => {
+      if (layer.type === "adjustment") {
+        // Create adjustment container with mask
+        const adjustmentLayer = layer as AdjustmentLayer;
+        const adjustmentContainer = adjustmentLayer.container;
+        adjustmentContainer.zIndex = layer.zIndex;
+        adjustmentContainer.width = realNaturalWidth.current;
+        adjustmentContainer.height = realNaturalHeight.current;
+
+        // Place the adjustment layer in the center of the canvas
+        adjustmentContainer.pivot.set(
+          realNaturalWidth.current / 2,
+          realNaturalHeight.current / 2
+        );
+        adjustmentContainer.position.set(
+          realNaturalWidth.current / 2,
+          realNaturalHeight.current / 2
+        );
+
+        // Iterate through filters and set the enabled property to the visibility prop of the layer
+        adjustmentContainer.filters?.forEach((filter) => {
+          filter.enabled = adjustmentLayer.visible;
+        });
+
+        container.addChild(adjustmentContainer); // Add adjustment container to parent container
+        // Get layers with lower z-index values
+        const lowerZIndexLayers = layers.filter(
+          (l) => l.zIndex < adjustmentLayer.zIndex
+        );
+
+        // Render lower z-index layers within adjustment container
+        lowerZIndexLayers.forEach((lowerLayer) => {
+          renderLayer(lowerLayer, adjustmentContainer, layers);
+        });
+      } else if (layer.type === "image") {
+        // Create image sprite
+        const imageLayer = layer as ImageLayer;
+        const imageSprite = imageLayer.sprite;
+        // Pivot is the position of rotation, relative to the origin
+        // Anchor is the set position of the origin (default is 0.5) which is the middle
+        imageSprite.visible = imageLayer.visible;
+
+        container.addChild(imageSprite); // Add image sprite to parent container
+        imageSprite.cursor = "pointer";
+        imageSprite.eventMode = "static";
+
+        imageSprite.zIndex = layer.zIndex;
+        const previousOpacity = imageSprite.alpha;
+
+        let dragTarget: Sprite | null = null;
+        let dragOffset: PIXI.IPointData = { x: 0, y: 0 };
+        imageSprite.on("pointerup", (event: FederatedPointerEvent) =>
+          onDragEnd(event)
+        );
+
+        imageSprite.on("pointerupoutside", (event: FederatedPointerEvent) =>
+          onDragEnd(event)
+        );
+
+        imageSprite.on("pointerdown", (event: FederatedPointerEvent) => {
+          onDragStart(event);
+        });
+
+        const onDragMove = (event: FederatedPointerEvent) => {
+          if (dragTarget && dragOffset) {
+            const displacement = {
+              x: event.getLocalPosition(dragTarget.parent).x - dragOffset.x,
+              y: event.getLocalPosition(dragTarget.parent).y - dragOffset.y,
+            };
+
+            dragTarget.x = event.getLocalPosition(dragTarget.parent).x;
+            dragTarget.y = event.getLocalPosition(dragTarget.parent).y;
+
+            dragOffset = event.getLocalPosition(dragTarget.parent);
+
+            // Update position values or trigger any relevant updates
+            throttledSetPositionX(dragTarget.x);
+            throttledSetPositionY(dragTarget.y);
+          }
+        };
+
+        const onDragStart = (event: FederatedPointerEvent) => {
+          imageSprite.alpha = 0.75;
+
+          dragTarget = imageSprite as SpriteX;
+          dragTarget.cursor = "grabbing";
+
+          // Get the position of the pointer relative to the parent container
+          dragOffset = event.getLocalPosition(dragTarget.parent);
+
+          if (appRef.current) {
+            appRef.current.stage.on(
+              "pointermove",
+              (event: FederatedPointerEvent) => onDragMove(event)
+            );
+          }
+        };
+
+        const onDragEnd = (event: FederatedPointerEvent) => {
+          if (dragTarget) {
+            if (appRef.current) {
+              appRef.current.stage.off(
+                "pointermove",
+                (event: FederatedPointerEvent) => onDragMove(event)
+              );
+            }
+            dragTarget.alpha = previousOpacity;
+            dragTarget.cursor = "grab";
+
+            dragTarget = null;
+          }
+        };
+      }
+      // Other cases like "group" can be handled similarly
+    },
+    [
+      realNaturalWidth,
+      realNaturalHeight,
+      appRef,
+      throttledSetPositionX,
+      throttledSetPositionY,
+    ]
+  );
+
+  const renderLayers = useMemo(
+    () =>
+      throttle((layers: LayerX[], container: Container) => {
+        layers.forEach((layer) => {
+          if (layer.type === "group" && layer.children) {
+            // If it's a group layer, recursively render its children
+            const groupContainer = new Container();
+            container.addChild(groupContainer); // Add group container to parent container
+            renderLayers(layer.children, groupContainer);
+          } else {
+            // Render individual layers
+            renderLayer(layer, container, layers);
+          }
+        });
+      }, 100),
+    [renderLayer]
+  );
 
   useEffect(() => {
     const createContainerIfNeeded = () => {
@@ -111,7 +276,6 @@ const ApplyCanvas = ({
         realNaturalWidth.current > 1 &&
         realNaturalHeight.current > 1
       ) {
-        console.log("Creating container", realNaturalWidth.current);
         containerRef.current = new Container();
         containerRef.current.width = realNaturalWidth.current;
         containerRef.current.height = realNaturalHeight.current;
@@ -120,7 +284,7 @@ const ApplyCanvas = ({
           realNaturalHeight.current / 2
         );
         const background = new Graphics();
-        const squareSize = 20;
+        const squareSize = 5;
         const numRows = Math.floor(realNaturalHeight.current / squareSize);
         const numCols = Math.floor(realNaturalWidth.current / squareSize);
         const colors = [0xffffff, 0xe5e5e5]; // Colors for the checkerboard pattern
@@ -128,13 +292,10 @@ const ApplyCanvas = ({
         for (let row = 0; row < numRows; row++) {
           for (let col = 0; col < numCols; col++) {
             const color = colors[(row + col) % 2];
+            const x = Math.ceil(col * squareSize); // Round to integer
+            const y = Math.ceil(row * squareSize); // Round to integer
             background.beginFill(color);
-            background.drawRect(
-              col * squareSize,
-              row * squareSize,
-              squareSize,
-              squareSize
-            );
+            background.drawRect(x, y, squareSize, squareSize);
             background.endFill();
           }
         }
@@ -178,6 +339,7 @@ const ApplyCanvas = ({
       } else {
         backgroundColor = 0xcdcdcd;
       }
+
       appRef.current = new Application({
         view: canvasRef.current,
         width: canvasWidth,
@@ -207,7 +369,6 @@ const ApplyCanvas = ({
     // app.stage.removeChildren();
     // Check if there's a container
     if (!containerRef.current) {
-      console.log("Creating container");
       createContainerIfNeeded();
     }
     // Check if there's a mask
@@ -221,98 +382,28 @@ const ApplyCanvas = ({
     // Add container to project
 
     const mask = maskRef.current;
-    let dragTarget: Sprite | null = null;
-    let dragOffset: PIXI.Point | null = null; // Store the initial offset when dragging starts
 
-    if (container && mask && project.layers.length > 0) {
+    if (container && mask && project.layerManager.layers.length > 0) {
       container.position.set(canvasWidth / 2 + fakeX, canvasHeight / 2 + fakeY);
+      container.sortableChildren = true;
       container.scale.set(zoomValue * scaleX, zoomValue * scaleY);
-      //Only show layers that are visible
-      // const visibleLayers = project.layers.filter((layer) => layer.visible);
-      const layers = project.layers;
+      app.stage.eventMode = "static";
+      // Render the layers :) WOOHOO
 
-      layers.forEach((layer) => {
-        // Add the layer to container if it's not there
-        console.log(layer.sprite.visible);
-        app.stage.eventMode = "static";
-        app.stage.on("pointerup", (event: FederatedPointerEvent) =>
-          onDragEnd(event)
-        );
-        app.stage.on("pointerupoutside", (event: FederatedPointerEvent) =>
-          onDragEnd(event)
-        );
-
-        layer.sprite.zIndex = layer.zIndex;
-        layer.sprite.rotation = rotateValue * (Math.PI / 180);
-        layer.sprite.eventMode = "static";
-        layer.sprite.cursor = "grab";
-        layer.sprite.visible = layer.visible;
-
-        layer.sprite.calculateVertices();
-        console.log(layer.sprite.getVertexData());
-
-        layer.sprite.on("pointerdown", (event: FederatedPointerEvent) => {
-          project.target = layer;
-
-          onDragStart(event);
-        });
-
-        const onDragMove = (event: FederatedPointerEvent) => {
-          if (dragTarget && dragOffset) {
-            const newPosition = event.global.clone();
-            // Account for zoom
-            const zoomAdjustedDeltaX =
-              (newPosition.x - dragOffset.x) / zoomValue;
-            console.log(zoomAdjustedDeltaX);
-            const zoomAdjustedDeltaY =
-              (newPosition.y - dragOffset.y) / zoomValue;
-
-            // Update the drag target's position
-            dragTarget.position.set(
-              dragTarget.x + zoomAdjustedDeltaX,
-              dragTarget.y + zoomAdjustedDeltaY
-            );
-            dragOffset = newPosition;
-          }
-        };
-        const onDragStart = (event: FederatedPointerEvent) => {
-          layer.sprite.alpha = 0.75;
-
-          dragTarget = layer.sprite;
-          dragTarget.cursor = "grabbing";
-
-          dragOffset = event.global.clone(); // Store the initial offset
-
-          app.stage.on("pointermove", (event: FederatedPointerEvent) =>
-            onDragMove(event)
-          );
-        };
-
-        const onDragEnd = (event: FederatedPointerEvent) => {
-          if (dragTarget) {
-            app.stage.off("pointermove", (event: FederatedPointerEvent) =>
-              onDragMove(event)
-            );
-            dragTarget.alpha = 1;
-            dragTarget.cursor = "grab";
-            dragTarget = null;
-          }
-        };
-
-        if (
-          !container.children.find(
-            (child) => child.name === layer.id && child.visible
-          )
-        ) {
-          console.log(container.children);
-          container.addChild(layer.sprite);
-        }
-      });
+      renderLayers(project.layerManager.layers, container);
 
       return () => {
         app.stage.removeAllListeners();
-        layers.forEach((layer) => {
-          layer.sprite.removeAllListeners();
+        project.layerManager.layers.forEach((layer) => {
+          if (layer.type === "image") {
+            const imageLayer = layer as ImageLayer;
+            const imageSprite = imageLayer.sprite;
+            imageSprite.removeAllListeners();
+          } else if (layer.type === "adjustment") {
+            const adjustmentLayer = layer as AdjustmentLayer;
+            const adjustmentContainer = adjustmentLayer.container;
+            adjustmentContainer.removeAllListeners();
+          }
         });
       };
       // container.addChild(mask);
@@ -321,7 +412,7 @@ const ApplyCanvas = ({
     }
   }, [
     project,
-    setProject,
+    showTransform,
     spriteRefs,
     imgSrc,
     zoomValue,
@@ -344,6 +435,9 @@ const ApplyCanvas = ({
     scaleYSign,
     scaleX,
     scaleY,
+    setProject,
+    project.target,
+    trigger,
   ]);
 };
 

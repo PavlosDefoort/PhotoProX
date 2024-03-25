@@ -10,12 +10,8 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Test from "@/pages/test";
@@ -26,7 +22,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -44,7 +39,7 @@ import { debounce } from "lodash";
 import { fitImageToScreen, clamp, fillImageToScreen } from "@/utils/calcUtils";
 import { Poppins } from "next/font/google";
 import { app } from "../../../../../app/firebase";
-import { MySprite } from "@/utils/interfaces";
+import { ImageLayer, SpriteX } from "@/utils/editorInterfaces";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -112,7 +107,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
   const [minZoom, setMinZoom] = useState(1);
   const [maxZoom, setMaxZoom] = useState(1);
   const [initialized, setInitialized] = useState(false);
-  const [newLayers, setNewLayers] = useState(project.layers);
+  const [newLayers, setNewLayers] = useState(project.layerManager.layers);
   const [appWidth, setAppWidth] = useState(1600);
   const [appHeight, setAppHeight] = useState(800);
 
@@ -131,19 +126,19 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
     project.settings.canvasSettings.height,
   ]);
 
-  useEffect(() => {
-    if (showResize) {
-      const visibleLayers = project.layers.filter((layer) => layer.visible);
-      const layers = visibleLayers;
-      // Create new instances of the same sprites
-      layers.forEach((layer) => {
-        const sprite = MySprite.from(layer.sprite.texture);
-        layer.sprite = sprite;
-        layer.sprite.name = layer.id;
-      });
-      setNewLayers(layers);
-    }
-  }, [showResize, project.layers]);
+  // useEffect(() => {
+  //   if (showResize) {
+  //     const visibleLayers = project.layerManager.layers.filter((layer) => layer.visible);
+  //     const layers = visibleLayers;
+  //     // Create new instances of the same sprites
+  //     layers.forEach((layer) => {
+  //       const sprite = SpriteX.from(layer.sprite.texture);
+  //       layer.sprite = sprite;
+  //       layer.sprite.name = layer.id;
+  //     });
+  //     setNewLayers(layers);
+  //   }
+  // }, [showResize, project.layers]);
 
   useEffect(() => {
     const requestFit = () => {
@@ -205,6 +200,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
         newContainerRef.current.mask = newMaskRef.current;
       }
     };
+
     const delayedEffect = debounce(() => {
       if (showResize) {
         if (!newAppRef.current) {
@@ -243,7 +239,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
         // // Make a copy of the project that we can modify
         const newProject = { ...project };
 
-        if (container && mask && newProject.layers.length > 0) {
+        if (container && mask && newProject.layerManager.layers.length > 0) {
           container.position.set(appWidth / 2, appHeight / 2);
           container.scale.set(zoomValue);
           //Only show layers that are visible
@@ -260,15 +256,15 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
               onDragEnd(event)
             );
 
-            layer.sprite.zIndex = layer.zIndex;
-            layer.sprite.rotation = 0;
-            layer.sprite.eventMode = "static";
-            layer.sprite.cursor = "grab";
-            layer.sprite.visible = true;
-            layer.sprite.on("pointerdown", (event: FederatedPointerEvent) => {
-              newProject.target = layer;
-              onDragStart(event);
-            });
+            // layer.sprite.zIndex = layer.zIndex;
+            // layer.sprite.rotation = 0;
+            // layer.sprite.eventMode = "static";
+            // layer.sprite.cursor = "grab";
+            // layer.sprite.visible = true;
+            // layer.sprite.on("pointerdown", (event: FederatedPointerEvent) => {
+            //   newProject.target = layer;
+            //   onDragStart(event);
+            // });
 
             const onDragMove = (event: FederatedPointerEvent) => {
               if (dragTarget && dragOffset) {
@@ -289,10 +285,10 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
               }
             };
             const onDragStart = (event: FederatedPointerEvent) => {
-              layer.sprite.alpha = 0.75;
+              // layer.sprite.alpha = 0.75;
 
-              dragTarget = layer.sprite;
-              dragTarget.cursor = "grabbing";
+              // dragTarget = layer.sprite;
+              // dragTarget.cursor = "grabbing";
 
               dragOffset = event.global.clone(); // Store the initial offset
 
@@ -319,15 +315,15 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
             ) {
               console.log(container.children);
               console.log("Adding layer to container");
-              container.addChild(layer.sprite);
+              // container.addChild(layer.sprite);
             }
           });
 
           return () => {
             app.stage.removeAllListeners();
-            newLayers.forEach((layer) => {
-              layer.sprite.removeAllListeners();
-            });
+            // newLayers.forEach((layer) => {
+            //   layer.sprite.removeAllListeners();
+            // });
           };
         }
       } else {
@@ -368,16 +364,16 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
     appHeight,
   ]);
 
-  const handleSave = () => {
-    console.log("Width:", width);
-    project.changeCanvasDimensions(width, height, setProject);
-    appRef.current?.stage.removeChild(containerRef.current!);
-    containerRef.current?.destroy();
-    maskRef.current?.destroy();
-    containerRef.current = null;
-    maskRef.current = null;
-    setShowResize(false);
-  };
+  // const handleSave = () => {
+  //   console.log("Width:", width);
+  //   project.changeCanvasDimensions(width, height, setProject);
+  //   appRef.current?.stage.removeChild(containerRef.current!);
+  //   containerRef.current?.destroy();
+  //   maskRef.current?.destroy();
+  //   containerRef.current = null;
+  //   maskRef.current = null;
+  //   setShowResize(false);
+  // };
 
   return (
     <div className="">
@@ -409,8 +405,13 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
                   value={width}
                   onChange={(e) => {
                     const value = e.target.value;
-                    previousWidth.current = width;
-                    setWidth(value === "" ? 1 : parseInt(value));
+                    // Check if the input is a valid number
+                    if (!isNaN(parseInt(value))) {
+                      previousWidth.current = width;
+                      setWidth(
+                        value === "" ? 1 : clamp(parseInt(value), 1, 10000)
+                      );
+                    }
                   }}
                   className="col-span-3 dark:bg-white dark:text-black"
                 />
@@ -424,8 +425,13 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
                   value={height}
                   onChange={(e) => {
                     const value = e.target.value;
-                    previousHeight.current = height;
-                    setHeight(value === "" ? 1 : parseInt(value));
+                    // Check if the input is a valid number
+                    if (!isNaN(parseInt(value))) {
+                      previousWidth.current = width;
+                      setHeight(
+                        value === "" ? 1 : clamp(parseInt(value), 1, 10000)
+                      );
+                    }
                   }}
                   className="col-span-3 dark:bg-white dark:text-black"
                 />
@@ -469,7 +475,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
           </div>
           <DialogFooter>
             <Button onClick={handleReset}>Reset</Button>
-            <Button onClick={handleSave}>Save changes</Button>
+            {/* <Button onClick={handleSave}>Save changes</Button> */}
           </DialogFooter>
         </DialogContent>
       </Dialog>
