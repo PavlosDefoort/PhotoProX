@@ -76,20 +76,11 @@ const Export: React.FC<ExportProps> = ({
 
   useEffect(() => {
     if (showContainerRef.current) {
-      console.log("Setting scale");
       showContainerRef.current.scale.set(scaleValue);
     }
   }, [scaleValue, showContainerRef]);
 
   useEffect(() => {
-    console.log(
-      image.length,
-      showCanvasRef.current,
-      renderWidth,
-      renderHeight,
-      canvasWidth,
-      canvasHeight
-    );
     if (
       image.length > 0 &&
       showCanvasRef.current &&
@@ -100,7 +91,6 @@ const Export: React.FC<ExportProps> = ({
       appWidth > 0 &&
       appHeight > 0
     ) {
-      console.log("Creating image");
       const debounced = debounce(() => {
         if (!showAppRef.current && showCanvasRef.current) {
           showAppRef.current = new Application({
@@ -131,7 +121,6 @@ const Export: React.FC<ExportProps> = ({
             appHeight,
             0
           );
-          console.log(someScale);
           setScaleValue(someScale);
         }
 
@@ -184,8 +173,6 @@ const Export: React.FC<ExportProps> = ({
           backgroundColor: 0xcdcdcd,
         });
 
-        console.log(containerRef.current.width, containerRef.current.height);
-
         setRenderWidth(renderer.width);
         setRenderHeight(renderer.height);
 
@@ -208,7 +195,6 @@ const Export: React.FC<ExportProps> = ({
       }
     };
     if (showExport) {
-      console.log("Exporting");
       exportContainer();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -249,13 +235,10 @@ const Export: React.FC<ExportProps> = ({
     )
       return;
 
-    console.log("Setting up resize observer");
     const stageContainer = stageRef.current;
-    console.log(stageContainer);
 
     const handleResize = () => {
       if (stageContainer) {
-        console.log("Resizing");
         setCanvasWidth(stageContainer.clientWidth);
         setCanvasHeight(stageContainer.clientHeight);
         setAppWidth(stageContainer.clientWidth * 2);
@@ -265,7 +248,6 @@ const Export: React.FC<ExportProps> = ({
 
     if (stageContainer) {
       // Create a new ResizeObserver instance
-      console.log("Creating resize observer");
       const resizeObserver = new ResizeObserver(handleResize);
 
       // Start observing the target element

@@ -391,17 +391,6 @@ const ApplyCanvas = ({
       app.stage.eventMode = "static";
       // Render the layers :) WOOHOO
 
-      console.log(
-        container.width,
-        container.height,
-        realNaturalWidth.current,
-        realNaturalHeight.current
-      );
-      console.log(
-        project.settings.canvasSettings.width,
-        project.settings.canvasSettings.height
-      );
-
       renderLayers(project.layerManager.layers, container);
 
       return () => {
