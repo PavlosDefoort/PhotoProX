@@ -720,7 +720,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       // setCanvasWidth(newWidth);
       // setCanvasHeight(newHeight);
       // const app = appRef.current!;
-      // console.log(newWidth, newHeight);
+      // (newWidth, newHeight);
       // if (app) app.renderer.resize(newWidth, newHeight);
     };
     calculateAspectRatioFit();
@@ -748,7 +748,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   useEffect(() => {
     const app = appRef.current!;
-    console.log(darkMode);
+    darkMode;
 
     if (app) {
       if (darkMode) {

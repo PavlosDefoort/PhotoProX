@@ -77,7 +77,7 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
           Math.min(newScaleX, calculateMaxScale(imageWidth, imageHeight))
         );
       } catch (error) {
-        console.log(error);
+        error;
       }
     }
   };
@@ -146,7 +146,7 @@ const ResizeBar: React.FC<ResizeBarProps> = ({
           Math.min(newScaleY, calculateMaxScale(imageWidth, imageHeight))
         );
       } catch (error) {
-        console.log(error);
+        error;
       }
     }
   };

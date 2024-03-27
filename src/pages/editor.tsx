@@ -185,7 +185,7 @@ export default function Editor({}) {
   };
 
   useEffect(() => {
-    console.log(project.layerManager.layers);
+    project.layerManager.layers;
   }, [project.layerManager.layers]);
 
   const handleImageSet = (
@@ -207,7 +207,6 @@ export default function Editor({}) {
         imageHeight: realHit,
         imageWidth: realWit,
       };
-      console.log(realWit, realHit, "realWit, realHit");
 
       try {
         const layer = project.layerManager.createLayer(
@@ -233,7 +232,7 @@ export default function Editor({}) {
           };
 
           draft.layerManager.addLayer(imageLayer);
-          console.log(draft.layerManager.layers, "draft.layerManager.layers");
+          draft.layerManager.layers, "draft.layerManager.layers";
           const targetLayer = draft.layerManager.findLayer(layer.id);
           if (targetLayer) {
             draft.target = targetLayer as Draft<ImageLayer>;

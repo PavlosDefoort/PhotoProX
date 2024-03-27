@@ -283,6 +283,7 @@ const ApplyCanvas = ({
           realNaturalWidth.current / 2,
           realNaturalHeight.current / 2
         );
+        realNaturalWidth.current, realNaturalHeight.current;
         const background = new Graphics();
         const squareSize = 5;
         const numRows = Math.floor(realNaturalHeight.current / squareSize);

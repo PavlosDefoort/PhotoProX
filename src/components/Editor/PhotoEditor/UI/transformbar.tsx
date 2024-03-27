@@ -394,7 +394,7 @@ const TopBarTwo: React.FC<TopBarTwoProps> = ({
                   //   project.target?.imageData.imageWidth! / 2;
                   // const maxNegative =
                   //   -project.target?.imageData.imageWidth! / 2;
-                  // console.log(
+                  // (
                   //   "maxPositive",
                   //   maxPositive,
                   //   "maxNegative",
@@ -441,7 +441,7 @@ const TopBarTwo: React.FC<TopBarTwoProps> = ({
                   //   project.target?.imageData.imageWidth! / 2;
                   // const maxNegative =
                   //   -project.target?.imageData.imageWidth! / 2;
-                  // console.log(
+                  // (
                   //   "maxPositive",
                   //   maxPositive,
                   //   "maxNegative",
