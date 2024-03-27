@@ -123,7 +123,7 @@ const ApplyCanvas = ({
   const throttledSetPositionY = throttle(setPositionY, 10);
 
   useEffect(() => {
-    console.log("Rendering canvas");
+    ("Rendering canvas");
     const createContainerIfNeeded = () => {
       if (
         appRef.current &&
@@ -131,11 +131,8 @@ const ApplyCanvas = ({
         realNaturalWidth.current > 1 &&
         realNaturalHeight.current > 1
       ) {
-        console.log(
-          appRef.current.renderer.width,
-          appRef.current.renderer.height
-        );
-        console.log("Creating containerRRR", realNaturalWidth.current);
+        appRef.current.renderer.width, appRef.current.renderer.height;
+        "Creating containerRRR", realNaturalWidth.current;
         containerRef.current = new Container();
         containerRef.current.width = realNaturalWidth.current;
         containerRef.current.height = realNaturalHeight.current;
@@ -223,13 +220,13 @@ const ApplyCanvas = ({
     }
 
     const app = appRef.current;
-    console.log(app.renderer.width, app.renderer.height);
+    app.renderer.width, app.renderer.height;
 
     // Remove the children whenever there's a change
     // app.stage.removeChildren();
     // Check if there's a container
     if (!containerRef.current) {
-      console.log("Creating container");
+      ("Creating container");
       createContainerIfNeeded();
     }
     // Check if there's a mask
@@ -267,7 +264,7 @@ const ApplyCanvas = ({
         }
       });
     }
-    console.log(renderLayers(testLayers), "renderLayers");
+    renderLayers(testLayers), "renderLayers";
 
     if (container && mask && project.layerManager.layers.length > 0) {
       container.position.set(canvasWidth / 2 + fakeX, canvasHeight / 2 + fakeY);

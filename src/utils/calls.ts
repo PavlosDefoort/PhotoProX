@@ -24,7 +24,7 @@ export const downloadImage = async (image: Post) => {
     body: JSON.stringify({ image: image.file_url }),
   });
   const data = await response.json();
-  console.log("data", data);
+  "data", data;
   const imageBase64 = data.image_base64;
   const byteCharacters = atob(imageBase64);
   const byteNumbers = new Array(byteCharacters.length);
@@ -127,7 +127,7 @@ export const fetchScout = async (
 
   // Combine the addString and blackListAddString
   const combinedString = addString + " -" + blackListAddString;
-  console.log(combinedString);
+  combinedString;
   // Put in the form tag1, tag2, tag3
   const stringArr: string[] = [];
   stringArr.push(rating);

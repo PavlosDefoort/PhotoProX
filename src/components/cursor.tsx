@@ -14,7 +14,7 @@ const MyCursor = () => {
   //     const element = document.elementFromPoint(x, y);
   //     const computedStyle = getComputedStyle(element as Element);
   //     const backgroundColor = computedStyle.backgroundColor;
-  //     console.log(backgroundColor);
+  //     (backgroundColor);
 
   //     // Logic to determine the cursor color based on the background color
   //     if (isDarkColor(backgroundColor)) {

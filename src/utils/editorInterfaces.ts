@@ -358,21 +358,20 @@ export function removeSpriteFromContainer(
   // Iterate over all children of the container
   for (let i = container.children.length - 1; i >= 0; i--) {
     const child = container.children[i];
-    console.log(container.children);
-    console.log(child, spriteToRemove);
+    container.children;
     // If the child is a container, recursively search its children
 
     if (
       child instanceof Container &&
       (!child.isSprite || (child.isSprite && child !== spriteToRemove))
     ) {
-      console.log("Container found");
+      ("Container found");
       removeSpriteFromContainer(child, spriteToRemove);
     }
 
     // If the child is the sprite to remove, remove it
     else if (child === spriteToRemove) {
-      console.log(child);
+      child;
       container.removeChild(child);
       // Exit the loop once the sprite is removed
       return;
@@ -408,9 +407,9 @@ const createAdjustmentContainer = (adjustmentType: string): Container => {
     });
 
     const hueMatrix = new ColorMatrixFilter();
-    console.log(hueMatrix.matrix);
+    hueMatrix.matrix;
     hueMatrix.negative(true);
-    console.log(hueMatrix.matrix);
+    hueMatrix.matrix;
 
     container.filters = [matrix, hueMatrix];
   } else if (adjustmentType === "bloom") {
@@ -420,7 +419,7 @@ const createAdjustmentContainer = (adjustmentType: string): Container => {
   } else if (adjustmentType === "waves") {
     // const matrix = new Functions("x");
     // container.filters = [matrix];
-    // console.log(container.filters[0].program.fragmentSrc);
+    // (container.filters[0].program.fragmentSrc);
   } else if (adjustmentType === "functions") {
     const matrix = new Functions("r", "g", "b");
     container.filters = [matrix];
@@ -447,7 +446,6 @@ class LayerManager {
     if (this.layers.find((existingLayer) => existingLayer.id === layer.id)) {
       return;
     } else {
-      console.log("Adding layer", layer);
       this.layers.push(layer);
     }
   };
@@ -517,7 +515,7 @@ class LayerManager {
   moveLayerDown = (id: string) => {
     const index = this.layers.findIndex((layer) => layer.id === id);
     if (index === 0) return;
-    console.log(index);
+    index;
     this.swapLayers(id, this.layers[index - 1].id);
   };
 
@@ -531,7 +529,7 @@ class LayerManager {
       ...layer,
       zIndex: index,
     }));
-    console.log(updatedLayers);
+    updatedLayers;
     this.layers = updatedLayers;
   };
 
@@ -550,10 +548,9 @@ class LayerManager {
   };
 
   swapLayers = (id1: string, id2: string) => {
-    console.log("Swapping layers");
+    ("Swapping layers");
     const index1 = this.layers.findIndex((layer) => layer.id === id1);
     const index2 = this.layers.findIndex((layer) => layer.id === id2);
-    console.log(index1, index2);
 
     // Check if indices are valid
     if (index1 === -1 || index2 === -1) {
@@ -563,7 +560,7 @@ class LayerManager {
 
     const temp = this.layers[index1];
     this.layers[index1] = this.layers[index2];
-    console.log("Swapping layerss");
+    ("Swapping layerss");
     this.layers[index2] = temp;
   };
 
@@ -587,7 +584,7 @@ class LayerManager {
     if (layer) {
       this.layers = this.layers.filter((layer) => layer.id !== id);
       this.layers.splice(newIndex, 0, layer);
-      console.log(this.layers);
+      this.layers;
     }
   };
 
@@ -703,7 +700,7 @@ class LayerManager {
       sprite: newSprite,
       visible: true,
     };
-    console.log(newSprite.getVertexData);
+    newSprite.getVertexData;
 
     return newLayer;
   };

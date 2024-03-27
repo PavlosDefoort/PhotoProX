@@ -103,7 +103,7 @@ const Tags: React.FC<TagsProps> = ({
   }, [inputValue, setTags]);
 
   const handleInputChange = (event: any, value: Tag[], reason: string) => {
-    console.log(event, value, reason);
+    event, value, reason;
     if (reason === "removeOption") {
       setHistory((prevHistory) => [...prevHistory, inputValue]);
     }
@@ -180,7 +180,7 @@ const Tags: React.FC<TagsProps> = ({
         let useImage;
         if (website === "danbooru" || website === "gelbooru") {
           // Convert image from url to base64
-          console.log("image", image);
+          "image", image;
           const response = await fetch("http://127.0.0.1:5000/get_image", {
             method: "POST",
             headers: {
@@ -206,7 +206,7 @@ const Tags: React.FC<TagsProps> = ({
           throw new Error("Failed to fetch image data");
         }
         const data = await response.json();
-        console.log("data", data);
+        "data", data;
         // Split the tags into an array
         const tagList = data.caption.split(", ");
 
@@ -217,12 +217,12 @@ const Tags: React.FC<TagsProps> = ({
           }
         });
 
-        console.log("tagList", tagList);
+        "tagList", tagList;
 
         // Interorate and find the matching tag in the tags.json file
         const tagListObjects = tagList.map((tag: string) => {
           const tagObject = tags.tags.find((t: Tag) => t.name === tag);
-          console.log("tagObject", tagObject);
+          "tagObject", tagObject;
           return tagObject;
         });
         const filteredTags = tagListObjects.filter(
@@ -239,7 +239,7 @@ const Tags: React.FC<TagsProps> = ({
 
         const tagListObjects = tagList.split(" ").map((tag: string) => {
           const tagObject = tags.tags.find((t: Tag) => t.name === tag);
-          console.log("tagObject", tagObject);
+          "tagObject", tagObject;
           return tagObject;
         });
         const filteredTags = tagListObjects.filter(
@@ -318,7 +318,7 @@ const Tags: React.FC<TagsProps> = ({
   const [filterMode, setFilterMode] = useState<number[]>([0, 1, 3, 4, 5]);
 
   useEffect(() => {
-    console.log("filterMode", scoutImages);
+    "filterMode", scoutImages;
   }, [scoutImages]);
 
   const [inputValueTwo, setInputValueTwo] = useState<string>("");
@@ -329,7 +329,7 @@ const Tags: React.FC<TagsProps> = ({
   ) => {
     const inputValue = event.target.value.trim();
     setInputValueTwo(inputValue);
-    console.log("inputValue", inputValue);
+    "inputValue", inputValue;
     if (inputValue.length > 0) {
       try {
         const response = await fetch(
@@ -338,7 +338,7 @@ const Tags: React.FC<TagsProps> = ({
         const data = await response.json();
         // Create an array with all the tags
         const tags = data.map((tag: any) => tag.name);
-        console.log("tags", tags);
+        "tags", tags;
         setTagSuggestions(tags);
       } catch (error) {
         console.error("Error fetching tag suggestions:", error);
@@ -355,7 +355,7 @@ const Tags: React.FC<TagsProps> = ({
         tag.post_count > 100 &&
         tag.is_deprecated === false
     );
-    console.log("artistTags", artistTags);
+    "artistTags", artistTags;
     const randomArtistTag =
       artistTags[Math.floor(Math.random() * artistTags.length)];
     setInputValue([randomArtistTag]);
@@ -376,7 +376,7 @@ const Tags: React.FC<TagsProps> = ({
         tag.post_count > 10000 &&
         tag.is_deprecated === false
     );
-    console.log("seriesTags", seriesTags);
+    "seriesTags", seriesTags;
     const randomSeriesTag =
       seriesTags[Math.floor(Math.random() * seriesTags.length)];
     setInputValue([randomSeriesTag]);
@@ -396,7 +396,7 @@ const Tags: React.FC<TagsProps> = ({
         tag.post_count > 1000 &&
         tag.is_deprecated === false
     );
-    console.log("characterTags", characterTags);
+    "characterTags", characterTags;
     const randomCharacterTag =
       characterTags[Math.floor(Math.random() * characterTags.length)];
     const newArray = [randomCharacterTag];
@@ -428,7 +428,7 @@ const Tags: React.FC<TagsProps> = ({
         tag.post_count > 200000 &&
         tag.is_deprecated === false
     );
-    console.log("availableTags", availableTags.length);
+    "availableTags", availableTags.length;
     const randomTags: Tag[] = [];
 
     // Ensure at least one character tag

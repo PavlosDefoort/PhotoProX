@@ -93,7 +93,7 @@ interface GridGalleryCardProps {
 const GridGalleryCard: React.FC<GridGalleryCardProps> = ({ post, show }) => {
   const [viewer, setViewer] = useState<Viewer | null>(null);
   // useEffect(() => {
-  //   console.log(post.file_url);
+  //   (post.file_url);
   //   setViewer(new Viewer(document.getElementById(post.id.toString())!));
   // }, [post, show]);
 

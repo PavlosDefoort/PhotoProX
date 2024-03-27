@@ -36,7 +36,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   const componentsRef = useRef(components);
 
   const handleCancel = () => {
-    console.log(componentsRef.current);
+    componentsRef.current;
     setComponents(componentsRef.current);
     changeActive("");
   };

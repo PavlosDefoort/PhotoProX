@@ -171,7 +171,6 @@ const DynamicPlot: React.FC<DynamicPlotProps> = ({ layer }) => {
     }
 
     const logga = convertLatexLogToGLSL(glslExpression);
-    console.log(logga, "logga");
     const glslExpressionFinal = logga
       .replace(/\\sin\(([^)]+)\)/g, "sin($1)")
       .replace(/\\cos\(([^)]+)\)/g, "cos($1)")
@@ -189,7 +188,6 @@ const DynamicPlot: React.FC<DynamicPlotProps> = ({ layer }) => {
 
     // To finalize, we should converts any numbers to floats
     const converted = convertNumbersToFloats(glslExpressionFinal);
-    console.log(converted, "converted");
 
     return converted;
   }
@@ -264,7 +262,7 @@ const DynamicPlot: React.FC<DynamicPlotProps> = ({ layer }) => {
             });
           }
         } catch (error) {
-          console.log(error);
+          error;
         }
       }
     }
@@ -324,7 +322,6 @@ const DynamicPlot: React.FC<DynamicPlotProps> = ({ layer }) => {
     if (!gl) return false;
 
     const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-    console.log(gl, "gl", fragmentShader, "fragmentShader");
     if (!fragmentShader) return false;
 
     gl.shaderSource(fragmentShader, fragmentShaderSource);

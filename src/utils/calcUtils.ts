@@ -473,7 +473,6 @@ export const analyseAlphaValues = (imageData: Uint8Array) => {
     const alpha4 = imageData[i + 12];
     alphaValues[alphaIndex++] = alpha4;
   }
-  console.log("alphaValues", alphaValues);
 
   return alphaValues;
 };

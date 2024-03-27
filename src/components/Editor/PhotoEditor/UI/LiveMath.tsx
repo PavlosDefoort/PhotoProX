@@ -135,7 +135,7 @@ const LiveMath: React.FC<LiveMathProps> = ({
           event.currentTarget.value,
           { canonical: false }
         ).latex;
-        console.log(someValue);
+        someValue;
         setGreenMathData(someValue);
       }
     },

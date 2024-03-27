@@ -82,7 +82,7 @@ export default SheetDemo;
 export function FramerCMDK() {
   const [value, setValue] = React.useState("button");
   useEffect(() => {
-    console.log("value", value);
+    "value", value;
   }, [value]);
   return (
     <div className="framer w-[400px] bg-slate-200">

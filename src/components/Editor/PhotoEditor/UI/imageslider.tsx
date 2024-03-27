@@ -31,7 +31,7 @@ const CarouselDemo: React.FC<CarouselDemoProps> = ({
   const [api, setApi] = React.useState<CarouselApi>();
 
   React.useEffect(() => {
-    console.log("Current Index:", currentIndex);
+    "Current Index:", currentIndex;
   }, [currentIndex]);
 
   return (

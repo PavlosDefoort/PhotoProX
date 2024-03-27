@@ -283,6 +283,7 @@ const ApplyCanvas = ({
           realNaturalWidth.current / 2,
           realNaturalHeight.current / 2
         );
+        realNaturalWidth.current, realNaturalHeight.current;
         const background = new Graphics();
         const squareSize = 5;
         const numRows = Math.floor(realNaturalHeight.current / squareSize);
@@ -389,6 +390,17 @@ const ApplyCanvas = ({
       container.scale.set(zoomValue * scaleX, zoomValue * scaleY);
       app.stage.eventMode = "static";
       // Render the layers :) WOOHOO
+
+      console.log(
+        container.width,
+        container.height,
+        realNaturalWidth.current,
+        realNaturalHeight.current
+      );
+      console.log(
+        project.settings.canvasSettings.width,
+        project.settings.canvasSettings.height
+      );
 
       renderLayers(project.layerManager.layers, container);
 

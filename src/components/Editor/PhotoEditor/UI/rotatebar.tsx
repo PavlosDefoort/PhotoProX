@@ -44,9 +44,9 @@ const RotateBar: React.FC<RotateBarProps> = ({
 
   const handleRotateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    console.log(value);
+    value;
     const parsedValue = parseInt(value);
-    console.log(parsedValue);
+    parsedValue;
     const newValue = clamp(parsedValue, -360, 360);
     setRotateValue(newValue);
   };

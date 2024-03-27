@@ -5,11 +5,11 @@ const DarkMode = () => {
   const { darkMode } = useContext(ThemeContext);
 
   useEffect(() => {
-    console.log(darkMode);
+    darkMode;
     const favicon = document.querySelector(
       'link[rel="icon"]'
     ) as HTMLLinkElement;
-    console.log(favicon);
+    favicon;
     if (favicon) {
       favicon.href = darkMode ? "/darkfavicon.ico" : "/favicon.ico";
     }

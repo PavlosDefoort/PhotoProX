@@ -177,7 +177,7 @@ export const ImageLayerBarItem: React.FC<ImageLayerBarItemProps> = ({
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        console.log(e.currentTarget.value);
+                        e.currentTarget.value;
                         // Remove the '%' sign
                         const opacity = e.currentTarget.value.replace("%", "");
                         const numberOpacity = clamp(

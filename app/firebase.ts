@@ -82,14 +82,14 @@ const uploadLayer = async (file: File, projectId: string, userId: string) => {
       (snapshot) => {
         const progress =
           (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log("Upload is " + progress + "% done");
+        "Upload is " + progress + "% done";
 
         switch (snapshot.state) {
           case "paused":
-            console.log("Upload is paused");
+            "Upload is paused";
             break;
           case "running":
-            console.log("Upload is running");
+            "Upload is running";
             break;
         }
       },
@@ -110,7 +110,7 @@ const uploadLayer = async (file: File, projectId: string, userId: string) => {
               },
             },
           });
-          console.log("File available at", downloadURL);
+          "File available at", downloadURL;
           resolve(downloadURL);
         } catch (error) {
           toast.error("Failed to save file. Please try again");
@@ -151,14 +151,14 @@ const uploadFileFromGallery = async (
       (snapshot) => {
         const progress =
           (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log("Upload is " + progress + "% done");
+        "Upload is " + progress + "% done";
 
         switch (snapshot.state) {
           case "paused":
-            console.log("Upload is paused");
+            "Upload is paused";
             break;
           case "running":
-            console.log("Upload is running");
+            "Upload is running";
             break;
         }
       },
@@ -180,7 +180,7 @@ const uploadFileFromGallery = async (
               },
             },
           });
-          console.log("File available at", downloadURL);
+          "File available at", downloadURL;
           resolve(downloadURL);
         } catch (error) {
           toast.error("Failed to save file. Please try again");

@@ -197,7 +197,7 @@ const TopBar: React.FC<TopBarProps> = ({
           "Explore our powerful photo editor and unleash your creativity.",
         action: {
           label: "Got it!",
-          onClick: () => console.log("Undo"),
+          onClick: () => "Undo",
         },
       });
       localStorage.setItem("welcome", "true");
@@ -231,7 +231,12 @@ const TopBar: React.FC<TopBarProps> = ({
           </div>
         )}
         <DividerVerticalIcon className="w-6 h-6 text-[#cdcdcd] dark:text-gray-500" />
-        <MenubarDemo trigger={trigger} setTrigger={setTrigger} />
+        <MenubarDemo
+          trigger={trigger}
+          setTrigger={setTrigger}
+          appRef={appRef}
+          containerRef={containerRef}
+        />
       </div>
 
       <div className="pl-16 flex items-center h-full text-black dark:text-white text-xs">

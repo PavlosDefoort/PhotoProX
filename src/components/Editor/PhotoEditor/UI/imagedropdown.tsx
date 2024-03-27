@@ -204,7 +204,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
     const delayedEffect = debounce(() => {
       if (showResize) {
         if (!newAppRef.current) {
-          console.log("Creating new app");
+          ("Creating new app");
           newAppRef.current = new Application({
             view: newCanvasRef.current!,
             width: appWidth,
@@ -245,7 +245,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
           //Only show layers that are visible
 
           newLayers.forEach((layer) => {
-            console.log(layer.id);
+            layer.id;
             // Add the layer to container if it's not there
             app.stage.eventMode = "static";
 
@@ -313,8 +313,8 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
                 (child) => child.name === layer.id && child.visible
               )
             ) {
-              console.log(container.children);
-              console.log("Adding layer to container");
+              container.children;
+              ("Adding layer to container");
               // container.addChild(layer.sprite);
             }
           });
@@ -365,7 +365,7 @@ const ImageDropDown: React.FC<ImageDropDownProps> = ({
   ]);
 
   // const handleSave = () => {
-  //   console.log("Width:", width);
+  //   ("Width:", width);
   //   project.changeCanvasDimensions(width, height, setProject);
   //   appRef.current?.stage.removeChild(containerRef.current!);
   //   containerRef.current?.destroy();

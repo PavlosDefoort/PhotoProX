@@ -73,7 +73,7 @@ const GallerySettingsInterface: FC<GallerySettingsProps> = ({
   setGallerySettings,
 }) => {
   useEffect(() => {
-    console.log(gallerySettings.rating);
+    gallerySettings.rating;
   }, [gallerySettings.rating]);
 
   const form = useForm<z.infer<typeof FormSchema>>({

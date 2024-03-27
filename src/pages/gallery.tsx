@@ -75,7 +75,7 @@ export default function Generate() {
 
   useEffect(() => {
     if (inView) {
-      console.log("inView");
+      ("inView");
       setIsVisible(true);
     } else {
       setIsVisible(false);
@@ -128,7 +128,7 @@ export default function Generate() {
     const fetchImageData = async () => {
       try {
         const prompts = tags.join(", ");
-        console.log("prompts", prompts);
+        "prompts", prompts;
         const prompt = {
           prompt: prompts,
           negative_prompt:
@@ -150,7 +150,7 @@ export default function Generate() {
         if (!response.ok) {
           throw new Error("Failed to fetch image data");
         }
-        console.log("response", response);
+        "response", response;
         const data = await response.json();
         const image64 = data.image_base64;
         const image = new Image();
@@ -166,11 +166,11 @@ export default function Generate() {
     // Call the fetchImageData function
     fetchImageData();
 
-    console.log("fetchImageData");
+    ("fetchImageData");
   };
   useEffect(() => {
-    console.log(website);
-    console.log(rating);
+    website;
+    rating;
   }, [website, rating]);
 
   useEffect(() => {
