@@ -13,7 +13,6 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   if (urlString) {
-    "url", urlString; // Ensure that the query value is logged
     const response = await axios.get(urlString, {
       responseType: "arraybuffer",
     });

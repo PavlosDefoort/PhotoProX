@@ -24,7 +24,6 @@ export const downloadImage = async (image: Post) => {
     body: JSON.stringify({ image: image.file_url }),
   });
   const data = await response.json();
-  "data", data;
   const imageBase64 = data.image_base64;
   const byteCharacters = atob(imageBase64);
   const byteNumbers = new Array(byteCharacters.length);

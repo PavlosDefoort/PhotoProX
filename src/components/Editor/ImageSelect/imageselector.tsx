@@ -179,8 +179,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
         try {
           const compressedFile = await imageCompression(imageFile, options);
-          "compressedFile instanceof Blob", compressedFile instanceof Blob; // true
-          `compressedFile size ${compressedFile.size / 1024 / 1024} MB`; // smaller than maxSizeMB
 
           await setPhoto(compressedFile); // write your own logic
         } catch (error) {

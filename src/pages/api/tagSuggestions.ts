@@ -11,7 +11,6 @@ export default async function tagSuggestions(
   res: NextApiResponse
 ) {
   const { query } = req.query;
-  "query", query; // Ensure that the query value is logged
 
   try {
     const response = await fetch(

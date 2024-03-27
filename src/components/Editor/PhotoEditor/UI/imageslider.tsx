@@ -30,10 +30,6 @@ const CarouselDemo: React.FC<CarouselDemoProps> = ({
 }) => {
   const [api, setApi] = React.useState<CarouselApi>();
 
-  React.useEffect(() => {
-    "Current Index:", currentIndex;
-  }, [currentIndex]);
-
   return (
     <Carousel className="w-full max-w-sm" setApi={setApi}>
       <CarouselContent>

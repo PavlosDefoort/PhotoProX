@@ -110,7 +110,6 @@ const uploadLayer = async (file: File, projectId: string, userId: string) => {
               },
             },
           });
-          "File available at", downloadURL;
           resolve(downloadURL);
         } catch (error) {
           toast.error("Failed to save file. Please try again");
@@ -180,7 +179,6 @@ const uploadFileFromGallery = async (
               },
             },
           });
-          "File available at", downloadURL;
           resolve(downloadURL);
         } catch (error) {
           toast.error("Failed to save file. Please try again");

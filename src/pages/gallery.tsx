@@ -128,7 +128,6 @@ export default function Generate() {
     const fetchImageData = async () => {
       try {
         const prompts = tags.join(", ");
-        "prompts", prompts;
         const prompt = {
           prompt: prompts,
           negative_prompt:
@@ -150,7 +149,6 @@ export default function Generate() {
         if (!response.ok) {
           throw new Error("Failed to fetch image data");
         }
-        "response", response;
         const data = await response.json();
         const image64 = data.image_base64;
         const image = new Image();

@@ -132,7 +132,6 @@ const ApplyCanvas = ({
         realNaturalHeight.current > 1
       ) {
         appRef.current.renderer.width, appRef.current.renderer.height;
-        "Creating containerRRR", realNaturalWidth.current;
         containerRef.current = new Container();
         containerRef.current.width = realNaturalWidth.current;
         containerRef.current.height = realNaturalHeight.current;
