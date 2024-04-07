@@ -1,23 +1,21 @@
 import { Inter, Poppins } from "next/font/google";
 
-import { ImgComparisonSlider } from "@img-comparison-slider/react";
-import Link from "next/link";
-import { useContext, useEffect, useState } from "react";
-import "../styles/animations.css";
 import { handleSignIn } from "@/components/Editor/PhotoEditor/UI/topbar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "../../app/authcontext";
-import { NavigationMenuDemo } from "@/components/navigationmenu";
-import Image from "next/image";
 import { ThemeContext } from "@/components/ThemeProvider/themeprovider";
+import { NavigationMenuDemo } from "@/components/navigationmenu";
+import { ImgComparisonSlider } from "@img-comparison-slider/react";
 import {
   Build,
   Engineering,
   Lightbulb,
   PhotoFilter,
 } from "@mui/icons-material";
-import { ComponentBooleanIcon, TransformIcon } from "@radix-ui/react-icons";
 import Psychology from "@mui/icons-material/Psychology";
+import { ComponentBooleanIcon, TransformIcon } from "@radix-ui/react-icons";
+import Link from "next/link";
+import { useContext, useEffect, useState } from "react";
+import { useAuth } from "../../app/authcontext";
+import "../styles/animations.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,10 +46,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchCommits() {
       const myHeaders = new Headers();
-      myHeaders.append(
-        "Authorization",
-        "Bearer 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"
-      );
+      myHeaders.append("Authorization", "Bearer ");
 
       const requestOptions: RequestInit = {
         method: "GET",
