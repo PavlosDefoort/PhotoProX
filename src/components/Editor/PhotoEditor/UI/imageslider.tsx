@@ -9,7 +9,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { UseEmblaCarouselType } from "embla-carousel-react";
 
 interface photoObject {
   url: string;

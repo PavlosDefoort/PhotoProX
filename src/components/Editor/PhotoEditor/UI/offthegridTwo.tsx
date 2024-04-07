@@ -1,38 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  ChangeEvent,
-  useContext,
-  Dispatch,
-  SetStateAction,
-  useRef,
-} from "react";
-import VisibilitySensor from "react-visibility-sensor";
-import { Info } from "@mui/icons-material";
-import { PermIdentity } from "@mui/icons-material";
-import { Button } from "@/components/ui/button";
-import { Tooltip } from "@mui/material";
-import Image from "next/image";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { some } from "lodash";
-import "viewerjs/dist/viewer.css";
-import Viewer from "viewerjs";
 import {
   ContextMenu,
   ContextMenuCheckboxItem,
@@ -48,25 +14,44 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import Inspect from "@/components/Gallery/inspect";
-import { Fragment } from "react";
-import { Listbox, Transition } from "@headlessui/react";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { downloadImage, fetchTags } from "@/utils/calls";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import VisibilitySensor from "react-visibility-sensor";
+import Viewer from "viewerjs";
+import "viewerjs/dist/viewer.css";
 
-import Link from "next/link";
-import { uploadFileFromGallery } from "../../../../../app/firebase";
-import { useAuth } from "../../../../../app/authcontext";
-import { toast } from "sonner";
+import { useProjectContext } from "@/pages/editor";
 import {
   GallerySettings,
+  Post,
   createImageNameFromTags,
   sortByImportant,
 } from "@/utils/galleryInterfaces";
+import Link from "next/link";
+import { toast } from "sonner";
+import { useAuth } from "../../../../../app/authcontext";
 import { InputValueContext } from "../../../../../app/contexts";
-import { useProjectContext } from "@/pages/editor";
-import { ImageData } from "@/utils/editorInterfaces";
-import { Post } from "@/utils/galleryInterfaces";
+import { uploadFileFromGallery } from "../../../../../app/firebase";
 
 type Tag = {
   id: number;
@@ -172,6 +157,7 @@ const GridGalleryCard: React.FC<GridGalleryCardProps> = ({ post, show }) => {
           draft.layerManager.addLayer({
             ...layer,
             type: "image", // Add the missing 'type' property
+            opacity: 1,
           });
           setTrigger(!trigger);
         });

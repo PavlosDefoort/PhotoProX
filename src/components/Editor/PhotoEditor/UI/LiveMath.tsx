@@ -1,16 +1,7 @@
-import React, {
-  ChangeEvent,
-  use,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { MathfieldElement } from "mathlive";
-import { ComputeEngine } from "@cortex-js/compute-engine";
-import { useProjectContext } from "@/pages/editor";
-import { AdjustmentLayer } from "@/utils/editorInterfaces";
 import { Label } from "@/components/ui/label";
+import { ComputeEngine } from "@cortex-js/compute-engine";
+import { MathfieldElement } from "mathlive";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 declare global {
   namespace JSX {

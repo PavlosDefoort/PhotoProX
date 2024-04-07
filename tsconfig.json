@@ -31,7 +31,8 @@
     ".next/types/**/*.ts",
     "src/components/Editor/PhotoEditor/UI/offthegridTwo.tsx",
     "src/components/Editor/PhotoEditor/UI/LiveMath.js",
-    "src/components/Editor/PhotoEditor/UI/LiveMath.js"
+    "src/components/Editor/PhotoEditor/UI/LiveMath.js",
+    "src/components/newNavigation.tsx"
   ],
   "exclude": ["node_modules"]
 }

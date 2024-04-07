@@ -24,6 +24,8 @@ module.exports = {
         ...mauve,
         ...violet,
         buttonHover: "hsl(var(--hover))",
+        hover: "hsl(var(--hover))",
+        selectBackground: "hsl(var(--select-background))",
         navbarBackground: "hsl(var(--navbar-background))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

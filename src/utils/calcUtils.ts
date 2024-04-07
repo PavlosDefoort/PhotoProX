@@ -1,4 +1,3 @@
-import { red } from "@mui/material/colors";
 import Decimal from "decimal.js";
 import { AnalysisData } from "./editorInterfaces";
 
@@ -494,4 +493,85 @@ export const combineIntensity = (imageData: Uint8Array) => {
   // Sort the combined intensity array
 
   return combinedIntensities;
+};
+
+export const convertPixelsToInches = (pixels: number, ppi: number) => {
+  // Round to the nearest hundredth of an inch
+  return pixels / ppi;
+};
+
+export const convertInchesToPixels = (inches: number, ppi: number) => {
+  // Return to the nearest pixel
+  return inches * ppi;
+};
+
+export const convertPPItoPPCM = (ppi: number) => {
+  return ppi / 2.54;
+};
+
+export const convertPPCMtoPPI = (ppcm: number) => {
+  return ppcm * 2.54;
+};
+
+export const convertPixelsToCentimeters = (pixels: number, ppcm: number) => {
+  return pixels / ppcm;
+};
+
+export const convertMMtoPixels = (mm: number, ppi: number) => {
+  return mm * (ppi / 25.4);
+};
+
+export const convertPixelsToMM = (pixels: number, ppi: number) => {
+  return (pixels * 25.4) / ppi;
+};
+
+export const convertInchToMM = (inch: number) => {
+  return inch * 25.4;
+};
+
+export const convertMMToInch = (mm: number) => {
+  // Convert to the nearest hundredth of an inch
+  return mm / 25.4;
+};
+
+export const convertFromTo = (
+  to: string,
+  from: string,
+  width: number,
+  height: number,
+  ppi: number
+): { width: number; height: number } => {
+  if (to == "inch" && from == "px") {
+    return {
+      width: convertPixelsToInches(width, ppi),
+      height: convertPixelsToInches(height, ppi),
+    };
+  } else if (to === "px" && from === "inch") {
+    return {
+      width: convertInchesToPixels(width, ppi),
+      height: convertInchesToPixels(height, ppi),
+    };
+  } else if (to === "px" && from === "mm") {
+    return {
+      width: convertMMtoPixels(width, ppi),
+      height: convertMMtoPixels(height, ppi),
+    };
+  } else if (to === "mm" && from === "px") {
+    return {
+      width: convertPixelsToMM(width, ppi),
+      height: convertPixelsToMM(height, ppi),
+    };
+  } else if (to === "inch" && from === "mm") {
+    return {
+      width: convertMMToInch(width),
+      height: convertMMToInch(height),
+    };
+  } else if (to === "mm" && from === "inch") {
+    return {
+      width: convertInchToMM(width),
+      height: convertInchToMM(height),
+    };
+  } else {
+    return { width: width, height: height };
+  }
 };

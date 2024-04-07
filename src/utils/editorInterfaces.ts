@@ -1,41 +1,37 @@
 // A file to store all the interfaces used in the project
+import { immerable } from "immer";
 import {
-  StorageReference,
-  UploadMetadata,
-  getDownloadURL,
-  ref,
-  uploadBytes,
-  uploadBytesResumable,
-} from "firebase/storage";
-import { Edit } from "lucide-react";
-import { produce, immerable, Draft } from "immer";
+  AdjustmentFilter,
+  AdvancedBloomFilter,
+  DropShadowFilter,
+} from "pixi-filters";
 import {
-  TYPES,
+  ColorMatrixFilter,
+  Container,
+  FORMATS,
+  Graphics,
+  IBaseTextureOptions,
+  MIPMAP_MODES,
+  Point,
   SCALE_MODES,
   Sprite,
-  FORMATS,
-  TARGETS,
-  MIPMAP_MODES,
-  Container,
-  DisplayObject,
   SpriteSource,
-  IBaseTextureOptions,
-  Graphics,
-  Point,
-  FederatedPointerEvent,
-  ColorMatrixFilter,
+  TARGETS,
+  TYPES,
 } from "pixi.js";
 import { v4 as uuidv4 } from "uuid";
-import {
-  storage,
-  uploadFileFromGallery,
-  uploadLayer,
-} from "../../app/firebase";
-import { Timestamp } from "firebase/firestore";
-import { useRef } from "react";
-import { useProjectContext } from "@/pages/editor";
-import { AdjustmentFilter, AdvancedBloomFilter } from "pixi-filters";
 import { Functions } from "./filters";
+
+export type rgb = {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
+export type Color = {
+  hex: string;
+  rgb: rgb;
+};
 
 export class SpriteX extends Sprite {
   getVertexData(): Float32Array | undefined {
@@ -88,13 +84,20 @@ export interface ProjectSnapshot {
   timestamp: number;
 }
 
-export type LayerType = "image" | "adjustment" | "group";
+export type LayerType =
+  | "image"
+  | "adjustment"
+  | "group"
+  | "background"
+  | "text"
+  | "shape";
 
 export interface LayerX {
   id: string;
   visible: boolean;
   type: LayerType;
   zIndex: number;
+  opacity: number;
   children?: LayerX[];
 }
 
@@ -161,17 +164,45 @@ export interface AdjustmentLayer extends LayerX {
     | "brightness"
     | "hue"
     | "bloom"
+    | "shadow"
     | "waves"
     | "levels"
     | "functions";
-  opacity: number;
   values: AdjustmentValues;
   container: Container;
+  color?: Color;
   mathData?: {
     redMathData: string;
     greenMathData: string;
     blueMathData: string;
   };
+}
+
+export interface TextLayer extends LayerX {
+  font: string;
+  fontSize: number;
+  color: number;
+  text: string;
+  position: Point;
+  bold: boolean;
+  italic: boolean;
+}
+
+export interface ShapeLayer extends LayerX {
+  color: number;
+  shape: Graphics;
+  position: Point;
+  width: number;
+  height: number;
+  radius: number;
+  rotation: number;
+  fill: boolean;
+}
+
+export interface BackgroundLayer extends LayerX {
+  transparent: boolean;
+  color: string;
+  graphics: Graphics;
 }
 
 export interface ImageLayer extends LayerX {
@@ -416,6 +447,14 @@ const createAdjustmentContainer = (adjustmentType: string): Container => {
     const matrix = new AdvancedBloomFilter();
 
     container.filters = [matrix];
+  } else if (adjustmentType === "shadow") {
+    const matrix = new DropShadowFilter({
+      alpha: 1,
+      blur: 1,
+      color: 0x000000,
+      shadowOnly: false,
+    });
+    container.filters = [matrix];
   } else if (adjustmentType === "waves") {
     // const matrix = new Functions("x");
     // container.filters = [matrix];
@@ -431,7 +470,8 @@ const createAdjustmentContainer = (adjustmentType: string): Container => {
 };
 
 class LayerManager {
-  layers: LayerX[];
+  public layers: LayerX[];
+
   constructor() {
     this.layers = [];
   }
@@ -592,17 +632,48 @@ class LayerManager {
     return this.layers.find((layer) => layer.id === id);
   };
 
+  createBackgroundLayer = (
+    transparent: boolean,
+    color: string,
+    width: number,
+    height: number,
+    opacity: number
+  ): BackgroundLayer => {
+    const graphics = new Graphics();
+    graphics.beginFill(color);
+    graphics.drawRect(0, 0, width, height);
+    graphics.endFill();
+    return {
+      id: uuidv4(),
+      type: "background",
+      visible: true,
+      zIndex: this.layers.length,
+      transparent: transparent,
+      color: color,
+      graphics: graphics,
+      opacity: opacity,
+    };
+  };
+
   createAdjustmentLayer = (
-    type: "brightness" | "bloom" | "hue" | "waves" | "levels" | "functions",
+    type:
+      | "brightness"
+      | "bloom"
+      | "hue"
+      | "shadow"
+      | "waves"
+      | "levels"
+      | "functions",
     clip: boolean
   ): AdjustmentLayer => {
     const container = createAdjustmentContainer(type);
-    if (type !== "functions") {
+    if (type !== "functions" && type !== "shadow") {
       return {
         adjustmentType: type as
           | "brightness"
           | "hue"
           | "bloom"
+          | "shadow"
           | "waves"
           | "levels"
           | "functions",
@@ -616,12 +687,13 @@ class LayerManager {
         values: defaultAdjustmentValues,
         container: container,
       };
-    } else {
+    } else if (type === "functions") {
       return {
         adjustmentType: type as
           | "brightness"
           | "hue"
           | "bloom"
+          | "shadow"
           | "waves"
           | "levels"
           | "functions",
@@ -639,6 +711,47 @@ class LayerManager {
           greenMathData: "g",
           blueMathData: "b",
         },
+      };
+    } else if (type === "shadow") {
+      return {
+        adjustmentType: type as
+          | "brightness"
+          | "hue"
+          | "bloom"
+          | "shadow"
+          | "waves"
+          | "levels"
+          | "functions",
+        clipToBelow: clip as boolean,
+        id: uuidv4(),
+        mask: new Graphics(),
+        type: "adjustment",
+        visible: true,
+        zIndex: this.layers.length,
+        opacity: 1,
+        values: defaultAdjustmentValues,
+        container: container,
+        color: { hex: "#000000", rgb: { r: 0, g: 0, b: 0, a: 1 } },
+      };
+    } else {
+      return {
+        adjustmentType: type as
+          | "brightness"
+          | "hue"
+          | "bloom"
+          | "shadow"
+          | "waves"
+          | "levels"
+          | "functions",
+        clipToBelow: clip as boolean,
+        id: uuidv4(),
+        mask: new Graphics(),
+        type: "adjustment",
+        visible: true,
+        zIndex: this.layers.length,
+        opacity: 1,
+        values: defaultAdjustmentValues,
+        container: container,
       };
     }
   };
@@ -717,6 +830,7 @@ export class Project {
   settings: ProjectSettings;
   id: string;
   target: LayerX | null;
+  container: Container | null;
 
   constructor() {
     this.layerManager = new LayerManager();
@@ -725,6 +839,7 @@ export class Project {
     this.historyStack = [];
     this.currentSnapshot = null;
     this.target = null;
+    this.container = null;
   }
 
   static [immerable] = true;

@@ -1,55 +1,69 @@
-import Image from "next/image";
-import Link from "next/link";
-import React from "react";
-import { CropIcon, ImageIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { MoveIcon } from "@radix-ui/react-icons";
 import { DropdownMenuShortcut } from "@/components/ui/dropdown-menu";
-import { CheckIcon } from "@radix-ui/react-icons";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  CheckIcon,
+  EyeOpenIcon,
+  MagicWandIcon,
+  MoveIcon,
+} from "@radix-ui/react-icons";
+import React, { useEffect } from "react";
 
-import DownloadIcon from "@mui/icons-material/Download";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import { TransformIcon } from "@radix-ui/react-icons";
-import SettingsIcon from "@mui/icons-material/Settings";
-import ControlCameraIcon from "@mui/icons-material/ControlCamera";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import Discovery from "@/components/Editor/PhotoEditor/UI/discovery";
 import { useProjectContext } from "@/pages/editor";
-import { Poppins } from "next/font/google";
-import Anime from "@/pages/gallery/anime";
 import { Psychology } from "@mui/icons-material";
+import { TransformIcon } from "@radix-ui/react-icons";
+import dynamic from "next/dynamic";
+import { Poppins } from "next/font/google";
 
 interface ToolBarProps {
-  imgSrc: string;
   downloadImage: () => void;
   toggleThirds: () => void;
-  setShowTransform: (value: boolean) => void;
-  showTransform: boolean;
+  mode: string;
+  setMode: (mode: string) => void;
 }
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
+
+const DynamicRemgb = dynamic(
+  () => import("@/components/Editor/PhotoEditor/UI/rembg")
+);
+
 const ToolBar: React.FC<ToolBarProps> = ({
-  imgSrc,
   downloadImage,
   toggleThirds,
-  setShowTransform,
-  showTransform,
+  mode,
+  setMode,
 }) => {
+  const [openView, setOpenView] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [openGallery, setOpenGallery] = React.useState(false);
   const [openAI, setOpenAI] = React.useState(false);
+  const { loading } = useProjectContext();
 
   const { project, setProject } = useProjectContext();
   let timer: any;
   let aiTimer: any;
+  let viewTimer: any;
+
+  const handleMouseEnterView = () => {
+    clearTimeout(viewTimer); // Clear any existing timeout
+    setOpenView(true);
+  };
+
+  const handleMouseLeaveView = () => {
+    // Set a timeout to close the popover after a delay
+    viewTimer = setTimeout(() => {
+      setOpenView(false);
+    }, 200); // Adjust the delay time as needed
+  };
 
   const handleMouseEnter = () => {
     clearTimeout(timer); // Clear any existing timeout
@@ -74,17 +88,87 @@ const ToolBar: React.FC<ToolBarProps> = ({
       setOpenAI(false);
     }, 200); // Adjust the delay time as needed
   };
+
+  useEffect(() => {
+    if (mode === "rembg") {
+      handleMouseLeaveAI();
+    }
+  }, [mode]);
   return (
-    <aside
-      id="logo-sidebar"
-      className={`animate-fade select-none animate-once animate-ease-out w-10 h-full border-r-2 border-[#cdcdcd] dark:border-[#252525]`}
-      aria-label="Sidebar"
-    >
-      <div className="h-full py-6 overflow-y-auto bg-navbarBackground dark:bg-navbarBackground ">
-        {imgSrc && (
+    <div>
+      <aside
+        id="logo-sidebar"
+        className={`animate-fade select-none animate-once animate-ease-out w-10 h-full border-r-2 border-[#cdcdcd] dark:border-[#252525]`}
+        aria-label="Sidebar"
+      >
+        <div className="h-full py-6 overflow-y-auto bg-navbarBackground dark:bg-navbarBackground ">
           <div className="animate-fade animate-once animate-ease-linear mt-1">
             <div>
               <ul className="space-y-6 font-medium ">
+                <li className="flex justify-center items-center">
+                  <Popover open={openView}>
+                    <PopoverTrigger
+                      asChild
+                      className="focus-visible:ring-offset-0 focus-visible:ring-0"
+                    >
+                      <Button
+                        className={`w-6 flex flex-row items-center justify-center hover:bg-buttonHover dark:hover:bg-buttonHover ${
+                          mode === "view"
+                            ? "bg-buttonHover dark:bg-[#3b3b3b]"
+                            : "bg-navbarBackground dark:bg-navbarBackground"
+                        }`}
+                        onMouseEnter={handleMouseEnterView}
+                        onMouseLeave={handleMouseLeaveView}
+                        variant={"outline"}
+                      >
+                        <span>
+                          <EyeOpenIcon
+                            aria-hidden="true"
+                            className="w-6 h-6 text-gray-500 dark:text-gray-100"
+                          ></EyeOpenIcon>
+                        </span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="right"
+                      className={`w-72 ${poppins.className} select-none`}
+                      onMouseEnter={handleMouseEnterView}
+                      onMouseLeave={handleMouseLeaveView}
+                    >
+                      <div className="grid gap-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium leading-none">View</h4>
+                          <p className="text-sm text-muted-foreground">
+                            View the canvas with smooth animation
+                          </p>
+                        </div>
+                        <div className="grid gap-4">
+                          <div
+                            className="grid grid-cols-2 items-center hover:bg-buttonHover dark:hover:bg-buttonHover cursor-pointer"
+                            onClick={() => {
+                              setMode("view");
+                            }}
+                          >
+                            <span className="flex flex-row items-center space-x-1 col-span-1">
+                              {mode === "view" && (
+                                <CheckIcon
+                                  className={`w-6 h-6 text-blue-600`}
+                                />
+                              )}
+                              <EyeOpenIcon className="w-6 h-6" />
+                              <Label htmlFor="width" className="cursor-pointer">
+                                View
+                              </Label>
+                            </span>
+
+                            <DropdownMenuShortcut>V</DropdownMenuShortcut>
+                          </div>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </li>
+
                 <li className="flex justify-center items-center ">
                   <Popover open={open}>
                     <PopoverTrigger
@@ -92,16 +176,29 @@ const ToolBar: React.FC<ToolBarProps> = ({
                       className="focus-visible:ring-offset-0 focus-visible:ring-0"
                     >
                       <Button
-                        className="w-6 flex flex-row items-center justify-center bg-navbarBackground dark:bg-navbarBackground hover:bg-buttonHover dark:hover:bg-buttonHover"
+                        className={`w-6 flex flex-row items-center justify-center  hover:bg-buttonHover dark:hover:bg-buttonHover
+                      ${
+                        mode === "move" || mode === "transform"
+                          ? "bg-buttonHover dark:bg-[#3b3b3b]"
+                          : "bg-navbarBackground dark:bg-navbarBackground"
+                      }`}
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}
                         variant={"outline"}
                       >
                         <span>
-                          <MoveIcon
-                            aria-hidden="true"
-                            className="w-6 h-6 text-gray-500 dark:text-gray-100"
-                          ></MoveIcon>
+                          {mode !== "transform" && (
+                            <MoveIcon
+                              aria-hidden="true"
+                              className="w-6 h-6 text-gray-500 dark:text-gray-100"
+                            ></MoveIcon>
+                          )}
+                          {mode === "transform" && (
+                            <TransformIcon
+                              aria-hidden="true"
+                              className="w-6 h-6 text-gray-500 dark:text-gray-100"
+                            ></TransformIcon>
+                          )}
                         </span>
                       </Button>
                     </PopoverTrigger>
@@ -122,13 +219,13 @@ const ToolBar: React.FC<ToolBarProps> = ({
                         </div>
                         <div className="grid gap-4">
                           <div
-                            className="grid grid-cols-2 items-center hover:bg-slate-200 dark:hover:bg-gray-800 cursor-pointer"
+                            className="grid grid-cols-2 items-center hover:bg-buttonHover dark:hover:bg-buttonHover cursor-pointer"
                             onClick={() => {
-                              setShowTransform(false);
+                              setMode("move");
                             }}
                           >
-                            <span className="flex flex-row items-center space-x-     col-span-1">
-                              {!showTransform && (
+                            <span className="flex flex-row items-center space-x-1 col-span-1">
+                              {mode === "move" && (
                                 <CheckIcon
                                   className={`w-6 h-6 text-blue-600`}
                                 />
@@ -139,17 +236,17 @@ const ToolBar: React.FC<ToolBarProps> = ({
                               </Label>
                             </span>
 
-                            <DropdownMenuShortcut>V</DropdownMenuShortcut>
+                            <DropdownMenuShortcut>M</DropdownMenuShortcut>
                           </div>
                           <div
-                            className="grid grid-cols-2 items-center hover:bg-slate-200 dark:hover:bg-gray-800 cursor-pointer"
+                            className="grid grid-cols-2 items-center hover:bg-buttonHover dark:hover:bg-buttonHover cursor-pointer"
                             id="transform"
                             onClick={() => {
-                              setShowTransform(true);
+                              setMode("transform");
                             }}
                           >
                             <span className="flex flex-row items-center space-x-1 col-span-1">
-                              {showTransform && (
+                              {mode === "transform" && (
                                 <CheckIcon
                                   className={`w-6 h-6 text-blue-600`}
                                 />
@@ -173,7 +270,7 @@ const ToolBar: React.FC<ToolBarProps> = ({
                   </Popover>
                 </li>
                 <li className="flex justify-center items-center">
-                  <Anime />
+                  <Discovery />
                 </li>
                 <li className="flex justify-center items-center">
                   <Popover open={openAI}>
@@ -182,7 +279,12 @@ const ToolBar: React.FC<ToolBarProps> = ({
                       className="focus-visible:ring-offset-0 focus-visible:ring-0"
                     >
                       <Button
-                        className="w-6 flex flex-row items-center justify-center bg-navbarBackground dark:bg-navbarBackground hover:bg-buttonHover dark:hover:bg-buttonHover"
+                        className={`w-6 flex flex-row items-center justify-center  hover:bg-buttonHover dark:hover:bg-buttonHover
+                      ${
+                        mode === "rembg"
+                          ? "bg-buttonHover dark:bg-[#3b3b3b]"
+                          : "bg-navbarBackground dark:bg-navbarBackground"
+                      }`}
                         variant="outline"
                         onMouseEnter={handleMouseEnterAI}
                         onMouseLeave={handleMouseLeaveAI}
@@ -213,49 +315,47 @@ const ToolBar: React.FC<ToolBarProps> = ({
                         </div>
                         <div className="grid gap-4">
                           <div
-                            className="grid grid-cols-2 items-center hover:bg-slate-200 cursor-pointer"
-                            onClick={() => {
-                              setShowTransform(false);
-                            }}
+                            className="grid grid-cols-2 items-center hover:bg-buttonHover hover:dark:bg-buttonHover cursor-pointer"
+                            onClick={() => setMode("rembg")}
                           >
-                            <span className="flex flex-row items-center space-x-1 col-span-1">
-                              {!showTransform && (
+                            <span className="flex flex-row items-center space-x-3 col-span-1">
+                              {mode === "rembg" && (
                                 <CheckIcon
                                   className={`w-6 h-6 text-blue-600`}
                                 />
                               )}
-                              <MoveIcon className="w-6 h-6" />
+                              <MagicWandIcon className="w-6 h-6" />
                               <Label htmlFor="rembg" className="cursor-pointer">
                                 Remove Background
                               </Label>
                             </span>
 
-                            <DropdownMenuShortcut>V</DropdownMenuShortcut>
+                            <DropdownMenuShortcut>
+                              Ctrl+R+B
+                            </DropdownMenuShortcut>
                           </div>
-                          <div
-                            className="grid grid-cols-2 items-center hover:bg-slate-200 cursor-pointer"
-                            id="transform"
-                            onClick={() => {
-                              setShowTransform(true);
-                            }}
-                          >
-                            <span className="flex flex-row items-center space-x-1 col-span-1">
-                              {showTransform && (
-                                <CheckIcon
-                                  className={`w-6 h-6 text-blue-600`}
-                                />
-                              )}
+                          {/* <div
+                          className="grid grid-cols-2 items-center hover:bg-slate-200 cursor-pointer"
+                          id="aiTransform"
+                          onClick={() => {
+                            setShowTransform(true);
+                          }}
+                        >
+                          <span className="flex flex-row items-center space-x-1 col-span-1">
+                            {showTransform && (
+                              <CheckIcon className={`w-6 h-6 text-blue-600`} />
+                            )}
 
-                              <TransformIcon className="w-6 h-6" />
-                              <Label
-                                htmlFor="generativeFill"
-                                className="cursor-pointer"
-                              >
-                                Generative Fill
-                              </Label>
-                            </span>
-                            <DropdownMenuShortcut>Ctrl+T</DropdownMenuShortcut>
-                          </div>
+                            <TransformIcon className="w-6 h-6" />
+                            <Label
+                              htmlFor="generativeFill"
+                              className="cursor-pointer"
+                            >
+                              Generative Fill
+                            </Label>
+                          </span>
+                          <DropdownMenuShortcut>Ctrl+T</DropdownMenuShortcut>
+                        </div> */}
                         </div>
                       </div>
                     </PopoverContent>
@@ -310,9 +410,11 @@ const ToolBar: React.FC<ToolBarProps> = ({
               </ul>
             </div> */}
           </div>
-        )}
-      </div>
-    </aside>
+        </div>
+      </aside>
+      {mode === "rembg" && <div className="w-64"></div>}
+      <DynamicRemgb setMode={setMode} mode={mode} />
+    </div>
   );
 };
 export default ToolBar;

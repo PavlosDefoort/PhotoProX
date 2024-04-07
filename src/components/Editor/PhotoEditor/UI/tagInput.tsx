@@ -1,45 +1,26 @@
-import * as React from "react";
-import Chip, { ChipProps } from "@mui/material/Chip";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import Stack from "@mui/material/Stack";
-import { useState, useEffect } from "react";
-import { createTheme, ThemeProvider } from "@mui/material";
-import CasinoIcon from "@mui/icons-material/Casino";
-import { PaletteOptions } from "@mui/material";
+import { Button } from "@/components/ui/button";
 import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from "@/components/ui/command";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { FixedSizeList as List } from "react-window";
-import { Theme, width } from "@mui/system";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import GridGalleryTwo from "./offthegridTwo";
-import { InputValueContext } from "../../../../../app/contexts";
-import { set } from "lodash";
 import { fetchScout } from "@/utils/calls";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Post } from "@/utils/galleryInterfaces";
+import CasinoIcon from "@mui/icons-material/Casino";
+import { PaletteOptions, ThemeProvider, createTheme } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
+import Chip, { ChipProps } from "@mui/material/Chip";
+import TextField from "@mui/material/TextField";
+import { Theme } from "@mui/system";
+import * as React from "react";
+import { useEffect, useState } from "react";
+import { InputValueContext } from "../../../../../app/contexts";
 
 type post = {
   file_url: string;

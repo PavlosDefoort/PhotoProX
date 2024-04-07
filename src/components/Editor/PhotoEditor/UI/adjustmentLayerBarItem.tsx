@@ -1,51 +1,52 @@
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  AdjustmentLayer,
-  AnalysisData,
-  HistogramArray,
-  ImageLayer,
-  defaultHistogram,
-} from "@/utils/editorInterfaces";
-import {
-  analyseAlphaValues,
-  analyseEverything,
-  analyseImageGreenIntensities,
-  analyseImageLuminance,
-  analyseImageRedIntensities,
-  calculateHueAngle,
-  convertFloat32ArrayToNumberArray,
-  sortIntensityArray,
-  takeMultipleSamples,
-  takeSamples,
-} from "@/utils/calcUtils";
-import React, { useEffect } from "react";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { SelectSeparator } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
 import { useProjectContext } from "@/pages/editor";
+import {
+  analyseEverything,
+  calculateHueAngle,
+  clamp,
+  takeMultipleSamples,
+} from "@/utils/calcUtils";
+import {
+  AdjustmentLayer,
+  AnalysisData,
+  Color,
+  HistogramArray,
+  ImageLayer,
+  defaultHistogram,
+} from "@/utils/editorInterfaces";
+import { ColorLens, FilterVintage } from "@mui/icons-material";
 import {
   EyeClosedIcon,
   EyeOpenIcon,
   OpacityIcon,
+  ShadowIcon,
   SunIcon,
 } from "@radix-ui/react-icons";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { clamp } from "@/utils/calcUtils";
-import { Slider } from "@/components/ui/slider";
-import { ColorLens, FilterVintage, Waves } from "@mui/icons-material";
-import { AdjustmentFilter, AdvancedBloomFilter } from "pixi-filters";
+  AdjustmentFilter,
+  AdvancedBloomFilter,
+  DropShadowFilter,
+} from "pixi-filters";
 import { Application, ColorMatrixFilter } from "pixi.js";
-import LuminanceHistogram from "./histogram";
+import React, { useEffect, useState } from "react";
+import { SketchPicker } from "react-color";
+import Draggable from "react-draggable";
 import BezierCurves from "./draggablegraph";
 import DynamicPlot from "./dynamicplot";
 
@@ -63,6 +64,8 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
   const NUM_SAMPLES = 80;
 
   const [histogramData, setHistogramData] = useState(defaultHistogram);
+  const [prevOpacity, setPrevOpacity] = useState<number>(layer.opacity);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   useEffect(() => {
     if (appRef && layer.adjustmentType === "waves" && appRef.current) {
@@ -234,6 +237,7 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
               </TooltipProvider>
             </Button>
           </PopoverTrigger>
+
           <PopoverContent className="w-80">
             <div className="grid gap-4">
               <div className="space-y-2">
@@ -286,6 +290,25 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
                       }
                     }}
                   />
+                  <Slider
+                    value={[layer.opacity]}
+                    onValueChange={(e) => {
+                      setStringOpacity((e[0] * 100).toFixed(0) + "%");
+                      setProject((draft) => {
+                        const foundLayer = draft.layerManager.findLayer(
+                          layer.id
+                        );
+                        if (foundLayer) {
+                          setPrevOpacity(foundLayer.opacity);
+                          foundLayer.opacity = e[0];
+                        }
+                      });
+                      setTrigger(!trigger);
+                    }}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                  ></Slider>
                 </div>
               </div>
             </div>
@@ -303,6 +326,9 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
             )}
             {layer.adjustmentType === "bloom" && (
               <FilterVintage className="w-8 h-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+            )}
+            {layer.adjustmentType === "shadow" && (
+              <ShadowIcon className="w-8 h-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
             )}
             {layer.adjustmentType === "waves" && (
               <svg
@@ -417,8 +443,9 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
             )}
           </Button>
         </PopoverTrigger>
+
         <PopoverContent
-          className="w-96"
+          className="w-96 select-none"
           side="left"
           onOpenAutoFocus={(e) => {
             e.preventDefault();
@@ -436,7 +463,9 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
                 <p className="text-sm text-muted-foreground">
                   Set the brightness and contrast of the layer
                 </p>
+                <SelectSeparator />
               </div>
+
               <div>
                 <Label>Brightness</Label>
                 <div className="flex flex-row space-x-2">
@@ -510,6 +539,7 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
                 <p className="text-sm text-muted-foreground">
                   Set the hue and saturation of the layer
                 </p>
+                <SelectSeparator />
               </div>
               <div>
                 <Label>Saturation</Label>
@@ -599,7 +629,9 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
                 <p className="text-sm text-muted-foreground">
                   Set the bloom of the layer
                 </p>
+                <SelectSeparator />
               </div>
+
               <div>
                 <Label>Blur</Label>
                 <div className="flex flex-row space-x-2">
@@ -759,6 +791,213 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
               </div>
             </div>
           )}
+          {layer.adjustmentType == "shadow" && (
+            <div className="grid gap-2 ">
+              <div className="space-y-2">
+                <h4 className="font-medium leading-none">Shadow</h4>
+                <p className="text-sm text-muted-foreground">
+                  Add a shadow to the layer
+                </p>
+                <SelectSeparator />
+              </div>
+              <div>
+                <Label>Opacity</Label>
+                <div className="flex flex-row space-x-2">
+                  <Slider
+                    className="w-8/12"
+                    max={1}
+                    min={0}
+                    step={0.01}
+                    value={[
+                      (layer.container.filters &&
+                        (layer.container.filters[0] as DropShadowFilter)
+                          ?.alpha) ||
+                        0,
+                    ]}
+                    onValueChange={(value) => {
+                      if (layer.container.filters) {
+                        const theFilter = layer.container
+                          .filters[0] as DropShadowFilter;
+                        theFilter.alpha = value[0];
+                        setTrigger(!trigger);
+                      }
+                    }}
+                  />
+                  {(
+                    ((layer.container.filters &&
+                      (layer.container.filters[0] as DropShadowFilter)
+                        ?.alpha) ||
+                      0) * 100
+                  ).toFixed(0)}
+                  %
+                </div>
+              </div>
+              <div>
+                <Label>Blur</Label>
+                <div className="flex flex-row space-x-2">
+                  <Slider
+                    className="w-8/12"
+                    max={10}
+                    min={0}
+                    step={1}
+                    value={[
+                      (layer.container.filters &&
+                        (layer.container.filters[0] as DropShadowFilter)
+                          ?.blur) ||
+                        0,
+                    ]}
+                    onValueChange={(value) => {
+                      if (layer.container.filters) {
+                        const theFilter = layer.container
+                          .filters[0] as DropShadowFilter;
+                        theFilter.blur = value[0];
+                        setTrigger(!trigger);
+                      }
+                    }}
+                  />
+                  {(
+                    (layer.container.filters &&
+                      (layer.container.filters[0] as DropShadowFilter)?.blur) ||
+                    0
+                  ).toFixed(0)}
+                </div>
+              </div>
+              <div>
+                <Label>X</Label>
+                <div className="flex flex-row space-x-2">
+                  <Slider
+                    className="w-8/12"
+                    max={1000}
+                    min={-1000}
+                    step={1}
+                    value={[
+                      (layer.container.filters &&
+                        (layer.container.filters[0] as DropShadowFilter)?.offset
+                          .x) ||
+                        0,
+                    ]}
+                    onValueChange={(value) => {
+                      if (layer.container.filters) {
+                        const theFilter = layer.container
+                          .filters[0] as DropShadowFilter;
+                        theFilter.offset.x = value[0];
+                        setTrigger(!trigger);
+                      }
+                    }}
+                  />
+                  {(
+                    (layer.container.filters &&
+                      (layer.container.filters[0] as DropShadowFilter)?.offset
+                        .x) ||
+                    0
+                  ).toFixed(0)}
+                </div>
+              </div>
+              <div>
+                <Label>Y</Label>
+                <div className="flex flex-row space-x-2">
+                  <Slider
+                    className="w-8/12"
+                    max={1000}
+                    min={-1000}
+                    step={1}
+                    value={[
+                      (layer.container.filters &&
+                        (layer.container.filters[0] as DropShadowFilter)?.offset
+                          .y) ||
+                        0,
+                    ]}
+                    onValueChange={(value) => {
+                      if (layer.container.filters) {
+                        const theFilter = layer.container
+                          .filters[0] as DropShadowFilter;
+                        theFilter.offset.y = value[0];
+                        setTrigger(!trigger);
+                      }
+                    }}
+                  />
+                  {(
+                    (layer.container.filters &&
+                      (layer.container.filters[0] as DropShadowFilter)?.offset
+                        .y) ||
+                    0
+                  ).toFixed(0)}
+                </div>
+              </div>
+              <div className="mb-1">
+                <div className="flex flex-row items-center space-x-3">
+                  <Label>Colour</Label>
+                  <div
+                    className={`aspect-square w-10 h-10 border-2 border-black cursor-pointer`}
+                    style={{
+                      backgroundColor: layer.color?.hex,
+                    }}
+                    onClick={() => {
+                      setShowColorPicker(!showColorPicker);
+                    }}
+                  ></div>
+                </div>
+                {showColorPicker && (
+                  <Draggable
+                    handle=".popup-header"
+                    defaultPosition={{ x: 0, y: 0 }}
+                  >
+                    <div className="absolute bottom-0 left-40 opacity-80 transition-opacity duration-300 hover:opacity-100 z-50">
+                      <div className="popup-header px-2 py-1 cursor-move bg-navbarBackground  dark:bg-navbarBackground border-2 border-[#cdcdcd] dark:border-[#252525]">
+                        Shadow Color Picker
+                      </div>
+                      <SketchPicker
+                        color={layer.color?.hex}
+                        onChange={(color) => {
+                          if (layer.container.filters) {
+                            layer.color = {
+                              hex: color.hex,
+                              rgb: color.rgb,
+                            } as Color;
+                            const theFilter = layer.container
+                              .filters[0] as DropShadowFilter;
+                            // The shadow accepts the hex value as 0xRRGGBB, but we have it as "#RRGGBB"
+                            const newColor = parseInt(color.hex.slice(1), 16);
+                            theFilter.color = newColor;
+                            setTrigger(!trigger);
+                          }
+                        }}
+                      ></SketchPicker>
+                    </div>
+                  </Draggable>
+                )}
+              </div>
+              <div className="flex flex-row justify-start items-center space-x-2 space-y-1">
+                <Label>Show Shadow Only</Label>
+                <Checkbox
+                  className=""
+                  checked={
+                    (layer.container.filters &&
+                      (layer.container.filters[0] as DropShadowFilter)
+                        .shadowOnly) ||
+                    false
+                  }
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      if (layer.container.filters) {
+                        const theFilter = layer.container
+                          .filters[0] as DropShadowFilter;
+                        theFilter.shadowOnly = true;
+                        setTrigger(!trigger);
+                      }
+                    } else {
+                      if (layer.container.filters) {
+                        const theFilter = layer.container
+                          .filters[0] as DropShadowFilter;
+                        theFilter.shadowOnly = false;
+                        setTrigger(!trigger);
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
           {layer.adjustmentType == "waves" && (
             <div className="">
               <div className="space-y-2 pb-2">
@@ -766,6 +1005,7 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
                 <p className="text-sm text-muted-foreground">
                   Manipulate the luminance of the layer
                 </p>
+                <SelectSeparator />
               </div>
 
               <div className="flex flex-row  h-full">
@@ -787,6 +1027,7 @@ const AdjustmentLayerBarItem: React.FC<AdjustmentLayerBarItemProps> = ({
                   Express your creativity with functions
                 </p>
                 <Label>Note: Only univariate functions will be graphed</Label>
+                <SelectSeparator />
               </div>
 
               <div className="flex flex-row  h-full">

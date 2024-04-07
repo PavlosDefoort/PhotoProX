@@ -1,5 +1,4 @@
 import { getGPUTier, TierResult } from "detect-gpu";
-import { useEffect } from "react";
 
 export const GetInfo = async (): Promise<TierResult> => {
   try {
