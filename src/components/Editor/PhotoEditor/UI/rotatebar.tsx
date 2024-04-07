@@ -1,13 +1,10 @@
-import React, { use, useEffect } from "react";
-import RotateRightIcon from "@mui/icons-material/RotateRight";
+import { clamp } from "@/utils/calcUtils";
 import RotateLeftIcon from "@mui/icons-material/RotateLeft";
+import RotateRightIcon from "@mui/icons-material/RotateRight";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
-import { Slider } from "@mui/material";
-import { clamp } from "@/utils/calcUtils";
 import Tooltip from "@mui/material/Tooltip";
-import { set } from "lodash";
-import { type } from "os";
+import React, { useEffect } from "react";
 
 interface RotateBarProps {
   changeActive: (mode: string) => void;

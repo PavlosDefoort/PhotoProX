@@ -1,19 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
-import Script from "next/script";
-import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { BoxedExpression, ComputeEngine } from "@cortex-js/compute-engine";
+import { useProjectContext } from "@/pages/editor";
 import { AdjustmentLayer } from "@/utils/editorInterfaces";
 import { Functions } from "@/utils/filters";
-import { red } from "@mui/material/colors";
-import { set } from "lodash";
-import { useProjectContext } from "@/pages/editor";
-import { late } from "zod";
-import { Application, Program, Shader } from "pixi.js";
-import { toast } from "sonner";
-import { ErrorOutline } from "@mui/icons-material";
+import { BoxedExpression, ComputeEngine } from "@cortex-js/compute-engine";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
-import { Mafs, Plot, Coordinates, Theme } from "mafs";
+import { Coordinates, Mafs, Plot, Theme } from "mafs";
+import dynamic from "next/dynamic";
+import React, { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 const DynamicLiveMath = dynamic(() => import("./LiveMath"), { ssr: false });
 

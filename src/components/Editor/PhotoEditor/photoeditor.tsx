@@ -1,94 +1,59 @@
+import dynamic from "next/dynamic";
 import React, {
-  useState,
-  useRef,
-  useEffect,
   useCallback,
   useContext,
-  useMemo,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
-import dynamic from "next/dynamic";
-import Decimal from "decimal.js";
-import Image from "next/image";
+import {
+  ReactZoomPanPinchContentRef,
+  TransformComponent,
+  TransformWrapper,
+} from "react-zoom-pan-pinch";
 import TopBar from "./UI/topbar";
-import ToolBar from "./UI/toolbar";
-import BottomBar from "./UI/bottombar";
+
 import ApplyCanvas from "@/components/Editor/PhotoEditor/applyCanvas";
-import PinchHandler from "./pinchLogic";
-import { EditorProject, ImageLayer } from "@/utils/editorInterfaces";
+import { ImageData, ImageLayer } from "@/utils/editorInterfaces";
 
 import {
-  Application,
-  Container,
-  DisplayObject,
-  Graphics,
-  Prepare,
-  Sprite,
-  autoDetectRenderer,
-} from "pixi.js";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import BedtimeIcon from "@mui/icons-material/Bedtime";
-import FilterVintageIcon from "@mui/icons-material/FilterVintage";
-import CameraEnhanceIcon from "@mui/icons-material/CameraEnhance";
-import WarningIcon from "@mui/icons-material/Warning";
+  HeightRotate,
+  WidthRotate,
+  calculateMaxScale,
+  clamp,
+  fitImageToScreen,
+} from "@/utils/calcUtils";
+import AcUnitIcon from "@mui/icons-material/AcUnit";
 import AlarmIcon from "@mui/icons-material/Alarm";
+import BedtimeIcon from "@mui/icons-material/Bedtime";
+import CameraEnhanceIcon from "@mui/icons-material/CameraEnhance";
+import FilterVintageIcon from "@mui/icons-material/FilterVintage";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import LooksIcon from "@mui/icons-material/Looks";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
-import AcUnitIcon from "@mui/icons-material/AcUnit";
 import TagFacesIcon from "@mui/icons-material/TagFaces";
+import WarningIcon from "@mui/icons-material/Warning";
+import {
+  Application,
+  Container,
+  Graphics,
+  Sprite,
+  autoDetectRenderer,
+} from "pixi.js";
 import { ThemeContext } from "../../ThemeProvider/themeprovider";
-import {
-  WidthRotate,
-  HeightRotate,
-  clamp,
-  calculateZoomPan,
-  fitImageToScreen,
-  calculateMaxScale,
-  analyseImageLuminance,
-  convertFloat32ArrayToNumberArray,
-  sortIntensityArray,
-  takeSamples,
-  analyseImageRedIntensities,
-} from "@/utils/calcUtils";
-import { Newsreader } from "next/font/google";
-import { set } from "lodash";
-import {
-  ContextMenu,
-  ContextMenuCheckboxItem,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuRadioGroup,
-  ContextMenuRadioItem,
-  ContextMenuSeparator,
-  ContextMenuShortcut,
-  ContextMenuGroup,
-  ContextMenuPortal,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { ref, uploadBytesResumable } from "firebase/storage";
-import {
-  DotFilledIcon,
-  CheckIcon,
-  ChevronRightIcon,
-} from "@radix-ui/react-icons";
-import { ConstructionIcon } from "lucide-react";
+
 import { useProjectContext } from "@/pages/editor";
+import { uploadLayer } from "../../../../app/firebase";
 import LayerBar from "./UI/layerbar";
-import { db, storage } from "../../../../app/firebase";
-import { addDoc, collection } from "firebase/firestore";
+
 import { GetInfo } from "@/components/getinfo";
 import { TierResult } from "detect-gpu";
+import { Draft } from "immer";
+import { useAuth } from "../../../../app/authcontext";
+import ImageSelector from "../ImageSelect/imageselector";
+import CreateProject from "./UI/createProject";
 import TopBarTwo from "./UI/transformbar";
-import Anime from "@/pages/gallery/anime";
-import LuminanceHistogram from "./UI/histogram";
 
 const SideBar = dynamic(() => import("./UI/sidebar"), {
   loading: () => <p>loading</p>,
@@ -98,6 +63,8 @@ const FilterBar = dynamic(() => import("./UI/filterbar"), {
   loading: () => <p>loading</p>,
 });
 
+const ToolBar = dynamic(() => import("./UI/toolbar"));
+
 const RotateBar = dynamic(() => import("./UI/rotatebar"), {
   loading: () => <p>loading</p>,
 });
@@ -105,12 +72,6 @@ const RotateBar = dynamic(() => import("./UI/rotatebar"), {
 const ResizeBar = dynamic(() => import("./UI/resizebar"), {
   loading: () => <p>loading</p>,
 });
-
-interface PhotoEditorProps {
-  imageData: string;
-  fileName: string;
-  fileSize: number;
-}
 
 type StackElement = {
   rotate: number;
@@ -126,11 +87,7 @@ type StackElement = {
 
 type Stack = StackElement[];
 
-const PhotoEditor: React.FC<PhotoEditorProps> = ({
-  imageData,
-  fileName,
-  fileSize,
-}) => {
+const PhotoEditor: React.FC = () => {
   const [editingMode, setEditingMode] = useState("");
   const [windowWidth, setWindowWidth] = useState(0);
   const [deltaWidth, setDeltaWidth] = useState(0);
@@ -145,6 +102,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [topBarLength, setTopBarLength] = useState(40);
   const [positionX, setPositionX] = useState(0);
   const [positionY, setPositionY] = useState(0);
+  const transformRef = useRef<ReactZoomPanPinchContentRef | null>(null);
 
   // Add a canvasWidth and height global state to optimize resolution
   const [canvasWidth, setCanvasWidth] = useState(2000);
@@ -279,11 +237,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const imgRef = useRef(null);
   const target = useRef<HTMLDivElement | null>(null);
   const [windowHeight, setWindowHeight] = useState(0);
-  const { project, setProject, trigger, setTrigger } = useProjectContext();
+  const { project, setProject, trigger, setTrigger, loading, setLoading } =
+    useProjectContext();
 
   const realNaturalWidth = useRef(project.settings.canvasSettings.width);
   const realNaturalHeight = useRef(project.settings.canvasSettings.height);
-  const [showTransform, setShowTransform] = useState(false);
+  const [mode, setMode] = useState("view");
 
   useEffect(() => {
     if (
@@ -357,16 +316,16 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   };
 
   // Make a function to let the user drag on the canvas to move the image
-  useEffect(() => {
-    if (project) {
-      // Take the first 20 characters of the file name
-      const first20 = fileName.slice(0, 20);
+  // useEffect(() => {
+  //   if (project) {
+  //     // Take the first 20 characters of the file name
+  //     const first20 = fileName.slice(0, 20);
 
-      setProject((draft) => {
-        draft.settings.name = first20;
-      });
-    }
-  }, [fileName]);
+  //     setProject((draft) => {
+  //       draft.settings.name = first20;
+  //     });
+  //   }
+  // }, [fileName]);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -610,7 +569,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   ApplyCanvas({
     spriteRefs,
     canvasRef,
-    imgSrc,
     zoomValue,
     darkMode,
     fakeY,
@@ -633,7 +591,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     setPositionX,
     setPositionY,
     trigger,
-    showTransform,
+    mode,
   });
 
   useEffect(() => {
@@ -650,7 +608,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
   useEffect(() => {
     // set the image source to the imageData prop
 
-    setImgSrc(imageData);
+    // setImgSrc(imageData);
     const maxScale = calculateMaxScale(
       realNaturalWidth.current,
       realNaturalHeight.current
@@ -670,35 +628,18 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       canvasHeight,
       rotateValue
     );
+    const newZoom = clamp(scale, 0.1, 4);
 
-    setZoomValue(clamp(scale, 0.1, 4));
-
-    if (
-      imageData.length > 0 &&
-      realNaturalWidth.current > 0 &&
-      realNaturalHeight.current > 0 &&
-      fileName.length > 0 &&
-      (fileSize / 3) * 4 < 4
-    ) {
-      localStorage.setItem("imageData", imageData);
-      localStorage.setItem(
-        "realNaturalWidth.current",
-        realNaturalWidth.current.toString()
-      );
-      localStorage.setItem(
-        "realNaturalHeight.current",
-        realNaturalHeight.current.toString()
-      );
-      setFirstLoad(false);
+    setZoomValue(newZoom);
+    if (transformRef.current) {
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    imageData,
     realNaturalWidth.current,
     realNaturalHeight.current,
     rotateValue,
-    fileName,
-    fileSize,
+
     canvasWidth,
     canvasHeight,
     firstLoad,
@@ -1069,7 +1010,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
       } else if (gpu.tier === 2 || gpu.fps! <= 100) {
         setGpuFactor(1.25);
       } else if (gpu.tier === 3) {
-        const fpsFactor = clamp(gpu.fps! / 100, 1.25, 2);
+        const fpsFactor = clamp(gpu.fps! / 100, 1.25, 3);
         setGpuFactor(fpsFactor);
       } else {
         setGpuFactor(1);
@@ -1096,6 +1037,87 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
     if (appRef.current && project.layerManager.layers.length > 0) {
     }
   }, [project.layerManager.layers.length]);
+
+  const { user } = useAuth();
+  const { landing, setLanding } = useProjectContext();
+
+  const handleImageSet = (
+    selectedImage: HTMLImageElement | string | ArrayBuffer | null,
+    natWidth: number,
+    natHeight: number,
+    realWit: number,
+    realHit: number,
+    fileName: string,
+    fileSize: number,
+    file: File
+  ) => {
+    if (typeof selectedImage === "string") {
+      const backgroundLayer = project.layerManager.createBackgroundLayer(
+        false,
+        "#ffffff",
+        realWit,
+        realHit,
+        0
+      );
+      setProject((draft) => {
+        draft.layerManager.addLayer(backgroundLayer);
+      });
+
+      setLanding(true);
+
+      const imageData: ImageData = {
+        name: fileName,
+        src: selectedImage,
+        imageHeight: realHit,
+        imageWidth: realWit,
+      };
+
+      try {
+        const layer = project.layerManager.createLayer(
+          realWit,
+          realHit,
+          imageData,
+          file,
+          project.id,
+          user?.uid!
+        );
+        setProject((draft) => {
+          draft.settings.canvasSettings.width = realWit;
+          draft.settings.canvasSettings.height = realHit;
+
+          const imageLayer: ImageLayer = {
+            id: layer.id,
+            imageData: layer.imageData,
+            zIndex: layer.zIndex,
+            editingParameters: layer.editingParameters,
+            sprite: layer.sprite,
+            visible: layer.visible,
+            type: "image", // Add the 'type' property with the value 'image'
+            opacity: 1,
+          };
+
+          draft.layerManager.addLayer(imageLayer);
+          const targetLayer = draft.layerManager.findLayer(layer.id);
+          if (targetLayer) {
+            draft.target = targetLayer as Draft<ImageLayer>;
+          }
+        });
+
+        // Now you can use the 'newLayer' object after it's resolved
+      } catch (error) {
+        // Handle any errors that may occur during the async operation
+        console.error("Error creating layer:", error);
+      }
+
+      // Add the layer to the project
+    }
+
+    // const newName = removeExtension(fileName);
+    // setFileName(newName);
+    // setFileSize(toNumber((fileSize / 1024 / 1024).toFixed(2)));
+
+    uploadLayer(file, project.id, user?.uid!);
+  };
 
   return (
     <div className="h-full">
@@ -1126,13 +1148,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
         <div className="flex flex-row h-full justify-between">
           <ToolBar
-            imgSrc={imgSrc}
             downloadImage={handleDownload}
             toggleThirds={handleThirds}
-            setShowTransform={setShowTransform}
-            showTransform={showTransform}
+            mode={mode}
+            setMode={setMode}
           />
-          <div className="flex-grow flex flex-col h-full bg-slate-300">
+          <div className="flex-grow flex flex-col h-full">
             <TopBarTwo
               rotateValue={rotateValue}
               setRotateValue={setRotateValue}
@@ -1140,84 +1161,80 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({
               scaleYSign={scaleYSign}
               setScaleXSign={setScaleXSign}
               setScaleYSign={setScaleYSign}
-              showTransform={showTransform}
-              setShowTransform={setShowTransform}
+              mode={mode}
+              setMode={setMode}
               positionX={positionX}
               positionY={positionY}
             />
 
-            <div className="flex-grow w-full">
-              <PinchHandler
+            <div
+              className="flex-grow w-full "
+              style={{
+                background:
+                  "repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 20px 20px",
+              }}
+            >
+              {!landing && (
+                <div className="w-full h-full flex flex-row justify-center items-center bg-[#cdcdcd] dark:bg-[#252525]">
+                  <div className="flex flex-col justify-center items-center space-y-3 ">
+                    <ImageSelector onImageSelect={handleImageSet} />
+                    <CreateProject />
+                  </div>
+                </div>
+              )}
+
+              {/* <PinchHandler
                 setZoomValue={setZoomValue}
                 setIsZooming={setIsZooming}
                 target={target} // Pass the targetRef as the target
-              />
-              <div
-                id="stage-container"
-                ref={target}
-                className="w-full h-full relative"
-              >
-                <canvas
-                  id="canvas"
-                  ref={canvasRef}
-                  className="w-full h-full absolute top-0 left-0"
-                ></canvas>
+              /> */}
+              <div className="w-full h-full ">
+                <TransformWrapper
+                  ref={transformRef}
+                  onZoom={(e) => {}}
+                  panning={{
+                    disabled: mode === "move" || mode === "transform",
+                  }}
+                  onPanning={() => {}}
+                >
+                  <TransformComponent
+                    contentStyle={{
+                      width: "100%",
+                      height: "100%",
+                    }}
+                    wrapperStyle={{
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    <div
+                      id="stage-container"
+                      ref={target}
+                      className="w-full h-full relative "
+                    >
+                      <canvas
+                        id="canvas"
+                        ref={canvasRef}
+                        className="w-full h-full absolute top-0 left-0 "
+                      ></canvas>
+                    </div>
+                  </TransformComponent>
+                </TransformWrapper>
               </div>
             </div>
           </div>
 
           <LayerBar
-            imgSrc={imgSrc}
             downloadImage={handleDownload}
             toggleThirds={handleThirds}
             containerRef={containerRef}
             trigger={trigger}
             setTrigger={setTrigger}
             appRef={appRef}
+            landing={landing}
           />
         </div>
       </div>
-
-      {rendering && (
-        <Dialog open={rendering}>
-          <DialogContentText id="render-dialog">
-            Rendering Image...
-          </DialogContentText>
-        </Dialog>
-      )}
-      {/* <div
-        id="stage-container"
-        ref={target}
-        className="flex items-center justify-center"
-        style={{
-          position: "fixed",
-          top: `calc(50% + ${shiftY}px)`,
-          left: `calc(50% + ${shiftX}px)`,
-          transform: `translate(-50%, -50%)`,
-          width: realNaturalWidth.current
-            ? `${windowWidth - (toolBarLength + layerBarLength)}px`
-            : "100%",
-          height: realNaturalHeight.current
-            ? `${windowHeight - topBarLength}px`
-            : "100%",
-        }}
-      >
-        <canvas
-          id="canvas"
-          ref={canvasRef}
-          className=""
-          style={{
-            display: "block",
-            position: "absolute",
-            width: realNaturalWidth.current
-              ? `${windowWidth - (toolBarLength + layerBarLength)}px`
-              : "100%",
-            height: realNaturalHeight.current
-              ? `${windowHeight - topBarLength}px`
-              : "100%",
-          }}
-        ></canvas>
-      </div> */}
     </div>
   );
 };

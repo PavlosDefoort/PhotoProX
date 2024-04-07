@@ -1,28 +1,21 @@
 import PhotoEditor from "@/components/Editor/PhotoEditor/photoeditor";
-import ImageSelector from "@/components/Editor/ImageSelect/imageselector";
-import PreviousImage from "@/components/Editor/previousImage";
-import { ThemeContext } from "../components/ThemeProvider/themeprovider";
 import { GetInfo } from "@/components/getinfo";
-import { useState, useEffect, useContext, createContext } from "react";
-import { Poppins } from "next/font/google";
-import { create, toNumber } from "lodash";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { Project } from "@/utils/editorInterfaces";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { setAutoFreeze } from "immer";
+import { Poppins } from "next/font/google";
+import { createContext, useContext, useEffect, useState } from "react";
+import { Hourglass } from "react-loader-spinner";
 import { DraftFunction, useImmer } from "use-immer";
+import { ThemeContext } from "../components/ThemeProvider/themeprovider";
+import "../styles/animations.css";
 
 import {
-  EditingParameters,
-  EditorProject,
-  ImageData,
-  ImageLayer,
   ProjectSettings,
   initialEditingParameters,
 } from "@/utils/editorInterfaces";
-import { TYPES, SCALE_MODES, Sprite } from "pixi.js";
-import { v4 as uuidv4 } from "uuid";
+import { SCALE_MODES, TYPES } from "pixi.js";
 import { useAuth } from "../../app/authcontext";
-import { uploadLayer } from "../../app/firebase";
-import { Draft } from "immer";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -118,13 +111,15 @@ export default function Editor({}) {
       antialias: false,
     },
   };
-
+  setAutoFreeze(false);
   const [project, setProject] = useImmer<Project>(new Project());
   const [trigger, setTrigger] = useState(false);
+  const [landing, setLanding] = useState(false);
 
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
 
   const [image, setImage] = useState("");
+  const [loading, setLoading] = useState(false);
   const [possibleImage, setPossibleImage] = useState("");
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
@@ -184,80 +179,6 @@ export default function Editor({}) {
     return splitName.join(".");
   };
 
-  useEffect(() => {
-    project.layerManager.layers;
-  }, [project.layerManager.layers]);
-
-  const handleImageSet = (
-    selectedImage: HTMLImageElement | string | ArrayBuffer | null,
-    natWidth: number,
-    natHeight: number,
-    realWit: number,
-    realHit: number,
-    fileName: string,
-    fileSize: number,
-    file: File
-  ) => {
-    if (typeof selectedImage === "string") {
-      setImage(selectedImage);
-      const randomId = uuidv4();
-      const imageData: ImageData = {
-        name: fileName,
-        src: selectedImage,
-        imageHeight: realHit,
-        imageWidth: realWit,
-      };
-
-      try {
-        const layer = project.layerManager.createLayer(
-          realWit,
-          realHit,
-          imageData,
-          file,
-          project.id,
-          user?.uid!
-        );
-        setProject((draft) => {
-          draft.settings.canvasSettings.width = realWit;
-          draft.settings.canvasSettings.height = realHit;
-
-          const imageLayer: ImageLayer = {
-            id: layer.id,
-            imageData: layer.imageData,
-            zIndex: layer.zIndex,
-            editingParameters: layer.editingParameters,
-            sprite: layer.sprite,
-            visible: layer.visible,
-            type: "image", // Add the 'type' property with the value 'image'
-          };
-
-          draft.layerManager.addLayer(imageLayer);
-          draft.layerManager.layers, "draft.layerManager.layers";
-          const targetLayer = draft.layerManager.findLayer(layer.id);
-          if (targetLayer) {
-            draft.target = targetLayer as Draft<ImageLayer>;
-          }
-        });
-
-        // Now you can use the 'newLayer' object after it's resolved
-      } catch (error) {
-        // Handle any errors that may occur during the async operation
-        console.error("Error creating layer:", error);
-      }
-
-      // Add the layer to the project
-    }
-
-    setWidth(natWidth);
-    setHeight(natHeight);
-    setRealWidth(realWit);
-    setRealHeight(realHit);
-    const newName = removeExtension(fileName);
-    setFileName(newName);
-    setFileSize(toNumber((fileSize / 1024 / 1024).toFixed(2)));
-    uploadLayer(file, project.id, user?.uid!);
-  };
-
   const previousAgreement = () => {
     setAgree(true);
     setOpen(false);
@@ -268,29 +189,52 @@ export default function Editor({}) {
   };
 
   return (
-    <main
-      className={` bg-[#cdcdcd] dark:bg-[#252525] h-screen max-h-screen ${poppins.className}`}
-    >
-      <ThemeProvider theme={theme}>
-        {!agree && possibleImage && open && (
+    <main className={`h-screen max-h-screen  ${poppins.className} select-none`}>
+      <div
+        className={`bg-[#cdcdcd] dark:bg-[#252525] h-full w-full ${
+          loading ? "tint-in" : "tint-out"
+        }`}
+      >
+        <ThemeProvider theme={theme}>
+          {/* {!agree && possibleImage && open && (
           <PreviousImage
             image={possibleImage}
             setAgreement={previousAgreement}
             setPreviousOpen={setPreviousOpening}
           />
-        )}
+        )} */}
 
-        {!image && <ImageSelector onImageSelect={handleImageSet} />}
-        <ProjectContext.Provider
-          value={{ project, setProject, trigger, setTrigger }}
+          <ProjectContext.Provider
+            value={{
+              project,
+              setProject,
+              trigger,
+              setTrigger,
+              landing,
+              setLanding,
+              loading,
+              setLoading,
+            }}
+          >
+            <PhotoEditor />
+          </ProjectContext.Provider>
+        </ThemeProvider>
+      </div>
+      {loading && (
+        <div
+          className="bg-white dark:bg-black bg-opacity-50 dark:bg-opacity-50 h-full w-full flex items-center justify-center"
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            zIndex: "1000",
+            transform: "translate(-50%, -50%)",
+          }}
         >
-          <PhotoEditor
-            imageData={image}
-            fileName={fileName}
-            fileSize={fileSize}
-          />
-        </ProjectContext.Provider>
-      </ThemeProvider>
+          <h1 className="text-xl text-black dark:text-white ">Loading...</h1>
+          <Hourglass visible={loading} />
+        </div>
+      )}
     </main>
   );
 }
@@ -300,6 +244,10 @@ interface ProjectContextValue {
   setProject: (arg: Project | DraftFunction<Project>) => void;
   trigger: boolean;
   setTrigger: (value: boolean) => void;
+  landing: boolean;
+  setLanding: (value: boolean) => void;
+  loading: boolean;
+  setLoading: (value: boolean) => void;
 }
 
 export const ProjectContext = createContext<ProjectContextValue>({
@@ -309,6 +257,14 @@ export const ProjectContext = createContext<ProjectContextValue>({
   },
   trigger: false,
   setTrigger: (value: boolean) => {
+    // Add your implementation here
+  },
+  landing: false,
+  setLanding: (value: boolean) => {
+    // Add your implementation here
+  },
+  loading: false,
+  setLoading: (value: boolean) => {
     // Add your implementation here
   },
 });

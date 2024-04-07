@@ -1,27 +1,9 @@
-import React, { HtmlHTMLAttributes, use, useEffect, ChangeEvent } from "react";
-import imageCompression from "browser-image-compression";
-import { useState, useCallback } from "react";
-import { Slider } from "@mui/material";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import { SelectChangeEvent } from "@mui/material";
 import configurationsObject from "@/components/Editor/ImageSelect/configurations.json";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import Button from "@mui/material/Button";
-import NextImage from "next/image";
-import TextField from "@mui/material/TextField";
+import { SelectChangeEvent } from "@mui/material";
+import imageCompression from "browser-image-compression";
 import { debounce } from "lodash";
-import { blue, green, red } from "@mui/material/colors";
-import CircularProgress from "@mui/material/CircularProgress";
-import Box from "@mui/material/Box";
 import { Poppins } from "next/font/google";
-import Tooltip from "@mui/material/Tooltip";
-import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
-import { storage } from "../../../../app/firebase";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 // Initialize Poppins font
 const poppins = Poppins({
@@ -350,15 +332,9 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
   return (
     <div
-      className={`flex items-center justify-center w-full h-full z-10 transition duration-500 ${
-        dragging ? " bg-[#515151] " : ""
+      className={`flex items-center justify-center z-10 transition duration-500 ${
+        dragging ? " bg-[#515151] " : "bg-[#cdcdcd] dark:bg-[#252525]"
       }`}
-      style={{
-        position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-      }}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragLeave={handleDragLeave}
@@ -380,55 +356,6 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
               style={{ width: `${progressValue}%` }}
             ></div>
           </div>
-          {currentPhoto && (
-            <Dialog
-              open={open}
-              onClose={handleClose}
-              aria-labelledby="alert-dialog-title"
-              aria-describedby="alert-dialog-description"
-            >
-              <DialogTitle id="alert-dialog-title">
-                {"Compress Image?"}
-              </DialogTitle>
-              <DialogContent>
-                <DialogContentText id="alert-dialog-description">
-                  This image ({(currentPhoto.size / 1024 / 1024).toFixed(2)}
-                  MB) is larger than 4MB, which may cause some performance
-                  issues. Would you like to compress it? (Recommended)
-                </DialogContentText>
-
-                <NextImage
-                  className="pt-4"
-                  alt="Chosen image"
-                  src={URL.createObjectURL(currentPhoto)}
-                  width={300} // Set the desired width here
-                  height={100} // Set the desired height here
-                ></NextImage>
-                <p className={`pt-2 text-xs ${poppins.className}`}>
-                  Note: You will still be able to download the uncompressed
-                  result
-                </p>
-                {/* <p
-                  className={`text-xs ${poppins.className} items-center justify-center`}
-                >
-                  Note: This compression only applies to the canvas, you will
-                  still be able to download the uncompressed result
-                </p> */}
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleClose} sx={{ color: red[400] }}>
-                  Do not compress
-                </Button>
-                <Button
-                  onClick={agreeCompression}
-                  autoFocus
-                  sx={{ color: blue[400] }}
-                >
-                  Compress
-                </Button>
-              </DialogActions>
-            </Dialog>
-          )}
         </div>
       ) : (
         <div className="">
@@ -468,32 +395,11 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
               accept=".png,.jpg,.jpeg,.gif,.svg"
             />
           </label>
-          <div className="">
+          {/* <div className="">
             <div className=" flex flex-row  justify-center items-center h-20">
               <h1 className="text-base text-black dark:text-gray-100">
                 Have a URL instead?{" "}
               </h1>
-              {/* <div className="flex flex-row">
-               
-                <Button
-                  variant="contained"
-                  onClick={handleUrlChange}
-                  disabled={tempPhoto ? false : true}
-                  sx={{ color: "white" }}
-                >
-                  Submit
-                </Button>
-              </div>
-              {tempPhoto && (
-                <NextImage
-                  src={URL.createObjectURL(tempPhoto)}
-                  className="w-20 h-20 pt-2"
-                  alt="Chosen image"
-                  width="0"
-                  height="0"
-                  sizes="100vw"
-                ></NextImage>
-              )} */}
               <div className="ml-2">
                 <Button variant="outlined" onClick={handleClickOpenUrl}>
                   Enter URL
@@ -568,34 +474,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
                   </DialogActions>
                 </Dialog>
               </div>
-
-              {/* <Select value={currentConfig} onChange={handleConfigChanged}>
-                <MenuItem value={"potato"}>Very Low Quality</MenuItem>
-                <MenuItem value={"lowquality"}>Low-Quality</MenuItem>
-                <MenuItem value={"performance"}>HD Quality</MenuItem>
-                <MenuItem value={"highquality"}>FHD Quality</MenuItem>
-                <MenuItem value={"ultraquality"}>QHD Quality</MenuItem>
-                <MenuItem value={"maxquality"}>UHD Quality</MenuItem>
-                <MenuItem value={"godquality"}>UHD-2 Quality</MenuItem>
-                <MenuItem value={"custom"}>Custom</MenuItem>
-              </Select>
-              <Select value={scaleOption} onChange={handleScaleChanged}>
-                <MenuItem value={"none"}>Do not Scale</MenuItem>
-                <MenuItem value={"some"}>Scale if too big</MenuItem> 
-                <MenuItem value={"all"}>Scale Anyways</MenuItem>
-              </Select> */}
-              {/*  
-            <Slider
-              defaultValue={2}
-              aria-label="Default"
-              valueLabelDisplay="auto"
-              min={0.1}
-              max={100}
-              step={0.1}
-              onChange={handlemaxConfiguredSizeChange}
-            ></Slider>*/}
             </div>
-          </div>
+          </div> */}
         </div>
       )}
     </div>

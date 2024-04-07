@@ -1,5 +1,3 @@
-import { filter, set } from "lodash";
-import { Dispatch, SetStateAction } from "react";
 import { Post } from "./galleryInterfaces";
 
 const tags = require("./tags.json");

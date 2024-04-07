@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, useEffect } from "react";
 import { useProjectContext } from "@/pages/editor";
+import { useEffect, useState } from "react";
 
 import {
   Sheet,
@@ -12,9 +12,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
-import { set } from "lodash";
 
 const SHEET_SIDES = ["top"] as const;
 
@@ -82,8 +80,9 @@ const SheetSide: React.FC<SheetSideProps> = ({
                 value={name}
                 onChange={(e) => {
                   //Limit the length of the name to 20 characters
+
                   if (e.target.value.length > 20) {
-                    alert("Name should be less than 20 characters");
+                    alert("Name should be less than or equal to 20 characters");
                     return;
                   }
                   setName(e.target.value);

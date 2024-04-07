@@ -1,4 +1,3 @@
-import { Fragment, useEffect, useRef, useState, FC } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -6,14 +5,11 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 
 interface DropDownProps {
   zoomValue: string;
@@ -22,8 +18,6 @@ interface DropDownProps {
   zoomIn: () => void;
   zoomOut: () => void;
 }
-import { ChevronDownIcon } from "@radix-ui/react-icons";
-import { ZoomIn } from "lucide-react";
 
 const DropDown: React.FC<DropDownProps> = ({
   zoomValue,

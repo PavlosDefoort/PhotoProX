@@ -1,26 +1,22 @@
-import * as React from "react";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { HistogramArray } from "@/utils/editorInterfaces";
+import { Vector2 } from "@use-gesture/react";
+import { easeInOutCubic } from "js-easing-functions";
+import _ from "lodash";
 import {
-  Coordinates,
-  Plot,
   Line,
   Mafs,
+  Plot,
   Point,
+  Polygon,
   Theme,
+  UseMovablePoint,
   useMovablePoint,
   useStopwatch,
   vec,
-  Polygon,
-  PolygonProps,
-  UseMovablePoint,
-  LaTeX,
 } from "mafs";
-import { easeInOutCubic } from "js-easing-functions";
-import { Vector2 } from "@use-gesture/react";
-import LuminanceHistogram from "./histogram";
-import _ from "lodash";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { AdjustmentLayer, HistogramArray } from "@/utils/editorInterfaces";
+import * as React from "react";
 
 function inPairs<T>(arr: T[]) {
   const pairs: [T, T][] = [];
@@ -108,8 +104,6 @@ const BezierCurves: React.FC<BezierCurvesProps> = ({ histogramData }) => {
     verify(c1, c2, t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c1.point[0], c1.point[1], c2.point[0], c2.point[1], t]);
-
-  React.useEffect(() => {}, [frequencyObject]);
 
   function xyFromBernsteinPolynomial(
     p1: vec.Vector2,

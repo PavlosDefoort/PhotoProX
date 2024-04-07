@@ -1,5 +1,4 @@
 import * as React from "react";
-import { MinusIcon, PlusIcon } from "@radix-ui/react-icons";
 
 import CarouselDemo from "@/components/Editor/PhotoEditor/UI/imageslider";
 
@@ -12,9 +11,8 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useAuth } from "../../../../../app/authcontext";
+import { useProjectContext } from "@/pages/editor";
 import {
   StorageReference,
   getBlob,
@@ -23,11 +21,9 @@ import {
   listAll,
   ref,
 } from "firebase/storage";
-import { storage } from "../../../../../app/firebase";
-import { useProjectContext } from "@/pages/editor";
-import { set } from "lodash";
-import MyCursor from "@/components/cursor";
 import { Poppins } from "next/font/google";
+import { useAuth } from "../../../../../app/authcontext";
+import { storage } from "../../../../../app/firebase";
 
 interface DrawerProps {
   open: boolean;

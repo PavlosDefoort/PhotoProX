@@ -1,42 +1,25 @@
-import { useEffect, useCallback, useMemo } from "react";
+import { throttle } from "lodash";
 import * as PIXI from "pixi.js";
 import {
   Application,
-  Sprite,
-  ColorMatrixFilter,
-  BlurFilter,
-  NoiseFilter,
-  TYPES,
-  FORMATS,
-  TARGETS,
-  SCALE_MODES,
-  MIPMAP_MODES,
-  Graphics,
-  Texture,
   Container,
-  Rectangle,
-  DisplayObject,
   FederatedPointerEvent,
+  Graphics,
+  Sprite,
 } from "pixi.js";
-import { WidthRotate, HeightRotate } from "@/utils/calcUtils";
-import { throttle } from "lodash";
+import { useCallback, useEffect, useMemo } from "react";
 // ... (import other necessary dependencies)
 
-import { AdjustmentFilter } from "pixi-filters";
-import { InteractionEvents, Stage, render } from "@pixi/react";
-import { on } from "events";
+import { useProjectContext } from "@/pages/editor";
 import {
   AdjustmentLayer,
+  BackgroundLayer,
   ImageLayer,
   LayerX,
   Project,
   SpriteX,
 } from "@/utils/editorInterfaces";
-import { useProjectContext } from "@/pages/editor";
-import { set } from "lodash";
 import { Draft } from "immer";
-import LayerBar from "./UI/layerbar";
-import { analyseImageLuminance } from "@/utils/calcUtils";
 
 interface ImageProperties {
   contrast: { value: number; multiply: boolean; enabled?: boolean };
@@ -63,7 +46,6 @@ interface ImageProperties {
 interface ApplyCanvasProps {
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
   appRef: React.MutableRefObject<Application | null>;
-  imgSrc: string;
   zoomValue: number;
   fakeY: number;
   fakeX: number;
@@ -86,13 +68,12 @@ interface ApplyCanvasProps {
   setPositionX: React.Dispatch<React.SetStateAction<number>>;
   setPositionY: React.Dispatch<React.SetStateAction<number>>;
   trigger: boolean;
-  showTransform: boolean;
+  mode: string;
 }
 
 const ApplyCanvas = ({
   canvasRef,
   appRef,
-  imgSrc,
   zoomValue,
   fakeY,
   fakeX,
@@ -115,7 +96,7 @@ const ApplyCanvas = ({
   setPositionX,
   setPositionY,
   trigger,
-  showTransform,
+  mode,
 }: ApplyCanvasProps): void => {
   // Create container if needed
 
@@ -173,34 +154,38 @@ const ApplyCanvas = ({
         imageSprite.eventMode = "static";
 
         imageSprite.zIndex = layer.zIndex;
-        const previousOpacity = imageSprite.alpha;
+        const previousOpacity = imageLayer.opacity;
 
+        imageSprite.alpha = previousOpacity;
         let dragTarget: Sprite | null = null;
         let dragOffset: PIXI.IPointData = { x: 0, y: 0 };
-        imageSprite.on("pointerup", (event: FederatedPointerEvent) =>
-          onDragEnd(event)
-        );
 
-        imageSprite.on("pointerupoutside", (event: FederatedPointerEvent) =>
-          onDragEnd(event)
-        );
+        if (mode === "move" || mode === "transform") {
+          imageSprite.on("pointerup", (event: FederatedPointerEvent) =>
+            onDragEnd(event)
+          );
 
-        imageSprite.on("pointerdown", (event: FederatedPointerEvent) => {
-          onDragStart(event);
-        });
+          imageSprite.on("pointerupoutside", (event: FederatedPointerEvent) =>
+            onDragEnd(event)
+          );
+
+          imageSprite.on("pointerdown", (event: FederatedPointerEvent) => {
+            onDragStart(event);
+          });
+        }
 
         const onDragMove = (event: FederatedPointerEvent) => {
           if (dragTarget && dragOffset) {
-            const displacement = {
-              x: event.getLocalPosition(dragTarget.parent).x - dragOffset.x,
-              y: event.getLocalPosition(dragTarget.parent).y - dragOffset.y,
-            };
+            // Calculate the new position of the sprite relative to the container
+            const newPosition = event.data.getLocalPosition(dragTarget.parent);
 
-            dragTarget.x = event.getLocalPosition(dragTarget.parent).x;
-            dragTarget.y = event.getLocalPosition(dragTarget.parent).y;
+            // Adjust the drag offset by the scale factor
+            const offsetX = dragOffset.x * imageSprite.scale.x;
+            const offsetY = dragOffset.y * imageSprite.scale.y;
 
-            dragOffset = event.getLocalPosition(dragTarget.parent);
-
+            // Set the new position of the sprite
+            dragTarget.x = newPosition.x - offsetX;
+            dragTarget.y = newPosition.y - offsetY;
             // Update position values or trigger any relevant updates
             throttledSetPositionX(dragTarget.x);
             throttledSetPositionY(dragTarget.y);
@@ -210,11 +195,13 @@ const ApplyCanvas = ({
         const onDragStart = (event: FederatedPointerEvent) => {
           imageSprite.alpha = 0.75;
 
+          // Set the project target to the clicked layer
+
           dragTarget = imageSprite as SpriteX;
           dragTarget.cursor = "grabbing";
 
           // Get the position of the pointer relative to the parent container
-          dragOffset = event.getLocalPosition(dragTarget.parent);
+          dragOffset = event.data.getLocalPosition(dragTarget);
 
           if (appRef.current) {
             appRef.current.stage.on(
@@ -232,12 +219,22 @@ const ApplyCanvas = ({
                 (event: FederatedPointerEvent) => onDragMove(event)
               );
             }
+
             dragTarget.alpha = previousOpacity;
             dragTarget.cursor = "grab";
 
             dragTarget = null;
+            setProject((draft: Draft<Project>) => {
+              draft.target = imageLayer;
+            });
           }
         };
+      } else if (layer.type === "background") {
+        const backgroundLayer = layer as BackgroundLayer;
+        backgroundLayer.graphics.alpha = backgroundLayer.opacity;
+        backgroundLayer.graphics.zIndex = layer.zIndex;
+        backgroundLayer.graphics.visible = backgroundLayer.visible;
+        containerRef.current?.addChild(backgroundLayer.graphics);
       }
       // Other cases like "group" can be handled similarly
     },
@@ -285,7 +282,7 @@ const ApplyCanvas = ({
         );
         realNaturalWidth.current, realNaturalHeight.current;
         const background = new Graphics();
-        const squareSize = 5;
+        const squareSize = 20;
         const numRows = Math.floor(realNaturalHeight.current / squareSize);
         const numCols = Math.floor(realNaturalWidth.current / squareSize);
         const colors = [0xffffff, 0xe5e5e5]; // Colors for the checkerboard pattern
@@ -347,7 +344,7 @@ const ApplyCanvas = ({
         height: canvasHeight,
         antialias: true,
         preserveDrawingBuffer: true,
-        resolution: 1,
+        resolution: window.devicePixelRatio,
         powerPreference: "high-performance",
         clearBeforeRender: true,
         backgroundColor: backgroundColor,
@@ -384,8 +381,8 @@ const ApplyCanvas = ({
 
     const mask = maskRef.current;
 
-    if (container && mask && project.layerManager.layers.length > 0) {
-      container.position.set(canvasWidth / 2 + fakeX, canvasHeight / 2 + fakeY);
+    if (container && mask) {
+      container.position.set(canvasWidth / 2, canvasHeight / 2);
       container.sortableChildren = true;
       container.scale.set(zoomValue * scaleX, zoomValue * scaleY);
       app.stage.eventMode = "static";
@@ -413,9 +410,7 @@ const ApplyCanvas = ({
     }
   }, [
     project,
-    showTransform,
     spriteRefs,
-    imgSrc,
     zoomValue,
     fakeY,
     fakeX,
@@ -439,6 +434,7 @@ const ApplyCanvas = ({
     setProject,
     project.target,
     trigger,
+    mode,
   ]);
 };
 

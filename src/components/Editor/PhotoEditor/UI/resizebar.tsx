@@ -1,11 +1,8 @@
-import React, { useEffect } from "react";
-import { Tooltip } from "@mui/material";
-import { set } from "lodash";
-import { TextField } from "@mui/material";
-import { clamp } from "@/utils/calcUtils";
+import { calculateMaxScale, clamp } from "@/utils/calcUtils";
 import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
-import { calculateMaxScale } from "@/utils/calcUtils";
+import { Tooltip } from "@mui/material";
+import React, { useEffect } from "react";
 
 interface ResizeBarProps {
   changeActive: (mode: string) => void;

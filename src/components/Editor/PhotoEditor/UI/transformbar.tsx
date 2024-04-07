@@ -1,14 +1,3 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { clamp } from "@/utils/calcUtils";
-import { Poppins } from "next/font/google";
-import React, { useEffect } from "react";
-import RotateRightIcon from "@mui/icons-material/RotateRight";
-import RotateLeftIcon from "@mui/icons-material/RotateLeft";
-import { SwapHoriz, SwapVert } from "@mui/icons-material";
-import { set } from "lodash";
-import { useProjectContext } from "@/pages/editor";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,21 +9,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  LockClosedIcon,
-  LockOpen1Icon,
-  ResetIcon,
-} from "@radix-ui/react-icons";
-import { CSSTransition } from "react-transition-group";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { height } from "@mui/system";
-import "../../../../styles/animations.css";
+import { useProjectContext } from "@/pages/editor";
+import { clamp } from "@/utils/calcUtils";
 import { ImageLayer } from "@/utils/editorInterfaces";
+import { SwapHoriz, SwapVert } from "@mui/icons-material";
+import RotateLeftIcon from "@mui/icons-material/RotateLeft";
+import RotateRightIcon from "@mui/icons-material/RotateRight";
+import { LockClosedIcon, LockOpen1Icon } from "@radix-ui/react-icons";
+import { Poppins } from "next/font/google";
+import React, { useEffect } from "react";
+import "../../../../styles/animations.css";
 
 interface TopBarTwoProps {
   rotateValue: number;
@@ -43,8 +36,8 @@ interface TopBarTwoProps {
   scaleXSign: number;
   scaleYSign: number;
   setScaleYSign: (value: number) => void;
-  showTransform: boolean;
-  setShowTransform: (value: boolean) => void;
+  mode: string;
+  setMode: (value: string) => void;
   positionX: number;
   positionY: number;
 }
@@ -61,8 +54,8 @@ const TopBarTwo: React.FC<TopBarTwoProps> = ({
   scaleXSign,
   scaleYSign,
   setScaleYSign,
-  showTransform,
-  setShowTransform,
+  mode,
+  setMode,
   positionX,
   positionY,
 }) => {
@@ -122,7 +115,7 @@ const TopBarTwo: React.FC<TopBarTwoProps> = ({
       skewXRef.current = imageLayer.sprite.skew.x;
       skewYRef.current = imageLayer.sprite.skew.y;
     }
-  }, [showTransform, project.target]);
+  }, [mode, project.target]);
 
   // Create event listener for ctrl + t to toggle the showTransform state
   useEffect(() => {
@@ -135,9 +128,9 @@ const TopBarTwo: React.FC<TopBarTwoProps> = ({
         event.altKey
       ) {
         event.preventDefault(); // Prevent browser's default behavior
-        setShowTransform(!showTransform);
+        setMode("transform");
       }
-      if (showTransform && event.key === "Escape") {
+      if (mode === "transform" && event.key === "Escape") {
         handleCancel();
       }
     };
@@ -145,7 +138,7 @@ const TopBarTwo: React.FC<TopBarTwoProps> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showTransform, setShowTransform]);
+  }, [mode, setMode]);
 
   const handleCancel = () => {
     if (
@@ -178,7 +171,7 @@ const TopBarTwo: React.FC<TopBarTwoProps> = ({
       setStringSkewXValue((skewXRef.current ?? 0).toFixed(2));
       setStringSkewYValue((skewYRef.current ?? 0).toFixed(2));
     }
-    setShowTransform(false);
+    setMode("view");
   };
 
   const resetTransform = () => {
@@ -218,7 +211,7 @@ const TopBarTwo: React.FC<TopBarTwoProps> = ({
       skewXRef.current = imageLayer.sprite.skew.x;
       skewYRef.current = imageLayer.sprite.skew.y;
     }
-    setShowTransform(false);
+    setMode("view");
   };
 
   React.useEffect(() => {
@@ -364,7 +357,7 @@ const TopBarTwo: React.FC<TopBarTwoProps> = ({
   };
   return (
     <div className="w-full" id="transforming">
-      {project.target && showTransform && (
+      {project.target?.type === "image" && mode === "transform" && (
         <div className="relative h-full w-full">
           <div
             className={`h-10 flex-wrap w-full z-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-center items-center  ${poppins.className} text-black dark:text-white`}

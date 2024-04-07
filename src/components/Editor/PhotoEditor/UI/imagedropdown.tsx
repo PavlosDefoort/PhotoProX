@@ -1,9 +1,17 @@
-import { FC, useState, useEffect, ChangeEvent, use, useRef } from "react";
-import SheetSide from "./rename";
 import { Button } from "@/components/ui/button";
-import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { useProjectContext } from "@/pages/editor";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
+import { useEffect, useRef, useState } from "react";
+import SheetSide from "./rename";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,19 +22,12 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Test from "@/pages/test";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { fill, set } from "lodash";
+import { Label } from "@/components/ui/label";
+import { clamp, fitImageToScreen } from "@/utils/calcUtils";
 import { ZoomInIcon, ZoomOutIcon } from "@radix-ui/react-icons";
+import { debounce } from "lodash";
+import { Poppins } from "next/font/google";
 import {
   Application,
   Container,
@@ -35,11 +36,6 @@ import {
   Point,
   Sprite,
 } from "pixi.js";
-import { debounce } from "lodash";
-import { fitImageToScreen, clamp, fillImageToScreen } from "@/utils/calcUtils";
-import { Poppins } from "next/font/google";
-import { app } from "../../../../../app/firebase";
-import { ImageLayer, SpriteX } from "@/utils/editorInterfaces";
 
 const poppins = Poppins({
   subsets: ["latin"],

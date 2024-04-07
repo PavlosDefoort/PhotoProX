@@ -1,22 +1,23 @@
-import { ImageLayer } from "@/utils/editorInterfaces";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
 import { useProjectContext } from "@/pages/editor";
-import { EyeClosedIcon, EyeOpenIcon, OpacityIcon } from "@radix-ui/react-icons";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { clamp } from "@/utils/calcUtils";
+import { ImageLayer } from "@/utils/editorInterfaces";
+import { EyeClosedIcon, EyeOpenIcon, OpacityIcon } from "@radix-ui/react-icons";
+import { useState } from "react";
 
 interface ImageLayerBarItemProps {
   layer: ImageLayer;
@@ -124,9 +125,7 @@ export const ImageLayerBarItem: React.FC<ImageLayerBarItemProps> = ({
             onClick={() => {
               if (layer.type === "image") {
                 const imageLayer = layer as ImageLayer;
-                setStringOpacity(
-                  (imageLayer.sprite.alpha * 100).toFixed(0) + "%"
-                );
+                setStringOpacity((imageLayer.opacity * 100).toFixed(0) + "%");
               }
             }}
           >
@@ -190,18 +189,35 @@ export const ImageLayerBarItem: React.FC<ImageLayerBarItemProps> = ({
                             layer.id
                           );
                           if (foundLayer && foundLayer.type === "image") {
-                            const imageLayer = foundLayer as ImageLayer;
-                            imageLayer.sprite.alpha = numberOpacity;
+                            const imageLayer = foundLayer;
+                            imageLayer.opacity = numberOpacity;
                           }
                         });
                         setTrigger(!trigger);
                         setStringOpacity(
                           (numberOpacity * 100).toFixed(0) + "%"
                         );
-                        // ADD SLIDER TO CHANGE OPACITY
                       }
                     }}
                   />
+                  <Slider
+                    value={[layer.opacity]}
+                    onValueChange={(e) => {
+                      setStringOpacity((e[0] * 100).toFixed(0) + "%");
+                      setProject((draft) => {
+                        const foundLayer = draft.layerManager.findLayer(
+                          layer.id
+                        );
+                        if (foundLayer) {
+                          foundLayer.opacity = e[0];
+                        }
+                      });
+                      setTrigger(!trigger);
+                    }}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                  ></Slider>
                 </div>
               </div>
             </div>
@@ -217,7 +233,9 @@ export const ImageLayerBarItem: React.FC<ImageLayerBarItemProps> = ({
       >
         {layer.type === "image" && "imageData" in layer && (
           <img
-            src={(layer as ImageLayer).imageData.src as string}
+            src={
+              (layer as ImageLayer).sprite.texture.baseTexture.cacheId as string
+            }
             alt="Image"
             className="object-contain w-full h-full"
           />

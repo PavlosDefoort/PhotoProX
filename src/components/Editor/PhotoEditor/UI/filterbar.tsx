@@ -1,5 +1,4 @@
-import React, { use, useRef } from "react";
-import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
+import React, { useRef } from "react";
 
 interface FilterBarProps {
   components: FilterElement[];

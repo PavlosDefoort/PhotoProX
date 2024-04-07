@@ -1,44 +1,33 @@
-import { useState, useEffect, FC } from "react";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogHeader,
-  DialogClose,
-  DialogTitle,
-  DialogDescription,
-  DialogContent,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { GearIcon } from "@radix-ui/react-icons";
-import { Label } from "@/components/ui/label";
-import { CopyIcon } from "@radix-ui/react-icons";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { GallerySettings } from "@/utils/galleryInterfaces";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { GearIcon } from "@radix-ui/react-icons";
+import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { toast } from "sonner";
+import { z } from "zod";
 import {
   Tooltip,
   TooltipContent,

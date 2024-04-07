@@ -1,13 +1,23 @@
-import { Inter } from "next/font/google";
-import { Poppins } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 
-import { colors } from "@mui/material";
+import { ImgComparisonSlider } from "@img-comparison-slider/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { set } from "lodash";
-import Tags from "@/components/Editor/PhotoEditor/UI/tagInput";
+import { useContext, useEffect, useState } from "react";
 import "../styles/animations.css";
-import MyCursor from "@/components/cursor";
+import { handleSignIn } from "@/components/Editor/PhotoEditor/UI/topbar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "../../app/authcontext";
+import { NavigationMenuDemo } from "@/components/navigationmenu";
+import Image from "next/image";
+import { ThemeContext } from "@/components/ThemeProvider/themeprovider";
+import {
+  Build,
+  Engineering,
+  Lightbulb,
+  PhotoFilter,
+} from "@mui/icons-material";
+import { ComponentBooleanIcon, TransformIcon } from "@radix-ui/react-icons";
+import Psychology from "@mui/icons-material/Psychology";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,41 +27,98 @@ const poppins = Poppins({
 });
 
 export default function Home() {
+  const { darkMode } = useContext(ThemeContext);
+  const [numberOfCommits, setNumberOfCommits] = useState<number>(0);
+  const [numberOfStars, setNumberOfStars] = useState<number>(0);
+  const [numberOfForks, setNumberOfForks] = useState<number>(0);
+  const [numberOfWatchers, setNumberOfWatchers] = useState<number>(0);
+  const [leopardValue, setLeopardValue] = useState<number>(50);
+  const [meltValue, setMeltValue] = useState<number>(50);
+  const [sakuraValue, setSakuraValue] = useState<number>(80);
+
+  const [suitsValue, setSuitsValue] = useState<number>(50);
+  const [gojoValue, setGojoValue] = useState<number>(50);
+  const [sombraValue, setSombraValue] = useState<number>(90);
+  const { user } = useAuth();
+  const checkeredLight =
+    "repeating-conic-gradient(#808080 0% 25%, #ffffff 0% 50%) 50% / 20px 20px";
+  const checkeredDark =
+    "repeating-conic-gradient(#808080 0% 25%, #000000 0% 50%) 50% / 20px 20px";
+  const currentCheck = darkMode ? checkeredDark : checkeredLight;
+  useEffect(() => {
+    async function fetchCommits() {
+      const myHeaders = new Headers();
+      myHeaders.append(
+        "Authorization",
+        "Bearer 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"
+      );
+
+      const requestOptions: RequestInit = {
+        method: "GET",
+        headers: myHeaders,
+        redirect: "follow",
+      };
+
+      fetch(
+        "https://api.github.com/repos/PavlosDefoort/PhotoProX/stats/contributors",
+        requestOptions
+      )
+        .then((response) => response.json())
+        .then((result) => setNumberOfCommits(result[0].total))
+        .catch((error) => console.error(error));
+
+      fetch(
+        "https://api.github.com/repos/PavlosDefoort/PhotoProX",
+        requestOptions
+      )
+        .then((response) => response.json())
+        .then((result) => {
+          setNumberOfStars(result.stargazers_count);
+          setNumberOfForks(result.forks_count);
+          setNumberOfWatchers(result.subscribers_count);
+        })
+        .catch((error) => console.error(error));
+    }
+    console.log("fetching commits");
+    fetchCommits();
+  }, []);
+
   return (
-    <main className={`${poppins.className} `}>
-      <header className="z-50 text-gray-600 body-font sticky top-0 bg-white shadow border-b  border-gray-500">
+    <main className={`${poppins.className}  `}>
+      <header
+        className={`z-50 text-gray-600 dark:text-white body-font sticky top-0 ${
+          darkMode ? "dark:navbar-blur-dark" : "navbar-blur"
+        }  shadow border-b  border-gray-500 dark:border-gray-800`}
+      >
         <div className="container mx-auto flex flex-wrap p-2 flex-col md:flex-row items-center">
           <a className="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
               className="w-10 h-10 text-white p-2 bg-indigo-500 rounded-full"
               viewBox="0 0 24 24"
             >
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
             </svg>
-            <span className="ml-3 text-xl">PhotoProX</span>
+            <span className="ml-3 text-xl dark:text-white">PhotoProX</span>
           </a>
           <nav className="md:ml-auto md:mr-auto flex flex-wrap items-center text-base justify-center">
-            <a className="mr-5 hover:text-gray-900">Features</a>
-
-            <a className="mr-5 hover:text-gray-900">Pricing?</a>
-            <a className="mr-5 hover:text-gray-900">Contact</a>
-            <a className="mr-5 hover:text-gray-900">Learn</a>
+            <NavigationMenuDemo />
           </nav>
+
           <Link href="/editor">
-            <button className="inline-flex items-center bg-gray-100 border-0 py-1 px-3 focus:outline-none hover:bg-gray-200 rounded text-base mt-4 md:mt-0">
+            <button className="inline-flex items-center bg-transparent dark:bg-transparent border-0 py-1 px-3 focus:outline-none  rounded text-base mt-4 md:mt-0">
               Start Editing
               <svg
                 fill="none"
                 stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
                 className="w-4 h-4 ml-1"
                 viewBox="0 0 24 24"
               >
@@ -61,16 +128,16 @@ export default function Home() {
           </Link>
         </div>
       </header>
-      <section className="animate-gradient-x text-gray-600 body-font  bg-gradient-to-r from-purple-300 to-rose-300">
+      <section className="animate-gradient-x text-gray-600 body-font  bg-gradient-to-r from-purple-300 to-rose-300 dark:from-[#000000] dark:to-[#434343]">
         <div className="animate-fade-right  animate-once container mx-auto flex px-5 py-24 md:flex-row flex-col items-center">
           <div className="lg:flex-grow md:w-1/2 lg:pr-24 md:pr-16 flex flex-col md:items-start md:text-left mb-16 md:mb-0 items-center text-center">
-            <h1 className="title-font sm:text-4xl text-3xl mb-4 font-medium text-gray-800">
+            <h1 className="title-font sm:text-4xl text-3xl mb-4 font-medium text-gray-800 dark:text-white">
               Make Ordinary Photos{" "}
               <span className="text-color-change  font-bold">
                 Extraordinary
               </span>
             </h1>
-            <p className="mb-8 leading-relaxed text-black text-lg">
+            <p className="mb-8 leading-relaxed text-black text-lg dark:text-white">
               Introducing PhotoProX, the ultimate free web based photo editing
               tool.
             </p>
@@ -87,17 +154,17 @@ export default function Home() {
                 />
               </div> */}
               <Link href="/editor">
-                <button className="animate-bounce  text-white bg-indigo-500 border-0 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded text-lg">
+                <button className="animate-bounce mb-6  text-white bg-indigo-500 border-0 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded text-lg">
                   Start Editing
                 </button>
               </Link>
             </div>
-            <p className="text-sm mt-2 text-gray-500 mb-8 w-full">
-              Try out our new generative fill feature. Just type in a prompt and
-              let the AI do the rest!
-            </p>
+
             <div className="flex lg:flex-row md:flex-col">
-              <button className="bg-gray-100 inline-flex py-3 px-5 rounded-lg items-center hover:bg-gray-200 focus:outline-none">
+              <button
+                className="bg-gray-100  dark:bg-black dark:text-slate-100 inline-flex py-3 px-5 rounded-lg items-center hover:bg-gray-200 focus:outline-none"
+                onClick={() => handleSignIn()}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   x="0px"
@@ -123,64 +190,82 @@ export default function Home() {
                   ></path>
                 </svg>
                 <span className="ml-4 flex items-start flex-col leading-none">
-                  <span className="text-xs text-gray-600 mb-1">
+                  <span className="text-xs text-gray-600 mb-1 dark:text-slate-100">
                     SIGN IN WITH
                   </span>
                   <span className="title-font font-medium">Google</span>
                 </span>
               </button>
-              <button className="bg-gray-100 inline-flex py-3 px-5 rounded-lg items-center lg:ml-4 md:ml-0 ml-4 md:mt-4 mt-0 lg:mt-0 hover:bg-gray-200 focus:outline-none">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="currentColor"
-                  className="w-6 h-6"
-                  viewBox="0 0 305 305"
-                >
-                  <path d="M40.74 112.12c-25.79 44.74-9.4 112.65 19.12 153.82C74.09 286.52 88.5 305 108.24 305c.37 0 .74 0 1.13-.02 9.27-.37 15.97-3.23 22.45-5.99 7.27-3.1 14.8-6.3 26.6-6.3 11.22 0 18.39 3.1 25.31 6.1 6.83 2.95 13.87 6 24.26 5.81 22.23-.41 35.88-20.35 47.92-37.94a168.18 168.18 0 0021-43l.09-.28a2.5 2.5 0 00-1.33-3.06l-.18-.08c-3.92-1.6-38.26-16.84-38.62-58.36-.34-33.74 25.76-51.6 31-54.84l.24-.15a2.5 2.5 0 00.7-3.51c-18-26.37-45.62-30.34-56.73-30.82a50.04 50.04 0 00-4.95-.24c-13.06 0-25.56 4.93-35.61 8.9-6.94 2.73-12.93 5.09-17.06 5.09-4.64 0-10.67-2.4-17.65-5.16-9.33-3.7-19.9-7.9-31.1-7.9l-.79.01c-26.03.38-50.62 15.27-64.18 38.86z"></path>
-                  <path d="M212.1 0c-15.76.64-34.67 10.35-45.97 23.58-9.6 11.13-19 29.68-16.52 48.38a2.5 2.5 0 002.29 2.17c1.06.08 2.15.12 3.23.12 15.41 0 32.04-8.52 43.4-22.25 11.94-14.5 17.99-33.1 16.16-49.77A2.52 2.52 0 00212.1 0z"></path>
-                </svg>
-                <span className="ml-4 flex items-start flex-col leading-none">
-                  <span className="text-xs text-gray-600 mb-1">
-                    Download on the
+              <Link href={"https://photoproxdocs.vercel.app/"} target="_blank">
+                <button className="bg-gray-100 dark:bg-black dark:text-slate-100 inline-flex py-3 px-5 rounded-lg items-center lg:ml-4 md:ml-0 ml-4 md:mt-4 mt-0 lg:mt-0 hover:bg-gray-200 focus:outline-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    className="w-10 h-10  p-2 bg-slate-200 text-[#6366f1] dark:bg-[#111111] rounded-full"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                  </svg>
+                  <span className="ml-4 flex items-start flex-col leading-none">
+                    <span className="text-xs text-gray-600 mb-1 dark:text-slate-100">
+                      Check Out
+                    </span>
+                    <span className="title-font font-medium">
+                      PhotoProX-Docs
+                    </span>
                   </span>
-                  <span className="title-font font-medium">App Store</span>
-                </span>
-              </button>
+                </button>
+              </Link>
             </div>
           </div>
-          <div className="lg:max-w-xl lg:w-full md:w-1/2 w-5/6">
-            <img alt="penguins" src="\pexels-david-dibert-1299391.jpg" />
+          <div className="lg:max-w-xl lg:w-full md:w-1/2 w-5/6 ">
+            <ImgComparisonSlider
+              className=""
+              style={{
+                background: currentCheck,
+              }}
+            >
+              <figure slot="first" className="relative">
+                <img src="/landing/model_before.jpg" alt="Model" />
+                <figcaption className="text-sm text-black font-semibold absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-[#111111] dark:text-slate-200 bg-opacity-70 dark:bg-opacity-70 z-10">
+                  Try out our new AI background removal feature!
+                </figcaption>
+              </figure>
+              <figure slot="second" className="relative">
+                <img src="/landing/model_after.png" alt="Model" />
+                <figcaption className="text-sm text-black font-semibold absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-[#111111] dark:text-slate-200 bg-opacity-70 dark:bg-opacity-70 z-10">
+                  Try out our new AI background removal feature!
+                </figcaption>
+              </figure>
+            </ImgComparisonSlider>
+            {/* <figcaption className="text-sm text-black font-semibold absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-[#111111] dark:text-slate-200 bg-opacity-70 dark:bg-opacity-70 z-10">
+              Try out our new AI background removal feature!
+            </figcaption> */}
           </div>
         </div>
       </section>
-      <section className="text-gray-600 body-font bg-gradient-to-r from-neutral-50 to-gray-50">
+      <section className="text-gray-600 body-font bg-gradient-to-r from-neutral-50 to-gray-50 dark:from-[#111111] dark:to-black">
         <div className="container px-5 py-24 mx-auto">
           <div className="flex flex-wrap w-full mb-20 flex-col items-center text-center">
-            <h1 className="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">
+            <h1 className="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900 dark:text-zinc-100">
               Features
             </h1>
-            <p className="lg:w-1/2 w-full leading-relaxed text-gray-500">
+            <p className="lg:w-1/2 w-full leading-relaxed text-gray-500 dark:text-zinc-200">
               PhotoProX comes equipped with a variety of features to help you
               create stunning images.
             </p>
           </div>
-          <div className="flex flex-wrap -m-4">
+          <div className="flex flex-wrap -m-4 dark:text-slate-400">
             <div className="xl:w-1/3 md:w-1/2 p-4">
               <div className="border border-gray-200 p-6 rounded-lg">
-                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-4">
-                  <svg
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    className="w-6 h-6"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                  </svg>
+                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 dark:text-indigo-100 dark:bg-indigo-500 mb-4">
+                  <TransformIcon className="w-6 h-6" />
                 </div>
-                <h2 className="text-lg text-gray-900 font-medium title-font mb-2">
+                <h2 className="text-lg text-gray-900 font-medium title-font mb-2 dark:text-white">
                   Transform
                 </h2>
                 <p className="leading-relaxed text-base">
@@ -190,22 +275,10 @@ export default function Home() {
             </div>
             <div className="xl:w-1/3 md:w-1/2 p-4">
               <div className="border border-gray-200 p-6 rounded-lg">
-                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-4">
-                  <svg
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    className="w-6 h-6"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle cx="6" cy="6" r="3"></circle>
-                    <circle cx="6" cy="18" r="3"></circle>
-                    <path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"></path>
-                  </svg>
+                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 dark:text-indigo-100 dark:bg-indigo-500  mb-4">
+                  <PhotoFilter className="w-6 h-6" />
                 </div>
-                <h2 className="text-lg text-gray-900 font-medium title-font mb-2">
+                <h2 className="text-lg text-gray-900 font-medium title-font mb-2 dark:text-white">
                   Filters
                 </h2>
                 <p className="leading-relaxed text-base">
@@ -216,21 +289,10 @@ export default function Home() {
             </div>
             <div className="xl:w-1/3 md:w-1/2 p-4">
               <div className="border border-gray-200 p-6 rounded-lg">
-                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-4">
-                  <svg
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    className="w-6 h-6"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
+                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 dark:text-indigo-100 dark:bg-indigo-500  mb-4">
+                  <ComponentBooleanIcon className="w-6 h-6" />
                 </div>
-                <h2 className="text-lg text-gray-900 font-medium title-font mb-2">
+                <h2 className="text-lg text-gray-900 font-medium title-font mb-2 dark:text-white">
                   Adjustment/Clipping Layers
                 </h2>
                 <p className="leading-relaxed text-base">
@@ -240,20 +302,20 @@ export default function Home() {
             </div>
             <div className="xl:w-1/3 md:w-1/2 p-4">
               <div className="border border-gray-200 p-6 rounded-lg">
-                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-4">
+                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 dark:text-indigo-100 dark:bg-indigo-500  mb-4">
                   <svg
                     fill="none"
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
                     className="w-6 h-6"
                     viewBox="0 0 24 24"
                   >
                     <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"></path>
                   </svg>
                 </div>
-                <h2 className="text-lg text-gray-900 font-medium title-font mb-2">
+                <h2 className="text-lg text-gray-900 font-medium title-font mb-2 dark:text-white ">
                   Image Discovery
                 </h2>
                 <p className="leading-relaxed text-base">
@@ -264,20 +326,10 @@ export default function Home() {
             </div>
             <div className="xl:w-1/3 md:w-1/2 p-4">
               <div className="border border-gray-200 p-6 rounded-lg">
-                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-4">
-                  <svg
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    className="w-6 h-6"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
-                  </svg>
+                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 dark:text-indigo-100 dark:bg-indigo-500  mb-4">
+                  <Psychology className="w-6 h-6" />
                 </div>
-                <h2 className="text-lg text-gray-900 font-medium title-font mb-2">
+                <h2 className="text-lg text-gray-900 font-medium title-font mb-2 dark:text-white">
                   Artificial Intelligence
                 </h2>
                 <p className="leading-relaxed text-base">
@@ -288,20 +340,20 @@ export default function Home() {
             </div>
             <div className="xl:w-1/3 md:w-1/2 p-4">
               <div className="border border-gray-200 p-6 rounded-lg">
-                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-4">
+                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 dark:text-indigo-100 dark:bg-indigo-500  mb-4">
                   <svg
                     fill="none"
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
                     className="w-6 h-6"
                     viewBox="0 0 24 24"
                   >
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                   </svg>
                 </div>
-                <h2 className="text-lg text-gray-900 font-medium title-font mb-2">
+                <h2 className="text-lg text-gray-900 font-medium title-font mb-2 dark:text-white">
                   Secure Cloud Storage
                 </h2>
                 <p className="leading-relaxed text-base">
@@ -318,10 +370,10 @@ export default function Home() {
           </Link>
         </div>
       </section>
-      <section className="text-gray-600 body-font">
+      <section className="text-gray-600 body-font dark:bg-[#111111] dark:text-white">
         <div className="container px-5 py-24 mx-auto flex flex-wrap">
           <div className="flex w-full mb-20 flex-wrap">
-            <h1 className="sm:text-3xl text-2xl font-medium title-font text-gray-900 lg:w-1/3 lg:mb-0 mb-4">
+            <h1 className="sm:text-3xl text-2xl font-medium title-font text-gray-900 dark:text-white lg:w-1/3 lg:mb-0 mb-4">
               Enjoy some sample images
             </h1>
             <p className="lg:pl-6 lg:w-2/3 mx-auto leading-relaxed text-base">
@@ -330,56 +382,201 @@ export default function Home() {
           </div>
           <div className="flex flex-wrap md:-m-2 -m-1">
             <div className="flex flex-wrap w-1/2">
-              <div className="md:p-2 p-1 w-1/2">
-                <img
-                  alt="gallery"
-                  className="w-full object-cover h-full object-center block"
-                  src="\pexels-david-dibert-1299391.jpg"
-                />
+              <div className="md:p-2 p-1 w-1/2 relative">
+                <ImgComparisonSlider
+                  value={leopardValue}
+                  onSlide={(event) =>
+                    setLeopardValue(Number(event.target.value))
+                  }
+                  className=""
+                  style={{
+                    background:
+                      "repeating-conic-gradient(#808080 0% 25%, #ffffff 0% 50%) 50% / 20px 20px",
+                  }}
+                >
+                  <figure slot="first" className="relative">
+                    <img
+                      src="/landing/leopard_before.jpg"
+                      alt="Leopard Before"
+                    />
+                    {leopardValue > 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        Before
+                      </figcaption>
+                    )}
+                  </figure>
+                  <figure slot="second" className="relative">
+                    <img src="/landing/leopard_after.jpg" alt="Leopard After" />
+                    {leopardValue < 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        After
+                      </figcaption>
+                    )}
+                  </figure>
+                </ImgComparisonSlider>
               </div>
               <div className="md:p-2 p-1 w-1/2">
-                <img
-                  alt="gallery"
-                  className="w-full object-cover h-full object-center block"
-                  src="\pexels-david-dibert-1299391.jpg"
-                />
+                <ImgComparisonSlider
+                  value={meltValue}
+                  onSlide={(event) => setMeltValue(Number(event.target.value))}
+                  style={{
+                    background:
+                      "repeating-conic-gradient(#808080 0% 25%, #ffffff 0% 50%) 50% / 20px 20px",
+                  }}
+                >
+                  <figure slot="first" className="relative">
+                    <img
+                      src="/landing/melt_before.jpg"
+                      alt="Melt My Eyes By Denzel Curry Before"
+                    />
+                    {meltValue > 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        Before
+                      </figcaption>
+                    )}
+                  </figure>
+                  <figure slot="second" className="relative">
+                    <img
+                      src="/landing/melt_after.jpg"
+                      alt="Melt My Eyes By Denzel Curry After"
+                    />
+                    {meltValue < 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        After
+                      </figcaption>
+                    )}
+                  </figure>
+                </ImgComparisonSlider>
               </div>
               <div className="md:p-2 p-1 w-full">
-                <img
-                  alt="gallery"
-                  className="w-full h-full object-cover object-center block"
-                  src="\pexels-david-dibert-1299391.jpg"
-                />
+                <ImgComparisonSlider
+                  value={sakuraValue}
+                  onSlide={(event) =>
+                    setSakuraValue(Number(event.target.value))
+                  }
+                  className=""
+                  style={{
+                    background:
+                      "repeating-conic-gradient(#808080 0% 25%, #ffffff 0% 50%) 50% / 20px 20px",
+                  }}
+                >
+                  <figure slot="first" className="relative">
+                    <img
+                      src="/landing/sakura_before.png"
+                      alt="Sakura Kasugano Before"
+                    />
+                    {sakuraValue > 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        Before
+                      </figcaption>
+                    )}
+                  </figure>
+                  <figure slot="second" className="relative">
+                    <img
+                      src="/landing/sakura_after.png"
+                      alt="Sakura Kasugano After"
+                    />
+                    {sakuraValue < 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        After
+                      </figcaption>
+                    )}
+                  </figure>
+                </ImgComparisonSlider>
               </div>
             </div>
             <div className="flex flex-wrap w-1/2">
               <div className="md:p-2 p-1 w-full">
-                <img
-                  alt="gallery"
-                  className="w-full h-full object-cover object-center block"
-                  src="\pexels-david-dibert-1299391.jpg"
-                />
+                <ImgComparisonSlider
+                  value={gojoValue}
+                  onSlide={(event) => setGojoValue(Number(event.target.value))}
+                  className=""
+                  style={{
+                    background: currentCheck,
+                  }}
+                >
+                  <figure slot="first" className="relative">
+                    <img src="/landing/gojo_before.jpeg" alt="Gojo Before" />
+                    {gojoValue > 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        Before
+                      </figcaption>
+                    )}
+                  </figure>
+                  <figure slot="second" className="relative">
+                    <img src="/landing/gojo_after.png" alt="Gojo After" />
+                    {gojoValue < 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        After
+                      </figcaption>
+                    )}
+                  </figure>
+                </ImgComparisonSlider>
               </div>
               <div className="md:p-2 p-1 w-1/2">
-                <img
-                  alt="gallery"
-                  className="w-full object-cover h-full object-center block"
-                  src="\pexels-david-dibert-1299391.jpg"
-                />
+                <ImgComparisonSlider
+                  value={suitsValue}
+                  onSlide={(event) => setSuitsValue(Number(event.target.value))}
+                  className=""
+                  style={{
+                    background:
+                      "repeating-conic-gradient(#808080 0% 25%, #ffffff 0% 50%) 50% / 20px 20px",
+                  }}
+                >
+                  <figure slot="first" className="relative">
+                    <img src="/landing/suits_before.jpg" alt="Suits Before" />
+                    {suitsValue > 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        Before
+                      </figcaption>
+                    )}
+                  </figure>
+                  <figure slot="second" className="relative">
+                    <img src="/landing/suits_after.jpg" alt="Suits After" />
+                    {suitsValue < 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        After
+                      </figcaption>
+                    )}
+                  </figure>
+                </ImgComparisonSlider>
               </div>
               <div className="md:p-2 p-1 w-1/2">
-                <img
-                  alt="gallery"
-                  className="w-full object-cover h-full object-center block"
-                  src="\pexels-david-dibert-1299391.jpg"
-                />
+                <ImgComparisonSlider
+                  value={sombraValue}
+                  onSlide={(event) =>
+                    setSombraValue(Number(event.target.value))
+                  }
+                  className=""
+                  style={{
+                    background:
+                      "repeating-conic-gradient(#808080 0% 25%, #ffffff 0% 50%) 50% / 20px 20px",
+                  }}
+                >
+                  <figure slot="first" className="relative">
+                    <img src="/landing/sombra_before.jpg" alt="Sombra Before" />
+                    {sombraValue > 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        Before
+                      </figcaption>
+                    )}
+                  </figure>
+                  <figure slot="second" className="relative">
+                    <img src="/landing/sombra_after.jpg" alt="Sombra After" />
+                    {sombraValue < 30 && (
+                      <figcaption className="text-sm text-slate-100 font-semibold absolute bottom-0 left-0 right-0 p-4  dark:text-slate-200 bg-opacity-50 dark:bg-opacity-50 z-10">
+                        After
+                      </figcaption>
+                    )}
+                  </figure>
+                </ImgComparisonSlider>
               </div>
             </div>
           </div>
         </div>
       </section>
       <section
-        className="text-slate-100 body-font bg-[#475569]"
+        className="text-slate-100 body-font bg-[#475569] dark:bg-black"
         style={{
           backgroundImage: 'url("/github-mark.svg")',
           backgroundRepeat: "no-repeat",
@@ -388,53 +585,120 @@ export default function Home() {
         }}
       >
         <div className="z-50 container px-5 py-24 mx-auto">
-          <div className="flex flex-col text-center w-full mb-20">
-            <div className="flex flex-row justify-center items-center mb-4 space-x-3">
-              <h1 className="sm:text-3xl text-2xl font-medium title-font text-white">
+          <div className="container px-5 py-12 mx-auto">
+            <div className="text-center mb-20">
+              <h1 className="sm:text-3xl text-2xl font-medium title-font text-white mb-4 dark:text-white">
                 Open Source Philosophy
               </h1>
-            </div>
-
-            <div className="mt-4 mb-16">
-              <p className="lg:w-2/3 mx-auto leading-relaxed text-base">
-                PhotoProX is built on the principles of open source software.
+              <p className="text-base leading-relaxed xl:w-2/4 lg:w-3/4 mx-auto text-gray-500s">
+                PhotoProX is an open source project. We believe in the power of
+                community and collaboration.
               </p>
-              <Link
-                href={"https://github.com/PavlosDefoort/PhotoProX"}
-                target="_blank"
-              >
-                <button className="flex mx-auto mt-4 text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">
-                  Check out our GitHub
-                </button>
-              </Link>
+              <div className="flex mt-6 justify-center">
+                <div className="w-16 h-1 rounded-full bg-indigo-500 inline-flex"></div>
+              </div>
             </div>
-            <div className="mb-16">
-              <p className="lg:w-2/3 mx-auto leading-relaxed text-base">
-                If you have a feature request or a bug report, feel free to
-                submit an issue on our GitHub page.
-              </p>
-              <Link
-                href={"https://github.com/PavlosDefoort/PhotoProX/issues"}
-                target="_blank"
-              >
-                <button className="flex mx-auto mt-4 text-white bg-cyan-500 border-0 py-2 px-8 focus:outline-none hover:bg-cyan-600 rounded text-lg">
-                  Submit a Request
-                </button>
-              </Link>
-            </div>
-            <div className="">
-              <p className="lg:w-2/3 mx-auto leading-relaxed text-base">
-                The development build is available on Github. Feel free to check
-                out what we are working on before it is released!
-              </p>
-              <Link href={"https://photoprox-dev.vercel.app/"} target="_blank">
-                <button className="flex mx-auto mt-4 text-white bg-blue-500 border-0 py-2 px-8 focus:outline-none hover:bg-blue-600 rounded text-lg">
-                  Development Build
-                </button>
-              </Link>
+            <div className="flex flex-wrap sm:-m-4 -mx-4 -mb-10 -mt-4 md:space-y-0 space-y-6">
+              <div className="p-4 md:w-1/3 flex flex-col text-center items-center">
+                <div className="w-20 h-20 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-5 flex-shrink-0">
+                  <Lightbulb className="w-10 h-10" />
+                </div>
+                <div className="flex-grow">
+                  <h2 className="text-white text-lg title-font font-medium mb-3 dark:text-zinc-100">
+                    Suggest Features
+                  </h2>
+                  <p className="leading-relaxed text-base">
+                    We are always open to new ideas. Feel free to suggest new
+                    features using our Github Issues page.
+                  </p>
+                  <a
+                    className="mt-3 dark:text-indigo-500 text-indigo-200 inline-flex items-center"
+                    href="https://github.com/PavlosDefoort/PhotoProX/issues"
+                    target="_blank"
+                  >
+                    Submit a Feature Request
+                    <svg
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      className="w-4 h-4 ml-2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7"></path>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+              <div className="p-4 md:w-1/3 flex flex-col text-center items-center">
+                <div className="w-20 h-20 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-5 flex-shrink-0">
+                  <Engineering className="w-10 h-10" />
+                </div>
+                <div className="flex-grow">
+                  <h2 className="text-white text-lg title-font font-medium mb-3 dark:text-zinc-100">
+                    Contribute
+                  </h2>
+                  <p className="leading-relaxed text-base">
+                    We welcome all contributions. Feel free to fork our project
+                    and submit a pull request.
+                  </p>
+                  <a
+                    target="_blank"
+                    className="mt-3 dark:text-indigo-500 text-indigo-200 inline-flex items-center"
+                    href="https://github.com/PavlosDefoort/PhotoProX"
+                  >
+                    Fork the Project
+                    <svg
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      className="w-4 h-4 ml-2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7"></path>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+              <div className="p-4 md:w-1/3 flex flex-col text-center items-center">
+                <div className="w-20 h-20 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 mb-5 flex-shrink-0">
+                  <Build className="w-10 h-10" />
+                </div>
+                <div className="flex-grow">
+                  <h2 className="text-white text-lg title-font font-medium mb-3 dark:text-zinc-100">
+                    Development Build
+                  </h2>
+                  <p className="leading-relaxed text-base">
+                    Check out our development build to see what we are working
+                    on before it is released.
+                  </p>
+                  <a
+                    target="_blank"
+                    className="mt-3 dark:text-indigo-500 text-indigo-200 inline-flex items-center"
+                    href="https://photoprox-dev.vercel.app/"
+                  >
+                    Development Build
+                    <svg
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      className="w-4 h-4 ml-2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7"></path>
+                    </svg>
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap -m-4 text-center bg-gray-800 ">
+
+          <div className="flex flex-wrap -m-4 text-center bg-gray-800 dark:bg-black ">
             <div className="p-4 md:w-1/4 sm:w-1/2 w-full ">
               <div className="border-2 border-gray-200 px-4 py-6 rounded-lg">
                 <svg
@@ -449,7 +713,7 @@ export default function Home() {
                   />
                 </svg>
                 <h2 className="title-font font-medium text-3xl text-white">
-                  70
+                  {numberOfCommits}
                 </h2>
                 <p className="leading-relaxed">Commits</p>
               </div>
@@ -467,13 +731,13 @@ export default function Home() {
                 >
                   <path
                     stroke="currentColor"
-                    stroke-width="2"
+                    strokeWidth="2"
                     d="M11.083 5.104c.35-.8 1.485-.8 1.834 0l1.752 4.022a1 1 0 0 0 .84.597l4.463.342c.9.069 1.255 1.2.556 1.771l-3.33 2.723a1 1 0 0 0-.337 1.016l1.03 4.119c.214.858-.71 1.552-1.474 1.106l-3.913-2.281a1 1 0 0 0-1.008 0L7.583 20.8c-.764.446-1.688-.248-1.474-1.106l1.03-4.119A1 1 0 0 0 6.8 14.56l-3.33-2.723c-.698-.571-.342-1.702.557-1.771l4.462-.342a1 1 0 0 0 .84-.597l1.753-4.022Z"
                   />
                 </svg>
 
                 <h2 className="title-font font-medium text-3xl text-white">
-                  1
+                  {numberOfStars}
                 </h2>
                 <p className="leading-relaxed">Stars</p>
               </div>
@@ -493,9 +757,9 @@ export default function Home() {
                     r="28"
                     fill="none"
                     stroke="rgb(99,102,241)"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="15"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="15"
                   ></circle>
                   <circle
                     cx="188"
@@ -503,9 +767,9 @@ export default function Home() {
                     r="28"
                     fill="none"
                     stroke="rgb(99,102,241)"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="15"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="15"
                   ></circle>
                   <circle
                     cx="68"
@@ -513,16 +777,16 @@ export default function Home() {
                     r="28"
                     fill="none"
                     stroke="rgb(99,102,241)"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="15"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="15"
                   ></circle>
                   <path
                     fill="none"
                     stroke="rgb(99,102,241)"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="15"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="15"
                     d="M68,95.99756v8.002a24,24,0,0,0,24.00049,24l72-.00146a24,24,0,0,0,23.99951-24V95.99756"
                   ></path>
                   <line
@@ -532,13 +796,13 @@ export default function Home() {
                     y2="160"
                     fill="rgb(99,102,241)"
                     stroke="rgb(99,102,241)"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="15"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="15"
                   ></line>
                 </svg>
                 <h2 className="title-font font-medium text-3xl text-white">
-                  0
+                  {numberOfForks}
                 </h2>
                 <p className="leading-relaxed">Forks</p>
               </div>
@@ -556,18 +820,18 @@ export default function Home() {
                 >
                   <path
                     stroke="currentColor"
-                    stroke-width="2"
+                    strokeWidth="2"
                     d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"
                   />
                   <path
                     stroke="currentColor"
-                    stroke-width="2"
+                    strokeWidth="2"
                     d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                   />
                 </svg>
 
                 <h2 className="title-font font-medium text-3xl text-white">
-                  1
+                  {numberOfWatchers}
                 </h2>
                 <p className="leading-relaxed">Watching</p>
               </div>
@@ -575,15 +839,14 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="text-gray-600 body-font overflow-hidden">
+      <section className="text-gray-600 body-font overflow-hidden dark:bg-[#111111] dark:text-white">
         <div className="container px-5 py-24 mx-auto">
           <div className="flex flex-col text-center w-full mb-20">
-            <h1 className="sm:text-4xl text-3xl font-medium title-font mb-2 text-gray-900">
-              Completely Free! (for now...)
+            <h1 className="sm:text-4xl text-3xl font-medium title-font mb-2 text-gray-900 dark:text-white">
+              Completely Free!
             </h1>
-            <p className="lg:w-2/3 mx-auto leading-relaxed text-base text-gray-500">
-              PhotoProX is completely free to use for now. We are working on
-              features that will require a subscription in the future.
+            <p className="lg:w-2/3 mx-auto leading-relaxed text-base text-gray-500 dark:text-zinc-100">
+              PhotoProX is completely free to use. No hidden fees or charges.
             </p>
           </div>
           <div className="flex flex-row items-center justify-center -m-4">
@@ -592,17 +855,17 @@ export default function Home() {
                 <h2 className="text-sm tracking-widest title-font mb-1 font-medium">
                   START
                 </h2>
-                <h1 className="text-5xl text-gray-900 pb-4 mb-4 border-b border-gray-200 leading-none">
+                <h1 className="text-5xl text-gray-900 dark:text-white pb-4 mb-4 border-b border-gray-200 leading-none">
                   Free
                 </h1>
-                <p className="flex items-center text-gray-600 mb-2">
+                <p className="flex items-center text-gray-600 dark:text-zinc-200 mb-2">
                   <span className="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
                     <svg
                       fill="none"
                       stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
                       className="w-3 h-3"
                       viewBox="0 0 24 24"
                     >
@@ -611,14 +874,14 @@ export default function Home() {
                   </span>
                   Everything
                 </p>
-                <p className="flex items-center text-gray-600 mb-2">
+                <p className="flex items-center text-gray-600 dark:text-zinc-200 mb-2">
                   <span className="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
                     <svg
                       fill="none"
                       stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
                       className="w-3 h-3"
                       viewBox="0 0 24 24"
                     >
@@ -627,22 +890,23 @@ export default function Home() {
                   </span>
                   Did we mention everything?
                 </p>
-
-                <button className="flex items-center mt-auto text-white bg-gray-400 border-0 py-2 px-4 w-full focus:outline-none hover:bg-gray-500 rounded">
-                  Get Started
-                  <svg
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    className="w-4 h-4 ml-auto"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7"></path>
-                  </svg>
-                </button>
-                <p className="text-xs text-gray-500 mt-3">
+                <Link href={"./editor"}>
+                  <button className="flex items-center mt-auto text-white bg-gray-400 border-0 py-2 px-4 w-full focus:outline-none hover:bg-gray-500 rounded">
+                    Get Started
+                    <svg
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      className="w-4 h-4 ml-auto"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7"></path>
+                    </svg>
+                  </button>
+                </Link>
+                <p className="text-xs text-gray-500 dark:text-zinc-400 mt-3">
                   Get started today! For free!
                 </p>
               </div>
@@ -650,28 +914,28 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <footer className="text-gray-600 body-font">
+      <footer className="text-gray-600 body-font dark:bg-black">
         <div className="container px-5 py-8 mx-auto flex items-center sm:flex-row flex-col">
           <a className="flex title-font font-medium items-center md:justify-start justify-center text-gray-900">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
               className="w-10 h-10 text-white p-2 bg-indigo-500 rounded-full"
               viewBox="0 0 24 24"
             >
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
             </svg>
-            <span className="ml-3 text-xl">PhotoProX</span>
+            <span className="ml-3 text-xl dark:text-white ">PhotoProX</span>
           </a>
-          <p className="text-sm text-gray-500 sm:ml-4 sm:pl-4 sm:border-l-2 sm:border-gray-200 sm:py-2 sm:mt-0 mt-4">
+          <p className="text-sm text-gray-500  dark:text-gray-300 sm:ml-4 sm:pl-4 sm:border-l-2 sm:border-gray-200 sm:py-2 sm:mt-0 mt-4">
             © 2024 PhotoProX —
             <a
-              href="https://twitter.com/knyttneve"
-              className="text-gray-600 ml-1"
+              href="https://github.com/PavlosDefoort"
+              className="text-gray-600 dark:text-gray-400   ml-1"
               rel="noopener noreferrer"
               target="_blank"
             >
@@ -679,37 +943,37 @@ export default function Home() {
             </a>
           </p>
           <span className="inline-flex sm:ml-auto sm:mt-0 mt-4 justify-center sm:justify-start">
-            <a className="text-gray-500">
+            <a className="text-gray-500 dark:text-gray-300">
               <svg
                 fill="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
                 className="w-5 h-5"
                 viewBox="0 0 24 24"
               >
                 <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"></path>
               </svg>
             </a>
-            <a className="ml-3 text-gray-500">
+            <a className="ml-3 text-gray-500 dark:text-gray-300">
               <svg
                 fill="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
                 className="w-5 h-5"
                 viewBox="0 0 24 24"
               >
                 <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"></path>
               </svg>
             </a>
-            <a className="ml-3 text-gray-500">
+            <a className="ml-3 text-gray-500 dark:text-gray-300">
               <svg
                 fill="none"
                 stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
                 className="w-5 h-5"
                 viewBox="0 0 24 24"
               >
@@ -717,13 +981,13 @@ export default function Home() {
                 <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zm1.5-4.87h.01"></path>
               </svg>
             </a>
-            <a className="ml-3 text-gray-500">
+            <a className="ml-3 text-gray-500 dark:text-gray-300">
               <svg
                 fill="currentColor"
                 stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="0"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="0"
                 className="w-5 h-5"
                 viewBox="0 0 24 24"
               >

@@ -1,39 +1,19 @@
-import React, { use, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DividerVerticalIcon,
-  DownloadIcon,
-  HomeIcon,
-} from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
-import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
-import { NavigationMenuDemo } from "./navigationmenu";
+import { DividerVerticalIcon, HomeIcon } from "@radix-ui/react-icons";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import Link from "next/link";
+import React, { useEffect } from "react";
+import { NavigationMenuDemo } from "../../../navigationmenu";
 
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import ListSubheader from "@mui/material/ListSubheader";
-import FormControl from "@mui/material/FormControl";
-import Select from "@mui/material/Select";
+import MenubarDemo from "@/components/Editor/PhotoEditor/UI/menu";
+import { clamp, fillImageToScreen, fitImageToScreen } from "@/utils/calcUtils";
 import dynamic from "next/dynamic";
-import { fillImageToScreen, fitImageToScreen, clamp } from "@/utils/calcUtils";
-import { set } from "lodash";
-import ImageDropDown from "./imagedropdown";
-import MenubarDemo from "@/components/ui/menu";
+import { Poppins } from "next/font/google";
+import { Application, Container, Graphics } from "pixi.js";
+import { toast } from "sonner";
 import { useAuth } from "../../../../../app/authcontext";
 import { auth } from "../../../../../app/firebase";
-import { toast } from "sonner";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu";
-import { NavigationMenuTrigger } from "@radix-ui/react-navigation-menu";
-import { Application, Container, Graphics } from "pixi.js";
-import { Poppins } from "next/font/google";
+import ImageDropDown from "./imagedropdown";
 interface TopBarProps {
   imgName: string;
   zoomValue: string;
@@ -185,81 +165,56 @@ const TopBar: React.FC<TopBarProps> = ({
     };
   });
 
-  useEffect(() => {
-    // Check if user is signed in and has a display name
-    if (
-      user &&
-      user.displayName &&
-      localStorage.getItem("welcome") !== "true"
-    ) {
-      toast(`Welcome ${user.displayName}`, {
-        description:
-          "Explore our powerful photo editor and unleash your creativity.",
-        action: {
-          label: "Got it!",
-          onClick: () => "Undo",
-        },
-      });
-      localStorage.setItem("welcome", "true");
-    }
-  }, [user]);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
   return (
     <nav
-      className={`z-40 w-full h-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-between p-2 ${poppins.className}`}
+      className={`z-40 w-full h-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] pl-2 ${poppins.className} flex items-center justify-start`}
     >
-      <div className="flex items-center h-full text-black dark:text-white">
-        <Link href="/">
-          <HomeIcon className="hover:animate-bounce w-5 h-5" />
-          {/* <Image
+      <div className="w-3/5 flex justify-between h-full">
+        <div className="flex items-center  text-black dark:text-white">
+          <Link href="/">
+            <HomeIcon className="hover:animate-bounce w-5 h-5" />
+            {/* <Image
             width={25}
             height={25}
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1051px-Adobe_Photoshop_CC_icon.svg.png"
             alt="PhotoProX Logo"
           /> */}
-        </Link>
-        <DividerVerticalIcon className="w-6 h-6 text-[#cdcdcd] dark:text-gray-500" />
-        {user ? (
-          <NavigationMenuDemo />
-        ) : (
-          <div className="flex flex-row items-center justify-center text-sm ml-2">
-            <Button onClick={handleSignIn}>Sign In with Google</Button>
+          </Link>
+          <DividerVerticalIcon className="w-6 h-6 text-[#cdcdcd] dark:text-gray-500" />
+          <div className="">
+            <NavigationMenuDemo />
           </div>
-        )}
-        <DividerVerticalIcon className="w-6 h-6 text-[#cdcdcd] dark:text-gray-500" />
-        <MenubarDemo
-          trigger={trigger}
-          setTrigger={setTrigger}
-          appRef={appRef}
-          containerRef={containerRef}
-        />
-      </div>
-
-      <div className="pl-16 flex items-center h-full text-black dark:text-white text-xs">
-        <h1 className="mx-2">
-          <ImageDropDown
-            imgName={imgName}
-            setImgName={setFileName}
+          <DividerVerticalIcon className="w-6 h-6 text-[#cdcdcd] dark:text-gray-500" />
+          <MenubarDemo
+            trigger={trigger}
+            setTrigger={setTrigger}
             appRef={appRef}
             containerRef={containerRef}
-            maskRef={maskRef}
-            canvasRef={canvasRef}
           />
-        </h1>
+        </div>
 
-        <DynamicComponent
-          zoomValue={zoomValue}
-          requestFill={requestFill}
-          requestFit={requestFit}
-          zoomIn={handleZoomIn}
-          zoomOut={handleZoomOut}
-        />
+        <div className="flex items-center h-full text-black dark:text-white text-xs">
+          <h1 className="mx-2">
+            <ImageDropDown
+              imgName={imgName}
+              setImgName={setFileName}
+              appRef={appRef}
+              containerRef={containerRef}
+              maskRef={maskRef}
+              canvasRef={canvasRef}
+            />
+          </h1>
+
+          <DynamicComponent
+            zoomValue={zoomValue}
+            requestFill={requestFill}
+            requestFit={requestFit}
+            zoomIn={handleZoomIn}
+            zoomOut={handleZoomOut}
+          />
+        </div>
       </div>
-      <div className="flex items-center h-full text-black dark:text-white ">
+      {/* <div className="flex items-center h-full text-black dark:text-white ">
         <Button
           type="button"
           className="flex flex-row items-center justify-center text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-3 py-0.3 h-6 text-center"
@@ -269,7 +224,7 @@ const TopBar: React.FC<TopBarProps> = ({
             Download
           </span>
         </Button>
-      </div>
+      </div> */}
     </nav>
   );
 };

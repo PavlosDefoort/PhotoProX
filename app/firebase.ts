@@ -53,15 +53,15 @@ if (typeof window !== "undefined") {
   auth = getAuth(app);
   analytics = getAnalytics(app);
 
-  const appCheck = initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(
-      process.env.NEXT_PUBLIC_SITE_KEY as string
-    ),
+  // const appCheck = initializeAppCheck(app, {
+  //   provider: new ReCaptchaV3Provider(
+  //     process.env.NEXT_PUBLIC_SITE_KEY as string
+  //   ),
 
-    // Optional argument. If true, the SDK automatically refreshes App Check
-    // tokens as needed.
-    isTokenAutoRefreshEnabled: true,
-  });
+  //   // Optional argument. If true, the SDK automatically refreshes App Check
+  //   // tokens as needed.
+  //   isTokenAutoRefreshEnabled: true,
+  // });
 
   storage = getStorage(app);
   db = getFirestore(app);
