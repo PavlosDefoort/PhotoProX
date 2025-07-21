@@ -1,0 +1,58 @@
+@keyframes gradient-x {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 4s ease infinite;
+}
+
+@keyframes color-change {
+  0% {
+    color: #1a202c; /* Tailwind's gray-900 */
+  }
+  50% {
+    color: #fcfcfc; /* Tailwind's red-500 */
+  }
+  100% {
+    color: #1a202c; /* Tailwind's gray-900 */
+  }
+}
+
+.text-color-change {
+  animation: color-change 5s ease-in infinite;
+}
+
+@keyframes tint-in {
+  0% {
+    filter: brightness(100%);
+  }
+  100% {
+    filter: brightness(70%);
+  }
+}
+
+@keyframes tint-out {
+  0% {
+    filter: brightness(70%);
+  }
+  100% {
+    filter: brightness(100%);
+  }
+}
+
+.tint-in {
+  animation: tint-in 0.5s ease forwards;
+}
+
+.tint-out {
+  animation: tint-out 0.5s ease forwards;
+}
