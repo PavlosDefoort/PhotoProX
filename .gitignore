@@ -41,8 +41,4 @@ next-env.d.ts
 
 .env*.local
 
-# Experimental Code
-src/experiment
-src/pages/test.tsx
-src/pages/api/discover.ts
-src/pages/api/tagSuggestions.ts
+
