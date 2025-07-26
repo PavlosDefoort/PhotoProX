@@ -17,8 +17,8 @@ export async function createMiniApp(
   canvasRef: React.MutableRefObject<ICanvas | null>
 ): Promise<Application> {
   const newApp = await createApp(
-    800,
-    400,
+    600,
+    300,
     canvasRef.current as ICanvas,
     0x1a1a1a,
     DEFAULT_PERFORMANCE_SETTINGS

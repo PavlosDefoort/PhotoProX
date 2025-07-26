@@ -17,9 +17,47 @@ import { set } from "lodash";
 import { useEffect } from "react";
 
 const ZoomDropDown: React.FC = () => {
-  const { currentZoom, setCurrentZoom, app, container, setContainer } =
-    useCanvas();
+  const {
+    currentZoom,
+    setCurrentZoom,
+    app,
+    container,
+    setContainer,
+    setTargetZoom,
+    targetPosition,
+    targetMousePos,
+    targetWorldMousePos,
+    zoomFromUser,
+  } = useCanvas();
   const { project } = useProject();
+
+  const applyZoom = (zoom: number) => {
+    if (container && currentZoom !== zoom) {
+      console.log("Applying zoom:", zoom);
+      setTargetZoom(zoom);
+      zoomFromUser.current = false;
+    }
+  };
+
+  const applyCenterZoom = (
+    zoom: number,
+    appWidth: number,
+    appHeight: number
+  ) => {
+    if (container) {
+      applyZoom(zoom);
+      targetPosition.current.x = appWidth / 2;
+      targetPosition.current.y = appHeight / 2;
+      targetMousePos.current = {
+        x: appWidth / 2,
+        y: appHeight / 2,
+      };
+      targetWorldMousePos.current = {
+        x: project.settings.canvasSettings.width / 2,
+        y: project.settings.canvasSettings.height / 2,
+      };
+    }
+  };
 
   const handleFitToScreen = () => {
     // Fit to screen
@@ -33,10 +71,7 @@ const ZoomDropDown: React.FC = () => {
         appHeight,
         0
       );
-      container.scale.set(scale);
-      container.position.set(appWidth / 2, appHeight / 2);
-      setCurrentZoom(scale);
-      setContainer(container);
+      applyCenterZoom(scale, appWidth, appHeight);
     }
   };
 
@@ -52,10 +87,7 @@ const ZoomDropDown: React.FC = () => {
         appHeight,
         1
       );
-      container.scale.set(scale);
-      container.position.set(appWidth / 2, appHeight / 2);
-      setCurrentZoom(scale);
-      setContainer(container);
+      applyCenterZoom(scale, appWidth, appHeight);
     }
   };
 
@@ -63,19 +95,15 @@ const ZoomDropDown: React.FC = () => {
     if (container && currentZoom) {
       const newZoom = currentZoom + 0.1;
       const adjustedZoom = Math.min(newZoom, 5);
-      container.scale.set(adjustedZoom);
-      setCurrentZoom(adjustedZoom);
-      setContainer(container);
+      applyZoom(adjustedZoom);
     }
   };
 
   const handleDecrementZoom = () => {
     if (container && currentZoom) {
       const newZoom = currentZoom - 0.1;
-      const adjustedZoom = Math.max(newZoom, 0.1);
-      container.scale.set(adjustedZoom);
-      setCurrentZoom(adjustedZoom);
-      setContainer(container);
+      const adjustedZoom = Math.max(newZoom, 0.05);
+      applyZoom(adjustedZoom);
     }
   };
 
