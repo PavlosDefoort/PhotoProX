@@ -91,9 +91,11 @@ const UpdateCanvas = ({
 
           // Set zoom target
           setTargetZoom(newScale);
+          console.log(newScale);
 
           // Set zoomFromUser to false since this is a programmatic zoom
-          zoomFromUser.current = true;
+          zoomFromUser.current = false;
+          // container.scale.set(newScale, newScale);
 
           // Resize renderer
           app.current.renderer.resize(roundedWidth, roundedHeight);
@@ -105,14 +107,14 @@ const UpdateCanvas = ({
           targetPosition.current.y = roundedHeight / 2;
 
           // Optional: Clear the mouse focus since this isn't user zoom
-          targetMousePos.current = {
-            x: roundedWidth / 2,
-            y: roundedHeight / 2,
-          };
-          targetWorldMousePos.current = {
-            x: project.settings.canvasSettings.width / 2,
-            y: project.settings.canvasSettings.height / 2,
-          };
+          // targetMousePos.current = {
+          //   x: roundedWidth / 2,
+          //   y: roundedHeight / 2,
+          // };
+          // targetWorldMousePos.current = {
+          //   x: project.settings.canvasSettings.width / 2,
+          //   y: project.settings.canvasSettings.height / 2,
+          // };
         }
         // Position the container in the center of the canvas
 
