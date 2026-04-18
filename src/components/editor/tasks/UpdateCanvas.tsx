@@ -51,16 +51,26 @@ const UpdateCanvas = ({
   const { photoProXUser } = useAuth();
   const createProjectCalled = useRef(false);
   const currentlyCreating = useRef(false);
+  const prevLayerCount = useRef(layerManager.layers.length);
 
   // Create a debounced memoized function to render layers
   // This is to prevent the function from being recreated on every render and to limit the amount of times it is called
   const renderLayersMemo = useMemo(
     () =>
-      debounce((layers: LayerX[], container: ContainerX) => {
-        renderLayers(layers, container, editMode, setLayerManager);
+      debounce((layers: LayerX[], container: ContainerX, targetId: string) => {
+        renderLayers(layers, container, editMode, setLayerManager, targetId);
+        // Mark container for re-composite after layer changes
+        container.compositeNeeded = true;
       }, 100),
-    [editMode, setLayerManager]
+    [editMode, setLayerManager],
   );
+
+  // Cancel any pending debounced render when dependencies change or on unmount
+  useEffect(() => {
+    return () => {
+      renderLayersMemo.cancel();
+    };
+  }, [renderLayersMemo]);
 
   useEffect(() => {
     if (
@@ -69,7 +79,6 @@ const UpdateCanvas = ({
       project.settings.canvasSettings.height > 1 &&
       container?.destroyed !== true
     ) {
-      console.log("UpdateCanvas effect triggered");
       if (app.current && container) {
         const roundedWidth = Math.round(adjustedWidth);
         const roundedHeight = Math.round(adjustedHeight);
@@ -78,24 +87,19 @@ const UpdateCanvas = ({
           roundedHeight !== Math.floor(app.current.renderer.height) ||
           roundedWidth !== Math.floor(app.current.renderer.width)
         ) {
-          console.log(roundedHeight, app.current.renderer.height);
-          console.log(roundedWidth, app.current.renderer.width);
-
           const newScale = fitImageToScreen(
             project.settings.canvasSettings.width,
             project.settings.canvasSettings.height,
             roundedWidth,
             roundedHeight,
-            0
+            0,
           );
 
           // Set zoom target
           setTargetZoom(newScale);
-          console.log(newScale);
 
           // Set zoomFromUser to false since this is a programmatic zoom
           zoomFromUser.current = false;
-          // container.scale.set(newScale, newScale);
 
           // Resize renderer
           app.current.renderer.resize(roundedWidth, roundedHeight);
@@ -105,33 +109,16 @@ const UpdateCanvas = ({
           // Center the container (pan target)
           targetPosition.current.x = roundedWidth / 2;
           targetPosition.current.y = roundedHeight / 2;
-
-          // Optional: Clear the mouse focus since this isn't user zoom
-          // targetMousePos.current = {
-          //   x: roundedWidth / 2,
-          //   y: roundedHeight / 2,
-          // };
-          // targetWorldMousePos.current = {
-          //   x: project.settings.canvasSettings.width / 2,
-          //   y: project.settings.canvasSettings.height / 2,
-          // };
         }
-        // Position the container in the center of the canvas
 
-        // container.scale.set(zoomValue, zoomValue);
+        renderLayersMemo(layerManager.layers, container, layerManager.target);
 
-        // Render the layers :) WOOHOO
-
-        const currentApp = app.current;
-        console.log(app.current);
-        console.log(container);
-        renderLayersMemo(layerManager.layers, container);
-
-        // return () => {
-        //   if (currentApp) {
-        //     cleanApp(currentApp);
-        //   }
-        // };
+        // If the layer count changed (add/delete), flush immediately to avoid
+        // a visual flash where orphaned sprites are missing from the stage.
+        if (layerManager.layers.length !== prevLayerCount.current) {
+          renderLayersMemo.flush();
+          prevLayerCount.current = layerManager.layers.length;
+        }
       } else {
         // Ensure createProjectApp is only called once
         const createProject = async () => {
@@ -146,7 +133,7 @@ const UpdateCanvas = ({
             darkMode,
             setTrigger,
             trigger,
-            photoProXUser?.settings.performance
+            photoProXUser?.settings.performance,
           );
           createProjectCalled.current = true;
           currentlyCreating.current = false;
@@ -172,10 +159,9 @@ const UpdateCanvas = ({
     setTrigger,
     photoProXUser?.settings.performance,
     layerManager.layers,
+    layerManager.target,
     zoomFromUser,
     targetPosition,
-    targetMousePos,
-    targetWorldMousePos,
   ]);
 };
 

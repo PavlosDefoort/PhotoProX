@@ -15,7 +15,7 @@ export const ProjectContext = createContext<ProjectContextValue>({
   setLayerManager: (arg: LayerManager | DraftFunction<LayerManager>) => {},
   undoRedoManager: new UndoRedoManager(),
   setUndoRedoManager: (
-    arg: UndoRedoManager | DraftFunction<UndoRedoManager>
+    arg: UndoRedoManager | DraftFunction<UndoRedoManager>,
   ) => {},
   trigger: false,
   setTrigger: (value: boolean) => {
@@ -43,6 +43,10 @@ export const ProjectContext = createContext<ProjectContextValue>({
   },
   loadingTask: "regular",
   setLoadingTask: (value) => {
+    // Add your implementation here
+  },
+  loadingProgressText: "",
+  setLoadingProgressText: (value) => {
     // Add your implementation here
   },
 });

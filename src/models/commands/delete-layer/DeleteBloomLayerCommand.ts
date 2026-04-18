@@ -29,7 +29,7 @@ export class DeleteBloomLayerCommand implements DeleteLayerCommand {
     layer: BloomAdjustmentLayer,
     setter: (draft: DraftFunction<LayerManager>) => void,
     width: number,
-    height: number
+    height: number,
   ) {
     this.setLayerManager = setter;
     this.width = width;
@@ -50,13 +50,13 @@ export class DeleteBloomLayerCommand implements DeleteLayerCommand {
   execute(): void {
     // Delete the bloom layer
 
-    // 1. Remove the children from the container
-    this.container.removeChildren();
+    // 1. Clean up the container if it's in the scene graph
+    if (this.container.parent) {
+      this.container.removeChildren();
+      this.container.parent.removeChild(this.container);
+    }
 
-    // 2. Remove the container from the parent
-    this.container.parent.removeChild(this.container);
-
-    // 3. Update the state
+    // 2. Update the state
     this.setLayerManager((draft) => {
       draft.layers = removeLayer(draft.layers, this.layerId);
       draft.target = "";
@@ -76,7 +76,7 @@ export class DeleteBloomLayerCommand implements DeleteLayerCommand {
       this.width,
       this.height,
       false,
-      this.container
+      this.container,
     );
 
     // Update the state

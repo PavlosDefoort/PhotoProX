@@ -32,7 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useCanvas } from "@/hooks/useCanvas";
-import { createContainerBM } from "@/utils/PixiUtils";
+import { addContainerToStage, createContainerBM } from "@/utils/PixiUtils";
 import { getBackgroundLayer, removeLayer } from "@/models/project/LayerManager";
 import { ImageLayer } from "@/models/project/Layers/Layers";
 import ResizeComponent from "./ResizeComponent";
@@ -83,7 +83,7 @@ const ResizeProject: React.FC<ResizeProjectProps> = ({ open, setOpen }) => {
     // 3.5. Position the container in the center of the canvas
     newContainer.position.set(
       app.current.renderer.width / 2,
-      app.current.renderer.height / 2
+      app.current.renderer.height / 2,
     );
 
     // 3.75 Create a new background layer
@@ -92,7 +92,7 @@ const ResizeProject: React.FC<ResizeProjectProps> = ({ open, setOpen }) => {
       "#ffffff",
       width,
       height,
-      1
+      1,
     );
 
     const currentBackground = getBackgroundLayer(layerManager.layers);
@@ -110,8 +110,16 @@ const ResizeProject: React.FC<ResizeProjectProps> = ({ open, setOpen }) => {
       });
     }
 
-    // 4. Add the new container to the stage
-    app.current.stage.addChild(newContainer);
+    // 4. Add the new container to the stage with RT architecture
+    addContainerToStage(app.current, newContainer);
+
+    // Also sync displaySprite position
+    if (newContainer.displaySprite) {
+      newContainer.displaySprite.position.set(
+        app.current.renderer.width / 2,
+        app.current.renderer.height / 2,
+      );
+    }
 
     // 5. Set the new container
     setContainer(newContainer);

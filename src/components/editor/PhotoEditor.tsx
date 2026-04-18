@@ -6,7 +6,13 @@ import { GetInfo } from "@/services/GpuInfo";
 import { clamp } from "@/utils/CalcUtils";
 import { TierResult } from "detect-gpu";
 import { Application } from "pixi.js";
-import React, { createRef, useEffect, useRef, useState } from "react";
+import React, {
+  createRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ImageSelector from "./tasks/ImageSelector";
 import MovementHandler from "./tasks/MovementLogic";
 import UpdateCanvas, { UpdateCanvasProps } from "./tasks/UpdateCanvas";
@@ -39,7 +45,7 @@ const PhotoEditor: React.FC = () => {
       setCurrentZoom: () => {},
       setTargetZoom: () => {},
       targetPosition: targetPosition,
-    }
+    },
   );
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -47,8 +53,10 @@ const PhotoEditor: React.FC = () => {
   const [container, setContainer] = useState<ContainerX | null>(null);
   const [currentZoom, setCurrentZoom] = useState(1);
   const [targetZoom, setTargetZoom] = useState(1);
-  const [movementKey, setMovementKey] = useState(0);
   const target = useRef<HTMLDivElement | null>(null);
+  const targetMousePos = useRef({ x: 0, y: 0 });
+  const targetWorldMousePos = useRef({ x: 0, y: 0 });
+  const zoomFromUser = useRef(false);
   const realNaturalWidth = useRef(project.settings.canvasSettings.width);
   const realNaturalHeight = useRef(project.settings.canvasSettings.height);
 
@@ -67,22 +75,28 @@ const PhotoEditor: React.FC = () => {
 
   useEffect(() => {
     const stageContainer = document.getElementById("stage-container");
+    if (!stageContainer) return;
+
+    let rafId: number | null = null;
     const handleResize = () => {
-      if (stageContainer) {
+      // Debounce via RAF — coalesces multiple resize events per frame into one
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
         setWindowWidth(stageContainer.clientWidth);
         setWindowHeight(stageContainer.clientHeight);
-
-        // Adjust the container to fit within the canvas
-      }
+      });
     };
-    if (stageContainer) {
-      const resizeObserver = new ResizeObserver(handleResize);
-      resizeObserver.observe(stageContainer);
-      return () => {
-        resizeObserver.unobserve(stageContainer);
-      };
-    }
-  }, [windowWidth]);
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(stageContainer);
+    // Fire once immediately to initialise dimensions
+    handleResize();
+
+    return () => {
+      resizeObserver.unobserve(stageContainer);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []); // stable — no deps needed
 
   useEffect(() => {
     const app = appRef.current!;
@@ -102,7 +116,6 @@ const PhotoEditor: React.FC = () => {
       const adjustHeight = Math.round(windowHeight ?? 0);
       setCanvasWidth(adjustWidth);
       setCanvasHeight(adjustHeight);
-      setMovementKey((prev) => prev + 1);
     }
   }, [gpuFactor, windowWidth, windowHeight, project]);
 
@@ -147,9 +160,9 @@ const PhotoEditor: React.FC = () => {
         app: appRef,
         container: container,
         setContainer: setContainer,
-        targetMousePos: { current: { x: 0, y: 0 } },
-        targetWorldMousePos: { current: { x: 0, y: 0 } },
-        zoomFromUser: { current: false },
+        targetMousePos: targetMousePos,
+        targetWorldMousePos: targetWorldMousePos,
+        zoomFromUser: zoomFromUser,
 
         canvas: canvasRef,
         currentZoom: currentZoom,
@@ -187,7 +200,6 @@ const PhotoEditor: React.FC = () => {
 
                 <MovementHandler
                   target={target} // Pass the targetRef as the target
-                  key={movementKey}
                 />
                 <div className="w-full h-full ">
                   <div

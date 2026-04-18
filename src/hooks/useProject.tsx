@@ -23,6 +23,8 @@ export function useProject() {
     setLoadingProgress,
     loadingTask,
     setLoadingTask,
+    loadingProgressText,
+    setLoadingProgressText,
   } = useContext(ProjectContext);
 
   return {
@@ -46,5 +48,7 @@ export function useProject() {
     setLoadingProgress,
     loadingTask,
     setLoadingTask,
+    loadingProgressText,
+    setLoadingProgressText,
   };
 }

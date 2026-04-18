@@ -1,8 +1,7 @@
 // New Movement
-import React, { useEffect, useRef, useCallback, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { useCanvas } from "@/hooks/useCanvas";
-import { clamp } from "lodash";
-import { usePinch } from "@use-gesture/react";
+import { compositeToRT } from "@/utils/PixiUtils";
 
 interface PinchHandlerProps {
   target: React.RefObject<Element>;
@@ -37,7 +36,6 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
   // Wheel handler for zoom and pan
   useEffect(() => {
     if (!app.current?.canvas || !container) return;
-    console.log("Adding wheel event listener");
 
     const canvasBounds = app.current.canvas.getBoundingClientRect();
 
@@ -50,12 +48,10 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
       const minStepAbsolute = 0.01;
 
       // Mouse position relative to canvas
-      console.log(e.clientX, canvasBounds.left);
       const mouseX = e.clientX - canvasBounds.left;
       const mouseY = e.clientY - canvasBounds.top;
 
       if (e.ctrlKey && !isPinching.current) {
-        console.log("Zooming with wheel");
         // User zoom
         zoomFromUser.current = true;
 
@@ -95,7 +91,6 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
     });
 
     return () => {
-      console.log("Removing wheel event listener");
       app.current?.canvas.removeEventListener("wheel", handleWheel);
     };
   }, [app, container, setTargetZoom, targetPosition]);
@@ -104,7 +99,6 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
   useEffect(() => {
     // console.log("Running animation loop with targetZoom:", targetZoom);
     if (!container) return;
-    console.log("Starting animation loop");
 
     let animationFrameId: number;
     const zoomSpeed = 0.15;
@@ -141,6 +135,10 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
         container.x = mouse.x - world.x * container.scale.x;
         container.y = mouse.y - world.y * container.scale.y;
 
+        // Round to nearest pixel to prevent sub-pixel filter edge artifacts
+        container.x = Math.round(container.x);
+        container.y = Math.round(container.y);
+
         // console.log("Continer position updated 1:", container.x, container.y);
 
         // Sync pan target to container
@@ -151,33 +149,44 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
         currentZoomRef.current = newZoom;
       } else {
         // Pan with target zoom
-        // console.log(zoomDiff);
         if (
           panDiffX > panThreshold ||
           panDiffY > panThreshold ||
           targetZoom !== currentZoomRef.current
         ) {
           const appliedZoom = zoomDiff <= zoomThreshold ? targetZoom : newZoom;
-          // console.log("Zoom diff:", zoomDiff);
           container.scale.set(appliedZoom);
           currentZoomRef.current = appliedZoom;
           setCurrentZoom(appliedZoom);
           container.x = newX;
           container.y = newY;
-          // console.log(
-          //   targetZoom,
-          //   currentZoomRef.current,
-          //   "Container position updated"
-          // );
+
+          // Round to nearest pixel to prevent sub-pixel filter edge artifacts
+          container.x = Math.round(container.x);
+          container.y = Math.round(container.y);
         }
       }
 
       // Reset user zoom flag when zoom is near target
       if (zoomDiff <= zoomThreshold) {
-        // console.log("Zoom target reached, resetting user zoom flag");
         zoomFromUser.current = false;
       }
-      // console.log(animationFrameId, "Animation frame ID");
+
+      // Sync displaySprite transform to match container (for RenderTexture architecture)
+      if (container.displaySprite) {
+        container.displaySprite.x = container.x;
+        container.displaySprite.y = container.y;
+        container.displaySprite.scale.set(container.scale.x, container.scale.y);
+      }
+
+      // Composite into RenderTexture if content changed
+      if (
+        (container.compositeNeeded || container.alwaysComposite) &&
+        app.current
+      ) {
+        compositeToRT(app.current.renderer, container);
+        container.compositeNeeded = false;
+      }
 
       animationFrameId = requestAnimationFrame(animate);
     };
@@ -186,29 +195,8 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      // console.log("Stopping animation loop");
     };
   }, [container, targetZoom, setCurrentZoom, targetPosition]);
-
-  // Pinch zoom (touch)
-  // const pinchEventHandler = useCallback(
-  //   ({ offset: [d], last }: { offset: [number, number]; last: boolean }) => {
-  //     const clamped = clamp(d, 0.05, 5);
-  //     zoomFromUser.current = true;
-  //     setTargetZoom(clamped);
-
-  //     // Set pinching state
-  //     isPinching.current = !last; // true while pinching, false on end
-  //   },
-  //   [setTargetZoom]
-  // );
-
-  // usePinch(pinchEventHandler, {
-  //   target,
-  //   eventOptions: { passive: false },
-  //   pointer: { touch: true },
-  //   threshold: 0.01,
-  // });
 
   return null;
 };

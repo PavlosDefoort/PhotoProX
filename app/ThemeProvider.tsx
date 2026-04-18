@@ -2,53 +2,59 @@ import { ThemeContext } from "@/context/ThemeContext";
 import { ThemeProviderProps } from "@/interfaces/ContextInterfaces";
 import React, { useEffect, useState } from "react";
 
+const DARK_MODE_STORAGE_KEY = "darkMode";
+
 const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [darkMode, setDarkMode] = useState(false);
-  const [toggled, setToggled] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    const savedMode = window.localStorage.getItem(DARK_MODE_STORAGE_KEY);
+    if (savedMode !== null) {
+      return savedMode === "true";
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+  const [hasUserPreference, setHasUserPreference] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.localStorage.getItem(DARK_MODE_STORAGE_KEY) !== null;
+  });
 
   useEffect(() => {
-    // Check if dark mode is enabled in the user's system preference
-    const alreadyMode = localStorage.getItem("darkMode");
-    if (alreadyMode) {
-      setDarkMode(JSON.parse(alreadyMode));
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
-
-      // Function to handle changes in the system preference
-      const handleSystemPreferenceChange = (event: MediaQueryListEvent) => {
-        setDarkMode(event.matches);
-      };
-
-      // Listen for changes in the system preference and call the handler function
-      prefersDark.addEventListener("change", handleSystemPreferenceChange);
-
-      // Initial check of the user's system preference
-      setDarkMode(prefersDark.matches);
-
-      // Clean up the event listener when the component unmounts
-      return () => {
-        prefersDark.removeEventListener("change", handleSystemPreferenceChange);
-      };
+    if (hasUserPreference) {
+      return;
     }
-  }, []);
+
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handleSystemPreferenceChange = (event: MediaQueryListEvent) => {
+      setDarkMode(event.matches);
+    };
+
+    prefersDark.addEventListener("change", handleSystemPreferenceChange);
+
+    return () => {
+      prefersDark.removeEventListener("change", handleSystemPreferenceChange);
+    };
+  }, [hasUserPreference]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
-  useEffect(() => {
-    if (toggled) {
-      localStorage.setItem("darkMode", JSON.stringify(darkMode));
-    }
-  }, [toggled, darkMode]);
-
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
-    document.documentElement.classList.toggle("dark", newDarkMode);
-    localStorage.setItem("darkMode", JSON.stringify(newDarkMode));
-    setToggled(true);
-    // Add or remove the 'dark' class to the <html> element
+    window.localStorage.setItem(
+      DARK_MODE_STORAGE_KEY,
+      JSON.stringify(newDarkMode),
+    );
+    setHasUserPreference(true);
   };
 
   return (

@@ -10,18 +10,20 @@ import {
   Graphics,
   ICanvas,
   PointData,
+  RenderTexture,
+  Sprite,
 } from "pixi.js";
 import imageCompression, { Options } from "browser-image-compression";
 
 export async function createMiniApp(
-  canvasRef: React.MutableRefObject<ICanvas | null>
+  canvasRef: React.MutableRefObject<ICanvas | null>,
 ): Promise<Application> {
   const newApp = await createApp(
     600,
     300,
     canvasRef.current as ICanvas,
     0x1a1a1a,
-    DEFAULT_PERFORMANCE_SETTINGS
+    DEFAULT_PERFORMANCE_SETTINGS,
   );
 
   return newApp;
@@ -71,8 +73,11 @@ function fileToBase64(file: File): Promise<string> {
 export async function exportProjectImage(
   app: Application,
   container: Container,
-  format: "png" | "jpg" | "webp" | "jpeg" = "png"
+  format: "png" | "jpg" | "webp" | "jpeg" = "png",
 ): Promise<string> {
+  // Temporarily enable rendering for export (RT architecture sets renderable=false)
+  const wasRenderable = container.renderable;
+  container.renderable = true;
   try {
     let newFormat = format === "jpeg" ? "jpg" : format;
     const renderer = app.renderer;
@@ -101,17 +106,66 @@ export async function exportProjectImage(
 
     console.log("Converted compressed image to base64");
 
-    // Optional: Create a download link for the image
-    // const link = document.createElement("a");
-    // link.href = compressedBase64;
-    // link.download = `project.${newFormat}`;
-    // link.click();
-
     return compressedBase64;
   } catch (error) {
     console.error("Error exporting project image:", error);
     throw error;
+  } finally {
+    container.renderable = wasRenderable;
   }
+}
+
+/**
+ * Composite the container (with all layers/filters) into its RenderTexture
+ * at document resolution. This is the core of the RenderTexture architecture:
+ * compositing happens at fixed integer-pixel coords, eliminating sub-pixel
+ * filter edge artifacts caused by zoom.
+ */
+export function compositeToRT(renderer: any, container: ContainerX) {
+  const rt = container.renderTexture;
+  if (!rt) return;
+
+  // Save current transform (zoom/pan for event hit-testing)
+  const sx = container.scale.x,
+    sy = container.scale.y;
+  const px = container.x,
+    py = container.y;
+
+  // Set identity transform for document-resolution compositing
+  // With scale=1 and position=pivot, the localTransform becomes identity
+  container.scale.set(1);
+  container.x = container.pivot.x;
+  container.y = container.pivot.y;
+  container.renderable = true;
+
+  renderer.render({ container, target: rt, clear: true });
+
+  // Restore zoom/pan transform and non-renderable state
+  container.scale.set(sx, sy);
+  container.x = px;
+  container.y = py;
+  container.renderable = false;
+}
+
+/**
+ * Add a ContainerX to the stage with the RenderTexture architecture:
+ * - displaySprite is added for visual display
+ * - container is added for event hit-testing only (renderable=false)
+ * - initial composite is performed
+ */
+export function addContainerToStage(app: Application, container: ContainerX) {
+  // Add display sprite first (visual, below container in child order)
+  if (container.displaySprite) {
+    container.displaySprite.eventMode = "none";
+    app.stage.addChild(container.displaySprite);
+  }
+
+  // Add container on top (for event hit-testing, not rendered)
+  app.stage.addChild(container);
+  container.renderable = false;
+
+  // Initial composite
+  compositeToRT(app.renderer, container);
 }
 
 export async function createProjectApp(
@@ -125,13 +179,13 @@ export async function createProjectApp(
   isDarkMode: boolean,
   setTrigger: (trigger: boolean) => void,
   trigger: boolean,
-  settings: PerformanceSettings = DEFAULT_PERFORMANCE_SETTINGS
+  settings: PerformanceSettings = DEFAULT_PERFORMANCE_SETTINGS,
 ) {
   // Create the app, wait for it to finish, and set the appRef and containerRef
   const color = isDarkMode ? 0x1a1a1a : 0xcdcdcd;
   const newApp = await createApp(appWidth, appHeight, canvas, color, settings);
   const newContainer = createContainerBM(canvasWidth, canvasHeight);
-  newApp.stage.addChild(newContainer);
+  addContainerToStage(newApp, newContainer);
   appRef.current = newApp;
   setContainer(newContainer);
   setTrigger(!trigger);
@@ -142,9 +196,8 @@ async function createApp(
   appHeight: number,
   canvas: ICanvas,
   color: number,
-  settings: PerformanceSettings
+  settings: PerformanceSettings,
 ) {
-  //  NEXT: CHECK BACKGROUNDS FOR WHITE LINES
   const newApp = new Application();
   console.log("Settings:", settings);
   await newApp.init({
@@ -159,7 +212,6 @@ async function createApp(
     backgroundColor: color,
     hello: true,
     autoDensity: true,
-    roundPixels: true,
     preference: "webgpu",
   });
   newApp.stage.eventMode = "static";
@@ -185,7 +237,7 @@ function removeAllListenersRecursively(container: Container) {
 
 export function removeSpriteFromContainer(
   sprite: SpriteX,
-  container: Container
+  container: Container,
 ) {
   container.removeChild(sprite);
   sprite.destroy();
@@ -210,7 +262,7 @@ function createMask(containerWidth: number, containerHeight: number): Graphics {
 function createCheckerboardPattern(
   containerWidth: number,
   containerHeight: number,
-  squareSize: number
+  squareSize: number,
 ): Graphics {
   // Create a new Graphics object instance
   const background = new Graphics();
@@ -225,8 +277,8 @@ function createCheckerboardPattern(
   for (let row = 0; row < numRows; row++) {
     for (let col = 0; col < numCols; col++) {
       const color = colors[(row + col) % 2];
-      const x = Math.ceil(col * squareSize); // Round to integer
-      const y = Math.ceil(row * squareSize); // Round to integer
+      const x = Math.ceil(col * squareSize);
+      const y = Math.ceil(row * squareSize);
       background.rect(x, y, squareSize, squareSize);
       background.fill(color);
     }
@@ -247,18 +299,21 @@ function createCheckerboardPattern(
  */
 export function createContainerBM(
   containerWidth: number,
-  containerHeight: number
+  containerHeight: number,
 ): ContainerX {
   const newContainer = new ContainerX(containerWidth, containerHeight);
   newContainer.width = containerWidth;
   newContainer.height = containerHeight;
-  newContainer.pivot.set(containerWidth / 2, containerHeight / 2);
+  newContainer.pivot.set(
+    Math.round(containerWidth / 2),
+    Math.round(containerHeight / 2),
+  );
   newContainer.sortableChildren = true;
 
   const background = createCheckerboardPattern(
     containerWidth,
     containerHeight,
-    20
+    20,
   );
   newContainer.addChild(background);
 
@@ -267,17 +322,31 @@ export function createContainerBM(
   newContainer.addChild(mask);
   newContainer.mask = mask;
 
+  // Create RenderTexture for offscreen compositing at document resolution
+  const rt = RenderTexture.create({
+    width: containerWidth,
+    height: containerHeight,
+    resolution: 1,
+  });
+
+  // Create display sprite to show the composited result on stage
+  const displaySprite = new Sprite(rt);
+  displaySprite.pivot.set(
+    Math.round(containerWidth / 2),
+    Math.round(containerHeight / 2),
+  );
+
+  newContainer.renderTexture = rt;
+  newContainer.displaySprite = displaySprite;
+
   return newContainer;
 }
 
 export function createAdjustmentContainer(
   containerWidth: number,
-  containerHeight: number
+  containerHeight: number,
 ): ContainerX {
   const adjustmentContainer = new ContainerX(containerWidth, containerHeight);
-  adjustmentContainer.pivot.set(containerWidth / 2, containerHeight / 2);
-  adjustmentContainer.position.set(containerWidth / 2, containerHeight / 2);
-  adjustmentContainer.sortableChildren = true;
 
   return adjustmentContainer;
 }
@@ -285,11 +354,11 @@ export function createAdjustmentContainer(
 export function onDragMove(
   event: FederatedPointerEvent,
   dragTarget: SpriteX,
-  dragOffset: PointData
+  dragOffset: PointData,
 ) {
   if (dragTarget && dragOffset) {
     // Calculate the new position of the sprite relative to the container
-    const newPosition = event.getLocalPosition(dragTarget.parent);
+    const newPosition = event.getLocalPosition(dragTarget.parent!);
 
     // Adjust the drag offset by the scale factor
     const offsetX = dragOffset.x * dragTarget.scale.x;
@@ -298,13 +367,19 @@ export function onDragMove(
     // Set the new position of the sprite
     dragTarget.x = newPosition.x - offsetX;
     dragTarget.y = newPosition.y - offsetY;
+
+    // Mark container for re-composite so the change is visible
+    const parent = dragTarget.parent;
+    if (parent instanceof ContainerX) {
+      parent.compositeNeeded = true;
+    }
   }
 }
 
 export function onDragStart(
   event: FederatedPointerEvent,
   dragTarget: SpriteX,
-  dragOffset: PointData
+  dragOffset: PointData,
 ) {
   // Set the opacity of the clicked layer to 0.75
   dragTarget.alpha = 0.75;
@@ -316,7 +391,7 @@ export function onDragStart(
   dragOffset = event.getLocalPosition(dragTarget);
 
   dragTarget.on("pointermove", (event: FederatedPointerEvent) =>
-    onDragMove(event, dragTarget, dragOffset)
+    onDragMove(event, dragTarget, dragOffset),
   );
 }
 
@@ -325,13 +400,13 @@ export function fitItemToContainer(
   container: Container | Application | null,
   containerWidth?: number,
   containerHeight?: number,
-  setCurrentZoom?: (value: number) => void
+  setCurrentZoom?: (value: number) => void,
 ): void {
   if (container === null && containerWidth && containerHeight) {
     // Use just the width and height of the container
     const scale = Math.min(
       containerWidth / item.width,
-      containerHeight / item.height
+      containerHeight / item.height,
     );
 
     item.scale.set(scale);
@@ -343,7 +418,7 @@ export function fitItemToContainer(
       // Use the app's width and height
       const scale = Math.min(
         container.renderer.width / item.width,
-        container.renderer.height / item.height
+        container.renderer.height / item.height,
       );
       item.scale.set(scale);
       if (setCurrentZoom) {
@@ -353,7 +428,7 @@ export function fitItemToContainer(
       // Use the container's width and height
       const scale = Math.min(
         container.width / item.width,
-        container.height / item.height
+        container.height / item.height,
       );
       item.scale.set(scale);
       if (setCurrentZoom) {
@@ -367,7 +442,7 @@ export function onDragEnd(
   event: FederatedPointerEvent,
   dragTarget: SpriteX,
   dragOffset: PointData,
-  previousOpacity: number
+  previousOpacity: number,
 ) {
   dragTarget.off("pointermove", (event: FederatedPointerEvent) => {
     onDragMove(event, dragTarget, dragOffset);

@@ -39,7 +39,7 @@ export class ImageLayer extends LayerX implements ImageLayerInterface {
     zIndex: number,
     name: string,
     imageData: ImageData,
-    sprite: SpriteX
+    sprite: SpriteX,
   ) {
     super(zIndex, name);
     this.imageData = imageData;
@@ -69,7 +69,7 @@ export class AdjustmentLayer
     title: string,
     description: string,
     open: boolean,
-    container?: ContainerX
+    container?: ContainerX,
   ) {
     super(zIndex, name);
     this.clipToBelow = clipToBelow;
@@ -100,7 +100,7 @@ export class BackgroundLayer
     width: number,
     height: number,
     zIndex: number,
-    opacity: number
+    opacity: number,
   ) {
     super(zIndex, "Background");
     this.color = color;

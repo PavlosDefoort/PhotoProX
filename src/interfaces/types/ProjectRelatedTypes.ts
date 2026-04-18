@@ -1,1 +1,1 @@
-export type EditMode = "view" | "transform" | "discover" | "rembg" | "move";
+export type EditMode = "view" | "transform" | "discover" | "rembg" | "move" | "inpaint";

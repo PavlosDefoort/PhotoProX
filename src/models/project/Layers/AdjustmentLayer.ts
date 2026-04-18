@@ -64,7 +64,7 @@ export class BrightnessAdjustmentLayer
     width: number,
     height: number,
     open: boolean = true,
-    container?: ContainerX
+    container?: ContainerX,
   ) {
     super(
       zIndex,
@@ -75,7 +75,7 @@ export class BrightnessAdjustmentLayer
       "Brightness/Contrast",
       "Adjust the brightness and contrast of the layer",
       open,
-      container
+      container,
     );
 
     this.setFilter(this.container);
@@ -85,8 +85,6 @@ export class BrightnessAdjustmentLayer
     if (!window) return;
 
     const matrix = new AdjustmentFilter();
-    matrix.resolution = window.devicePixelRatio;
-    matrix.antialias = "on";
 
     this.container.filters = [matrix];
   };
@@ -115,7 +113,7 @@ export class SaturationAdjustmentLayer
     width: number,
     height: number,
     open: boolean = true,
-    container?: ContainerX
+    container?: ContainerX,
   ) {
     super(
       zIndex,
@@ -126,7 +124,7 @@ export class SaturationAdjustmentLayer
       "Saturation",
       "Adjust the saturation of the layer",
       open,
-      container
+      container,
     );
     this.setFilter(this.container);
   }
@@ -137,8 +135,6 @@ export class SaturationAdjustmentLayer
     });
 
     const hueMatrix = new ColorMatrixFilter();
-    satMatrix.resolution = window.devicePixelRatio;
-    hueMatrix.resolution = window.devicePixelRatio;
 
     container.filters = [satMatrix, hueMatrix];
   };
@@ -172,7 +168,7 @@ export class BloomAdjustmentLayer
     width: number,
     height: number,
     open: boolean = true,
-    container?: ContainerX
+    container?: ContainerX,
   ) {
     super(
       zIndex,
@@ -183,7 +179,7 @@ export class BloomAdjustmentLayer
       "Bloom",
       "Add a bloom effect to the layer",
       open,
-      container
+      container,
     );
     this.setFilter(this.container);
   }
@@ -225,7 +221,7 @@ export class DropShadowAdjustmentLayer
     width: number,
     height: number,
     open: boolean = true,
-    container?: ContainerX
+    container?: ContainerX,
   ) {
     super(
       zIndex,
@@ -236,7 +232,7 @@ export class DropShadowAdjustmentLayer
       "Drop Shadow",
       "Add a drop shadow to the layer. This effect is made for transparent layers.",
       open,
-      container
+      container,
     );
     this.setFilter(this.container);
   }

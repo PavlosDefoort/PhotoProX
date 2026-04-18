@@ -61,6 +61,14 @@
     --ring: 240 4.9% 83.9%;
   }
 
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
   .navbar-blur {
     --tw-backdrop-blur: blur(12px);
     -webkit-backdrop-filter: var(--tw-backdrop-blur)

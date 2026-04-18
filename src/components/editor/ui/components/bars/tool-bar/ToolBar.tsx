@@ -7,7 +7,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  ChatBubbleIcon,
   CheckIcon,
   EyeOpenIcon,
   MagicWandIcon,
@@ -23,9 +22,13 @@ import { findLayer } from "@/models/project/LayerManager";
 import { ImageLayer } from "@/models/project/Layers/Layers";
 import { toast } from "sonner";
 import BackgroundRemover from "./tools/artificial-intelligence/BackgroundRemover";
+import Inpaint from "./tools/artificial-intelligence/Inpaint";
+import Generate from "./tools/artificial-intelligence/Generate";
+import { Brush, AutoAwesome } from "@mui/icons-material";
 
 const ToolBar: React.FC = () => {
   const [openView, setOpenView] = React.useState(false);
+  const [openGenerate, setOpenGenerate] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [openAI, setOpenAI] = React.useState(false);
   const { editMode, setEditMode } = useProject();
@@ -73,7 +76,7 @@ const ToolBar: React.FC = () => {
   };
 
   useEffect(() => {
-    if (editMode === "rembg") {
+    if (editMode === "rembg" || editMode === "inpaint") {
       handleMouseLeaveAI();
     }
   }, [editMode]);
@@ -221,7 +224,7 @@ const ToolBar: React.FC = () => {
                         onClick={() => {
                           if (!(target instanceof ImageLayer)) {
                             toast.warning(
-                              "Please select an image layer to transform"
+                              "Please select an image layer to transform",
                             );
                           } else {
                             setEditMode("transform");
@@ -255,7 +258,7 @@ const ToolBar: React.FC = () => {
                   <Button
                     className={`w-6 flex flex-row items-center justify-center  hover:bg-buttonHover dark:hover:bg-buttonHover
                       ${
-                        editMode === "rembg"
+                        editMode === "rembg" || editMode === "inpaint"
                           ? "bg-buttonHover dark:bg-[#3b3b3b]"
                           : "bg-navbarBackground dark:bg-navbarBackground"
                       }`}
@@ -305,19 +308,43 @@ const ToolBar: React.FC = () => {
                       </div>
                       <div
                         className="grid grid-cols-2 items-center hover:bg-buttonHover hover:dark:bg-buttonHover cursor-pointer"
-                        onClick={() => setEditMode("rembg")}
+                        onClick={() => {
+                          if (!(target instanceof ImageLayer)) {
+                            toast.warning(
+                              "Please select an image layer to inpaint",
+                            );
+                          } else {
+                            setEditMode("inpaint");
+                          }
+                        }}
                       >
                         <span className="flex flex-row items-center space-x-3 col-span-1">
-                          {editMode === "rembg" && (
+                          {editMode === "inpaint" && (
                             <CheckIcon className={`w-6 h-6 text-blue-600`} />
                           )}
-                          <ChatBubbleIcon className="w-6 h-6" />
-                          <Label htmlFor="rembg" className="cursor-pointer">
+                          <Brush className="w-6 h-6" />
+                          <Label htmlFor="inpaint" className="cursor-pointer">
+                            Inpaint
+                          </Label>
+                        </span>
+
+                        <DropdownMenuShortcut>Ctrl+I+P</DropdownMenuShortcut>
+                      </div>
+                      <div
+                        className="grid grid-cols-2 items-center hover:bg-buttonHover hover:dark:bg-buttonHover cursor-pointer"
+                        onClick={() => {
+                          setOpenGenerate(true);
+                          handleMouseLeaveAI();
+                        }}
+                      >
+                        <span className="flex flex-row items-center space-x-3 col-span-1">
+                          <AutoAwesome className="w-6 h-6" />
+                          <Label htmlFor="generate" className="cursor-pointer">
                             Generate
                           </Label>
                         </span>
 
-                        <DropdownMenuShortcut>Ctrl+R+B</DropdownMenuShortcut>
+                        <DropdownMenuShortcut>Ctrl+G</DropdownMenuShortcut>
                       </div>
                     </div>
                   </div>
@@ -328,7 +355,11 @@ const ToolBar: React.FC = () => {
         </div>
       </aside>
       <BackgroundRemover />
-      {editMode === "rembg" && <div className="w-64"></div>}
+      <Inpaint />
+      <Generate open={openGenerate} onOpenChange={setOpenGenerate} />
+      {(editMode === "rembg" || editMode === "inpaint") && (
+        <div className="w-80"></div>
+      )}
     </div>
   );
 };

@@ -19,7 +19,7 @@ export class DeleteImageLayerCommand implements DeleteLayerCommand {
 
   constructor(
     layer: ImageLayer,
-    setter: (draft: DraftFunction<LayerManager>) => void
+    setter: (draft: DraftFunction<LayerManager>) => void,
   ) {
     this.layerData = { ...layer.imageData }; // Copy the image data
     this.layerId = layer.id; // Copy
@@ -33,7 +33,7 @@ export class DeleteImageLayerCommand implements DeleteLayerCommand {
   execute() {
     const parentContainer = this.sprite.parent;
     // Remove the sprite from the parent container
-    parentContainer.removeChild(this.sprite);
+    if (parentContainer) parentContainer.removeChild(this.sprite);
 
     this.setLayerManager((draft) => {
       draft.layers = removeLayer(draft.layers, this.layerId);
@@ -49,7 +49,7 @@ export class DeleteImageLayerCommand implements DeleteLayerCommand {
         1,
         this.name,
         this.layerData,
-        this.sprite
+        this.sprite,
       );
       this.layerId = newLayer.id;
       // Now, update the state with the result

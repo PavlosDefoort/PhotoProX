@@ -16,10 +16,10 @@ export default function Editor({}) {
 
   const [project, setProject] = useImmer<Project>(new Project());
   const [layerManager, setLayerManager] = useImmer<LayerManager>(
-    new LayerManager()
+    new LayerManager(),
   );
   const [undoRedoManager, setUndoRedoManager] = useImmer<UndoRedoManager>(
-    new UndoRedoManager()
+    new UndoRedoManager(),
   );
   const [trigger, setTrigger] = useState(false);
   const [landing, setLanding] = useState(false);
@@ -27,9 +27,10 @@ export default function Editor({}) {
   const [loading, setLoading] = useState(false);
   const [isLoadingBar, setIsLoadingBar] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingTask, setLoadingTask] = useState<"compressing" | "regular">(
-    "regular"
-  );
+  const [loadingTask, setLoadingTask] = useState<
+    "compressing" | "regular" | "inpainting"
+  >("regular");
+  const [loadingProgressText, setLoadingProgressText] = useState("");
 
   // useEffect(() => {
   //   setAutoFreeze(false);
@@ -64,6 +65,8 @@ export default function Editor({}) {
             setIsLoadingBar,
             loadingTask,
             setLoadingTask,
+            loadingProgressText,
+            setLoadingProgressText,
           }}
         >
           <PhotoEditor />
@@ -75,6 +78,7 @@ export default function Editor({}) {
           progressValue={loadingProgress}
           loading={loading}
           task={loadingTask}
+          progressText={loadingProgressText}
         />
       )}
     </main>

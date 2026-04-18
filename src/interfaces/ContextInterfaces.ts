@@ -16,7 +16,7 @@ export interface ProjectContextValue {
   setLayerManager: (arg: LayerManager | DraftFunction<LayerManager>) => void;
   undoRedoManager: UndoRedoManager;
   setUndoRedoManager: (
-    arg: UndoRedoManager | DraftFunction<UndoRedoManager>
+    arg: UndoRedoManager | DraftFunction<UndoRedoManager>,
   ) => void;
   trigger: boolean;
   setTrigger: (value: boolean) => void;
@@ -30,8 +30,10 @@ export interface ProjectContextValue {
   setLoadingProgress: (value: number) => void;
   isLoadingBar: boolean;
   setIsLoadingBar: (value: boolean) => void;
-  loadingTask: "compressing" | "regular";
-  setLoadingTask: (value: "compressing" | "regular") => void;
+  loadingTask: "compressing" | "regular" | "inpainting";
+  setLoadingTask: (value: "compressing" | "regular" | "inpainting") => void;
+  loadingProgressText: string;
+  setLoadingProgressText: (value: string) => void;
 }
 
 export interface ThemeContextValue {
