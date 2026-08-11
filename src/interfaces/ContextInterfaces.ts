@@ -8,12 +8,17 @@ import { PhotoProXUser } from "./FirebaseInterfaces";
 import { LayerManager } from "@/models/project/LayerManager";
 import { UndoRedoManager } from "@/models/data-structures/UndoRedoManager";
 import { ContainerX } from "@/models/pixi-extends/SpriteX";
+import { EditDocument } from "./editor/EditDocument";
 
 export interface ProjectContextValue {
   project: Project;
   setProject: (arg: Project | DraftFunction<Project>) => void;
   layerManager: LayerManager;
   setLayerManager: (arg: LayerManager | DraftFunction<LayerManager>) => void;
+  editDocument: EditDocument;
+  setEditDocument: (
+    arg: EditDocument | DraftFunction<EditDocument>,
+  ) => void;
   undoRedoManager: UndoRedoManager;
   setUndoRedoManager: (
     arg: UndoRedoManager | DraftFunction<UndoRedoManager>,

@@ -172,21 +172,21 @@ const AdjustmentPopover: React.FC<AdjustmentPopoverProps> = ({ layer }) => {
       }}
     >
       <PopoverTrigger asChild>
-        <Button className="w-40 h-40 aspect-square relative bg-navbarBackground dark:bg-navbarBackground hover:bg-buttonHover dark:hover:bg-buttonHover  border border-gray-500 disabled:opacity-20 transition-opacity duration-300 ease-linear transform hover:scale-110 active:scale-95 dark:text-white text-black">
+        <Button className="w-12 h-12 shrink-0 relative bg-navbarBackground dark:bg-navbarBackground hover:bg-buttonHover dark:hover:bg-buttonHover border border-gray-500 disabled:opacity-20 transition-opacity duration-300 ease-linear transform hover:scale-110 active:scale-95 dark:text-white text-black">
           {layer instanceof BrightnessAdjustmentLayer && (
-            <SunIcon className="w-8 h-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+            <SunIcon className="w-5 h-5" />
           )}
           {layer instanceof SaturationAdjustmentLayer && (
-            <ColorLens className="w-8 h-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+            <ColorLens className="w-5 h-5" />
           )}
           {layer instanceof BloomAdjustmentLayer && (
-            <FilterVintage className="w-8 h-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+            <FilterVintage className="w-5 h-5" />
           )}
           {layer instanceof DropShadowAdjustmentLayer && (
-            <ShadowIcon className="w-8 h-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+            <ShadowIcon className="w-5 h-5" />
           )}
           {layer.clipToBelow && (
-            <ThickArrowDownIcon className="w-4 h-4 absolute left-1/2 top-2/3 transform -translate-x-1/2" />
+            <ThickArrowDownIcon className="w-3 h-3 absolute bottom-1 right-1" />
           )}
         </Button>
       </PopoverTrigger>

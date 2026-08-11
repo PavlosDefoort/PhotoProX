@@ -8,13 +8,13 @@ export const ImageLayerBarItem: React.FC<ImageLayerBarItemProps> = ({
   layer,
 }) => {
   return (
-    <div className="flex flex-row items-center justify-between space-x-4">
-      <div className="border-[1px] border-slate-300 w-40 h-40 bg-black flex justify-center items-center">
+    <div className="flex flex-row items-center justify-between">
+      <div className="border border-slate-300 w-12 h-12 bg-black flex justify-center items-center shrink-0">
         <div
-          className="w-36 h-36 aspect-square relative "
+          className="w-11 h-11 aspect-square relative"
           style={{
             background:
-              "repeating-conic-gradient(#808080 0% 25%, #fafafa 0% 50%) 50% / 20px 20px",
+              "repeating-conic-gradient(#808080 0% 25%, #fafafa 0% 50%) 50% / 10px 10px",
           }}
         >
           {"imageData" in layer && (

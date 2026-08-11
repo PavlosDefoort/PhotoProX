@@ -1,4 +1,4 @@
-import { Label } from "@/components/ui/label";
+import { useCanvas } from "@/hooks/useCanvas";
 import { ImageLayer } from "@/models/project/Layers/Layers";
 import { useEffect, useState } from "react";
 import NumberInput from "../../../../input/NumberInput";
@@ -9,6 +9,7 @@ interface SkewProps {
 }
 
 const Skew: React.FC<SkewProps> = ({ target, update }) => {
+  const { container } = useCanvas();
   const [skewX, setSkewX] = useState<number>(target.sprite.skew.x);
   const [skewY, setSkewY] = useState<number>(target.sprite.skew.y);
 
@@ -24,47 +25,42 @@ const Skew: React.FC<SkewProps> = ({ target, update }) => {
     } else {
       target.sprite.skew.y = value;
     }
+    if (container) {
+      container.compositeNeeded = true;
+    }
   };
 
   return (
-    <div className="flex flex-row">
-      <div className="w-40 h-7 flex flex-row items-center justify-center">
-        <Label className="text-xs mr-2" htmlFor="skewX">
-          Skew X
-        </Label>
+    <div className="flex shrink-0 flex-row items-center gap-1.5 px-2">
+      <div className="flex items-center gap-1">
+        <span className="select-none rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
+          ↗
+        </span>
         <NumberInput
           min={0}
           max={3}
           numPlaces={2}
           value={skewX}
           setValue={setSkewX}
-          onBlur={(e) => {
-            updateSkew(parseFloat(e.currentTarget.value), "x");
-          }}
+          onBlur={(e) => updateSkew(parseFloat(e.currentTarget.value), "x")}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              updateSkew(parseFloat(e.currentTarget.value), "x");
-            }
+            if (e.key === "Enter") updateSkew(parseFloat(e.currentTarget.value), "x");
           }}
         />
       </div>
-      <div className="w-40 h-7 flex flex-row items-center justify-center">
-        <Label className="text-xs mr-2" htmlFor="skewY">
-          Skew Y
-        </Label>
+      <div className="flex items-center gap-1">
+        <span className="select-none rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
+          ↘
+        </span>
         <NumberInput
           min={0}
           max={3}
           numPlaces={2}
           value={skewY}
           setValue={setSkewY}
-          onBlur={(e) => {
-            updateSkew(parseFloat(e.currentTarget.value), "y");
-          }}
+          onBlur={(e) => updateSkew(parseFloat(e.currentTarget.value), "y")}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              updateSkew(parseFloat(e.currentTarget.value), "y");
-            }
+            if (e.key === "Enter") updateSkew(parseFloat(e.currentTarget.value), "y");
           }}
         />
       </div>

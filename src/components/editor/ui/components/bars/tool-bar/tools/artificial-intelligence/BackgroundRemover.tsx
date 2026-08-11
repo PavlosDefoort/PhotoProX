@@ -580,7 +580,7 @@ const BackgroundRemover: React.FC = () => {
     const workingResult =
       workingCanvasRef.current?.toDataURL("image/png") || resultSrc;
     if (!workingResult || !(target instanceof ImageLayer)) {
-      setEditMode("view");
+      setEditMode("move");
       return;
     }
 
@@ -594,7 +594,7 @@ const BackgroundRemover: React.FC = () => {
     });
 
     setResultSrc(workingResult);
-    setEditMode("view");
+    setEditMode("move");
   };
 
   const showBefore = async () => {
@@ -701,7 +701,7 @@ const BackgroundRemover: React.FC = () => {
     }
 
     void showBefore();
-    setEditMode("view");
+    setEditMode("move");
   };
 
   return (
@@ -916,7 +916,7 @@ const BackgroundRemover: React.FC = () => {
                 className="w-full"
                 onClick={async () => {
                   await showBefore();
-                  setEditMode("view");
+                  setEditMode("move");
                 }}
               >
                 Close Without Applying

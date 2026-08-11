@@ -36,7 +36,7 @@ export function radiansToDegrees(radians: number) {
 export function widthRotate(
   width: number,
   height: number,
-  rotateValue: number
+  rotateValue: number,
 ) {
   const newWidth =
     Math.abs(width * Math.cos((rotateValue * Math.PI) / 180)) +
@@ -47,7 +47,7 @@ export function widthRotate(
 export function heightRotate(
   width: number,
   height: number,
-  rotateValue: number
+  rotateValue: number,
 ) {
   const newHeight =
     Math.abs(width * Math.sin((rotateValue * Math.PI) / 180)) +
@@ -58,7 +58,7 @@ export function heightRotate(
 export function calculateScaledDimensions(
   originalWidth: number,
   originalHeight: number,
-  maxArea = 4096 * 4096
+  maxArea = 4096 * 4096,
 ) {
   const aspectRatio = originalWidth / originalHeight;
   const area = originalWidth * originalHeight;
@@ -77,7 +77,7 @@ export function calculateScaledDimensions(
 export function calculateMaxDimensions(
   width: number,
   height: number,
-  maxArea = 4096 * 4096
+  maxArea = 4096 * 4096,
 ) {
   const aspectRatio = width / height;
   const newHeight = Math.floor(Math.sqrt(maxArea / aspectRatio));
@@ -109,7 +109,7 @@ export function calculateZoomPan(
   zoomX: number,
   zoomY: number,
   maxHorizontalOffset: number,
-  maxVerticalOffset: number
+  maxVerticalOffset: number,
 ) {
   if (deltaY !== 0) {
     // Zoom vertically
@@ -117,13 +117,15 @@ export function calculateZoomPan(
       // Taking min of positive values
       newScaleFactorY = Math.min(
         fakeY + zoomY,
-        maxVerticalOffset !== 0 ? maxVerticalOffset + 100 : maxVerticalOffset
+        maxVerticalOffset !== 0 ? maxVerticalOffset + 100 : maxVerticalOffset,
       );
     } else {
       // Taking max of negative values
       newScaleFactorY = Math.max(
         fakeY + zoomY,
-        -maxVerticalOffset !== 0 ? -maxVerticalOffset - 100 : -maxVerticalOffset
+        -maxVerticalOffset !== 0
+          ? -maxVerticalOffset - 100
+          : -maxVerticalOffset,
       );
     }
   } else if (deltaX !== 0) {
@@ -133,14 +135,14 @@ export function calculateZoomPan(
         fakeX + zoomX,
         maxHorizontalOffset !== 0
           ? maxHorizontalOffset + 100
-          : maxHorizontalOffset
+          : maxHorizontalOffset,
       );
     } else {
       newScaleFactorX = Math.max(
         fakeX + zoomX,
         -maxHorizontalOffset !== 0
           ? -maxHorizontalOffset - 100
-          : -maxHorizontalOffset
+          : -maxHorizontalOffset,
       );
     }
   }
@@ -153,7 +155,7 @@ export function fitImageToScreen(
   height: number,
   canvasWidth: number,
   canvasHeight: number,
-  rotateValue: number
+  rotateValue: number,
 ) {
   const newWidth = widthRotate(width, height, rotateValue);
   const newHeight = heightRotate(width, height, rotateValue);
@@ -166,12 +168,37 @@ export function fitImageToScreen(
   return newScale.toNumber();
 }
 
+export function getOptimalInitialZoom(
+  width: number,
+  height: number,
+  canvasWidth: number,
+  canvasHeight: number,
+  rotateValue: number,
+) {
+  const rotatedWidth = widthRotate(width, height, rotateValue);
+  const rotatedHeight = heightRotate(width, height, rotateValue);
+  const fitsAtOneHundredPercent =
+    rotatedWidth <= canvasWidth && rotatedHeight <= canvasHeight;
+
+  if (fitsAtOneHundredPercent) {
+    return 1;
+  }
+
+  return fitImageToScreen(
+    width,
+    height,
+    canvasWidth,
+    canvasHeight,
+    rotateValue,
+  );
+}
+
 export function fillImageToScreen(
   width: number,
   height: number,
   canvasWidth: number,
   canvasHeight: number,
-  rotateValue: number
+  rotateValue: number,
 ) {
   const widthRatio = canvasWidth / width;
   const heightRatio = canvasHeight / height;
@@ -182,7 +209,7 @@ export function fillImageToScreen(
 export const calculateHueAngle = (red: number, green: number, blue: number) => {
   const hueAngle = Math.atan2(
     Math.sqrt(3) * (green - blue),
-    2 * red - green - blue
+    2 * red - green - blue,
   );
 
   let hueDegrees = hueAngle * (180 / Math.PI);
@@ -203,7 +230,7 @@ export const calculateHueAngle = (red: number, green: number, blue: number) => {
 const calculateRelativeLuminance = (
   red: number,
   green: number,
-  blue: number
+  blue: number,
 ) => {
   const relativeLuminance = 0.3 * red + 0.59 * green + 0.11 * blue;
   return relativeLuminance;
@@ -211,7 +238,7 @@ const calculateRelativeLuminance = (
 
 export function takeSamples(
   arr: Uint8Array,
-  sampleSize: number
+  sampleSize: number,
 ): [number[], number[]] {
   // Sort the luminance values
   const sortedArr = sortIntensityArray(arr);
@@ -261,7 +288,7 @@ export function takeSamples(
 export function takeMultipleSamples(
   analysis: AnalysisData,
   sampleSize: number,
-  properties: (keyof AnalysisData)[]
+  properties: (keyof AnalysisData)[],
 ): Record<string, [number[], number[]]> {
   const samples: Record<string, [number[], number[]]> = {};
 
@@ -273,7 +300,7 @@ export function takeMultipleSamples(
 }
 
 export function convertFloat32ArrayToNumberArray(
-  float32Array: Float32Array
+  float32Array: Float32Array,
 ): number[] {
   // Convert the Float32Array to a regular array of numbers
   const numberArray = Array.from(float32Array);
@@ -571,7 +598,7 @@ export const convertFromTo = (
   from: string,
   width: number,
   height: number,
-  ppi: number
+  ppi: number,
 ): { width: number; height: number } => {
   if (to == "inch" && from == "px") {
     return {

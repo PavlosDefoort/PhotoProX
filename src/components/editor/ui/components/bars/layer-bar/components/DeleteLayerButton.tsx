@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useProject } from "@/hooks/useProject";
 import { findLayer } from "@/models/project/LayerManager";
-import { LayerX } from "@/models/project/Layers/Layers";
+import { ImageLayer, LayerX } from "@/models/project/Layers/Layers";
 import { handleDeleteLayer } from "@/utils/LayerUtils";
 import { TrashIcon } from "@radix-ui/react-icons";
 
@@ -17,6 +17,7 @@ const DeleteLayerButton: React.FC = () => {
     undoRedoManager,
     setUndoRedoManager,
     project,
+    setEditDocument,
   } = useProject();
 
   const target = findLayer(layerManager.layers, layerManager.target);
@@ -36,7 +37,8 @@ const DeleteLayerButton: React.FC = () => {
                   project.settings.canvasSettings.width,
                   project.settings.canvasSettings.height,
                   setLayerManager,
-                  setUndoRedoManager
+                  setUndoRedoManager,
+                  setEditDocument,
                 );
               }
             }}

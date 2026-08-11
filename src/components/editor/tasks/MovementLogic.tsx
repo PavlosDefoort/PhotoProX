@@ -18,69 +18,93 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
     targetPosition,
   } = useCanvas();
 
-  const targetWorldMousePos = useRef({ x: 0, y: 0 });
-  const targetMousePos = useRef({ x: 0, y: 0 });
   const isPinching = useRef(false);
 
-  // Track if zoom was user-triggered (wheel or pinch)
-  const zoomFromUser = useRef(false);
-
   // Ref to hold latest currentZoom for animation loop (avoids stale closure)
+  // ONLY written by the animation loop — not synced from React state to avoid race conditions
   const currentZoomRef = useRef(currentZoom);
 
-  // Keep currentZoomRef in sync with currentZoom state
+  // Ref to hold latest targetZoom so animation loop doesn't need it as a dependency
+  const targetZoomRef = useRef(targetZoom);
+
+  // Zoom anchor: the world point and screen point that should stay locked together
+  const zoomAnchor = useRef<{
+    worldX: number;
+    worldY: number;
+    screenX: number;
+    screenY: number;
+  } | null>(null);
+
+  // Keep targetZoomRef in sync with targetZoom state
   useEffect(() => {
-    currentZoomRef.current = currentZoom;
-  }, [currentZoom]);
+    targetZoomRef.current = targetZoom;
+  }, [targetZoom]);
 
   // Wheel handler for zoom and pan
   useEffect(() => {
     if (!app.current?.canvas || !container) return;
 
-    const canvasBounds = app.current.canvas.getBoundingClientRect();
-
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      const zoomStep = 1.1;
       const maxZoom = 5;
       const minZoom = 0.05;
-      const minStepAbsolute = 0.01;
+      const zoomSensitivity = 0.0015;
+
+      const canvasBounds = app.current?.canvas.getBoundingClientRect();
+      if (!canvasBounds) return;
+
+      const deltaMultiplier =
+        e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? canvasBounds.height : 1;
+      const normalizedDeltaY = e.deltaY * deltaMultiplier;
 
       // Mouse position relative to canvas
       const mouseX = e.clientX - canvasBounds.left;
       const mouseY = e.clientY - canvasBounds.top;
 
       if (e.ctrlKey && !isPinching.current) {
-        // User zoom
-        zoomFromUser.current = true;
+        // Use the latest target as the base so rapid wheel events accumulate smoothly.
+        const baseZoom =
+          targetZoomRef.current > 0
+            ? targetZoomRef.current
+            : currentZoomRef.current;
+        const zoomFactor = Math.exp(-normalizedDeltaY * zoomSensitivity);
+        const newTargetZoom = Math.min(
+          maxZoom,
+          Math.max(minZoom, baseZoom * zoomFactor),
+        );
 
-        let newTargetZoom = currentZoomRef.current;
+        if (Math.abs(newTargetZoom - baseZoom) < 0.000001) return;
 
-        if (e.deltaY < 0) {
-          newTargetZoom =
-            currentZoomRef.current < 0.2
-              ? Math.min(currentZoomRef.current + minStepAbsolute, maxZoom)
-              : Math.min(currentZoomRef.current * zoomStep, maxZoom);
-        } else {
-          newTargetZoom =
-            currentZoomRef.current < 0.2
-              ? Math.max(currentZoomRef.current - minStepAbsolute, minZoom)
-              : Math.max(currentZoomRef.current / zoomStep, minZoom);
+        // Strict cursor-anchored zoom: apply exact transform immediately.
+        const worldX =
+          (mouseX - container.x) / container.scale.x + container.pivot.x;
+        const worldY =
+          (mouseY - container.y) / container.scale.y + container.pivot.y;
+        const newX = mouseX - (worldX - container.pivot.x) * newTargetZoom;
+        const newY = mouseY - (worldY - container.pivot.y) * newTargetZoom;
+
+        container.scale.set(newTargetZoom);
+        container.x = newX;
+        container.y = newY;
+
+        if (container.displaySprite) {
+          container.displaySprite.x = newX;
+          container.displaySprite.y = newY;
+          container.displaySprite.scale.set(newTargetZoom);
         }
 
-        // Set world pos under cursor
-        const worldPos = {
-          x: (mouseX - container.x) / container.scale.x,
-          y: (mouseY - container.y) / container.scale.y,
-        };
-
-        targetWorldMousePos.current = worldPos;
-        targetMousePos.current = { x: mouseX, y: mouseY };
+        targetPosition.current.x = newX;
+        targetPosition.current.y = newY;
+        currentZoomRef.current = newTargetZoom;
+        targetZoomRef.current = newTargetZoom;
+        zoomAnchor.current = null;
 
         setTargetZoom(newTargetZoom);
+        setCurrentZoom(newTargetZoom);
       } else {
-        // Pan
+        // Pan — clear zoom anchor so position lerps freely
+        zoomAnchor.current = null;
         targetPosition.current.x -= e.deltaX;
         targetPosition.current.y -= e.deltaY;
       }
@@ -93,94 +117,108 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
     return () => {
       app.current?.canvas.removeEventListener("wheel", handleWheel);
     };
-  }, [app, container, setTargetZoom, targetPosition]);
+  }, [app, container, setCurrentZoom, setTargetZoom, targetPosition]);
 
   // Animation loop
   useEffect(() => {
-    // console.log("Running animation loop with targetZoom:", targetZoom);
     if (!container) return;
 
     let animationFrameId: number;
-    const zoomSpeed = 0.15;
-    const panSpeed = 0.15;
-    const panThreshold = 0.1;
-    const zoomThreshold = 0.001;
+    const zoomSpeed = 0.4;
+    const panSpeed = 0.3;
+    const panThreshold = 0.05;
+    const zoomThreshold = 0.0005;
+    let frameCount = 0;
 
     const animate = () => {
       if (!container) return;
-      // console.log(targetZoom);
 
-      //
-      const newZoom =
-        currentZoomRef.current +
-        (targetZoom - currentZoomRef.current) * zoomSpeed;
-      const newX =
-        container.x + (targetPosition.current.x - container.x) * panSpeed;
-      const newY =
-        container.y + (targetPosition.current.y - container.y) * panSpeed;
+      const tZoom = targetZoomRef.current;
 
-      const zoomDiff = Math.abs(newZoom - currentZoomRef.current);
-      const panDiffX = Math.abs(newX - container.x);
-      const panDiffY = Math.abs(newY - container.y);
-      // console.log(zoomFromUser.current);
+      // Logarithmic zoom interpolation for perceptually uniform smoothing
+      const logCurrent = Math.log(currentZoomRef.current);
+      const logTarget = Math.log(tZoom);
+      const newZoom = Math.exp(
+        logCurrent + (logTarget - logCurrent) * zoomSpeed,
+      );
 
-      // Only handle zoom syncing if user caused zoom
-      if (zoomFromUser.current && zoomDiff > zoomThreshold) {
-        container.scale.set(newZoom);
+      const zoomGap = Math.abs(tZoom - currentZoomRef.current);
 
-        const world = targetWorldMousePos.current;
-        const mouse = targetMousePos.current;
-        // console.log(world, mouse);
+      if (zoomAnchor.current && zoomGap > zoomThreshold) {
+        // Zoom mode: derive position from zoom anchor so they stay coupled
+        const appliedZoom = newZoom;
+        const { worldX, worldY, screenX, screenY } = zoomAnchor.current;
 
-        container.x = mouse.x - world.x * container.scale.x;
-        container.y = mouse.y - world.y * container.scale.y;
+        container.scale.set(appliedZoom);
+        // Derive position accounting for pivot: pos = screen - (local - pivot) * scale
+        container.x = screenX - (worldX - container.pivot.x) * appliedZoom;
+        container.y = screenY - (worldY - container.pivot.y) * appliedZoom;
 
-        // Round to nearest pixel to prevent sub-pixel filter edge artifacts
-        container.x = Math.round(container.x);
-        container.y = Math.round(container.y);
-
-        // console.log("Continer position updated 1:", container.x, container.y);
-
-        // Sync pan target to container
+        // Sync pan target so pan picks up seamlessly after zoom ends
         targetPosition.current.x = container.x;
         targetPosition.current.y = container.y;
 
-        setCurrentZoom(newZoom);
-        currentZoomRef.current = newZoom;
+        currentZoomRef.current = appliedZoom;
+        if (++frameCount % 3 === 0) setCurrentZoom(appliedZoom);
       } else {
-        // Pan with target zoom
-        if (
-          panDiffX > panThreshold ||
-          panDiffY > panThreshold ||
-          targetZoom !== currentZoomRef.current
-        ) {
-          const appliedZoom = zoomDiff <= zoomThreshold ? targetZoom : newZoom;
+        // Pan mode (or zoom finished): lerp position independently
+        if (zoomAnchor.current) {
+          // Zoom just finished: snap to the exact anchored final transform.
+          const { worldX, worldY, screenX, screenY } = zoomAnchor.current;
+          container.scale.set(tZoom);
+          container.x = screenX - (worldX - container.pivot.x) * tZoom;
+          container.y = screenY - (worldY - container.pivot.y) * tZoom;
+
+          targetPosition.current.x = container.x;
+          targetPosition.current.y = container.y;
+
+          currentZoomRef.current = tZoom;
+          setCurrentZoom(tZoom);
+          zoomAnchor.current = null;
+        }
+
+        const tX = targetPosition.current.x;
+        const tY = targetPosition.current.y;
+        const panDiffX = Math.abs(tX - container.x);
+        const panDiffY = Math.abs(tY - container.y);
+
+        if (panDiffX > panThreshold || panDiffY > panThreshold) {
+          container.x += (tX - container.x) * panSpeed;
+          container.y += (tY - container.y) * panSpeed;
+        } else if (panDiffX > 0 || panDiffY > 0) {
+          container.x = tX;
+          container.y = tY;
+        }
+
+        // Handle programmatic zoom (e.g. fit-to-screen)
+        if (zoomGap > zoomThreshold) {
+          const appliedZoom = newZoom;
           container.scale.set(appliedZoom);
           currentZoomRef.current = appliedZoom;
-          setCurrentZoom(appliedZoom);
-          container.x = newX;
-          container.y = newY;
-
-          // Round to nearest pixel to prevent sub-pixel filter edge artifacts
-          container.x = Math.round(container.x);
-          container.y = Math.round(container.y);
+          if (++frameCount % 3 === 0) setCurrentZoom(appliedZoom);
+        } else if (currentZoomRef.current !== tZoom) {
+          container.scale.set(tZoom);
+          currentZoomRef.current = tZoom;
+          setCurrentZoom(tZoom);
         }
       }
 
-      // Reset user zoom flag when zoom is near target
-      if (zoomDiff <= zoomThreshold) {
-        zoomFromUser.current = false;
-      }
-
-      // Sync displaySprite transform to match container (for RenderTexture architecture)
+      // Sync displaySprite transform to match container
       if (container.displaySprite) {
+        container.displaySprite.visible = !container.directRenderMode;
         container.displaySprite.x = container.x;
         container.displaySprite.y = container.y;
         container.displaySprite.scale.set(container.scale.x, container.scale.y);
       }
 
+      if (container.directRenderMode) {
+        // In direct render mode (inpaint), bypass RT composite clipping.
+        container.renderable = true;
+      }
+
       // Composite into RenderTexture if content changed
       if (
+        !container.directRenderMode &&
         (container.compositeNeeded || container.alwaysComposite) &&
         app.current
       ) {
@@ -196,7 +234,7 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [container, targetZoom, setCurrentZoom, targetPosition]);
+  }, [container, setCurrentZoom, targetPosition]);
 
   return null;
 };

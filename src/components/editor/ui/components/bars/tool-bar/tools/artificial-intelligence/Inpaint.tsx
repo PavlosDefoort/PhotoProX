@@ -29,7 +29,7 @@ import { base64StringToTexture } from "@/utils/ImageUtils";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Graphics, FederatedPointerEvent, Container } from "pixi.js";
+import { Graphics, Container } from "pixi.js";
 import { fitImageToScreen } from "@/utils/CalcUtils";
 
 interface SelectSamplerProps {
@@ -94,6 +94,7 @@ const Inpaint: React.FC = () => {
   // Brush settings
   const [brushSize, setBrushSize] = useState(30);
   const isDrawingRef = useRef(false);
+  const activePointerIdRef = useRef<number | null>(null);
 
   // State management
   const [hasDrawn, setHasDrawn] = useState(false);
@@ -108,6 +109,7 @@ const Inpaint: React.FC = () => {
 
   // Mask graphics reference
   const maskGraphicsRef = useRef<Graphics | null>(null);
+  const maskPreviewGraphicsRef = useRef<Graphics | null>(null);
   const cursorGraphicsRef = useRef<Graphics | null>(null);
   const lastPosRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -130,6 +132,35 @@ const Inpaint: React.FC = () => {
   );
 
   const target = findLayer(layerManager.layers, layerManager.target);
+
+  // In inpaint mode, render container directly so the selected image is not clipped
+  // by the project RenderTexture bounds.
+  useEffect(() => {
+    if (!container) {
+      return;
+    }
+
+    if (editMode === "inpaint") {
+      container.directRenderMode = true;
+      container.renderable = true;
+      container.mask = null;
+      container.compositeNeeded = false;
+      if (container.displaySprite) {
+        container.displaySprite.visible = false;
+      }
+      return;
+    }
+
+    container.directRenderMode = false;
+    container.renderable = false;
+    if (container.children[1]) {
+      container.mask = container.children[1] as Graphics;
+    }
+    if (container.displaySprite) {
+      container.displaySprite.visible = true;
+    }
+    container.compositeNeeded = true;
+  }, [container, editMode]);
 
   // Function to fit view to the target layer
   const fitViewToTarget = useCallback(() => {
@@ -174,18 +205,8 @@ const Inpaint: React.FC = () => {
 
     targetPosition.current = { x: newX, y: newY };
     setTargetZoom(newZoom);
-
-    // Also directly set container position for immediate effect
-    container.x = newX;
-    container.y = newY;
-    container.scale.set(newZoom);
-
-    // Sync displaySprite for RenderTexture architecture
-    if (container.displaySprite) {
-      container.displaySprite.x = newX;
-      container.displaySprite.y = newY;
-      container.displaySprite.scale.set(newZoom);
-    }
+    // Let MovementLogic apply transform from target state to avoid jumpy swaps.
+    container.compositeNeeded = true;
 
     // Update last viewport size
     lastViewportRef.current = { width: viewportWidth, height: viewportHeight };
@@ -216,6 +237,19 @@ const Inpaint: React.FC = () => {
           // Update target ID but keep original view state
           originalViewRef.current.targetId = target.id;
         }
+
+        // Switching target while inpainting should start with a fresh mask/history.
+        if (maskGraphicsRef.current) {
+          maskGraphicsRef.current.clear();
+        }
+        if (maskPreviewGraphicsRef.current) {
+          maskPreviewGraphicsRef.current.clear();
+        }
+        setHasDrawn(false);
+        setHasGenerated(false);
+        setHistory([]);
+        setHistoryIndex(-1);
+        container.compositeNeeded = true;
 
         // Use requestAnimationFrame to ensure DOM is ready
         requestAnimationFrame(() => {
@@ -304,24 +338,56 @@ const Inpaint: React.FC = () => {
         oldLayer.sprite.rotation = originalRotationRef.current.rotation;
       }
       originalRotationRef.current = null;
+      if (container) {
+        container.compositeNeeded = true;
+      }
     }
-  }, [editMode, target, layerManager.layers]);
+  }, [editMode, target, layerManager.layers, container]);
 
   // Initialize mask graphics and cursor when entering inpaint mode
   useEffect(() => {
-    if (editMode === "inpaint" && container && target instanceof ImageLayer) {
-      // Create mask and cursor graphics
+    if (
+      editMode === "inpaint" &&
+      container &&
+      target instanceof ImageLayer &&
+      app.current?.stage
+    ) {
+      const stage = app.current.stage;
+
+      // Create mask graphics in document space (composited into RenderTexture)
       if (!maskGraphicsRef.current) {
         const maskGraphics = new Graphics();
         maskGraphics.alpha = 0.5;
         maskGraphics.zIndex = 999;
         container.addChild(maskGraphics);
         maskGraphicsRef.current = maskGraphics;
+      }
 
+      // Create visible paint preview on stage so strokes are always visible.
+      if (!maskPreviewGraphicsRef.current) {
+        const previewGraphics = new Graphics();
+        previewGraphics.zIndex = 1500;
+        previewGraphics.eventMode = "none";
+        stage.addChild(previewGraphics);
+        maskPreviewGraphicsRef.current = previewGraphics;
+      } else if (maskPreviewGraphicsRef.current.parent !== stage) {
+        maskPreviewGraphicsRef.current.removeFromParent();
+        stage.addChild(maskPreviewGraphicsRef.current);
+      }
+
+      // Create cursor graphics on stage as an overlay (always visible)
+      if (!cursorGraphicsRef.current) {
         const cursorGraphics = new Graphics();
-        cursorGraphics.zIndex = 1000;
-        container.addChild(cursorGraphics);
+        cursorGraphics.zIndex = 2000;
+        cursorGraphics.eventMode = "none";
+        stage.addChild(cursorGraphics);
         cursorGraphicsRef.current = cursorGraphics;
+      } else if (
+        cursorGraphicsRef.current &&
+        cursorGraphicsRef.current.parent !== stage
+      ) {
+        cursorGraphicsRef.current.removeFromParent();
+        stage.addChild(cursorGraphicsRef.current);
       }
     }
 
@@ -331,24 +397,121 @@ const Inpaint: React.FC = () => {
         maskGraphicsRef.current.destroy();
         maskGraphicsRef.current = null;
       }
-      if (cursorGraphicsRef.current && container) {
-        container.removeChild(cursorGraphicsRef.current);
+      if (maskPreviewGraphicsRef.current) {
+        maskPreviewGraphicsRef.current.removeFromParent();
+        maskPreviewGraphicsRef.current.destroy();
+        maskPreviewGraphicsRef.current = null;
+      }
+      if (cursorGraphicsRef.current) {
+        cursorGraphicsRef.current.removeFromParent();
         cursorGraphicsRef.current.destroy();
         cursorGraphicsRef.current = null;
       }
     };
-  }, [editMode, container, target]);
+  }, [editMode, container, target, app]);
 
   // Set up drawing events
   useEffect(() => {
-    if (editMode !== "inpaint" || !container || !maskGraphicsRef.current)
+    if (
+      editMode !== "inpaint" ||
+      !container ||
+      !maskGraphicsRef.current ||
+      !maskPreviewGraphicsRef.current ||
+      !app.current
+    ) {
       return;
+    }
 
     const maskGraphics = maskGraphicsRef.current;
+    const maskPreviewGraphics = maskPreviewGraphicsRef.current;
+    const stage = app.current.stage;
+    const canvasEl = app.current.canvas as HTMLCanvasElement | null;
+
+    if (!canvasEl) {
+      return;
+    }
+
+    const previousContainerCursor = container.cursor;
+    const previousContainerEventMode = container.eventMode;
+    const previousStageCursor = stage.cursor;
+    const previousStageEventMode = stage.eventMode;
+    const previousStageHitArea = stage.hitArea;
+    const previousCanvasCursor = canvasEl.style.cursor;
+    const previousWrapperCanvasCursor = canvas.current?.style.cursor;
+
+    const previousChildCursors = new Map<any, string | undefined>();
+    container.children.forEach((child: any) => {
+      if (child.cursor !== undefined) {
+        previousChildCursors.set(child, child.cursor);
+      }
+    });
+
+    const requestPreviewComposite = () => {
+      container.compositeNeeded = true;
+    };
+
+    const getGlobalFromPointerEvent = (event: PointerEvent) => {
+      const rect = canvasEl.getBoundingClientRect();
+      const x =
+        ((event.clientX - rect.left) / rect.width) *
+        app.current!.renderer.width;
+      const y =
+        ((event.clientY - rect.top) / rect.height) *
+        app.current!.renderer.height;
+      return { x, y };
+    };
+
+    const getGlobalFromClient = (clientX: number, clientY: number) => {
+      const rect = canvasEl.getBoundingClientRect();
+      const x =
+        ((clientX - rect.left) / rect.width) * app.current!.renderer.width;
+      const y =
+        ((clientY - rect.top) / rect.height) * app.current!.renderer.height;
+      return { x, y };
+    };
+
+    const toContainerLocal = (globalX: number, globalY: number) => {
+      return {
+        x: (globalX - container.x) / container.scale.x + container.pivot.x,
+        y: (globalY - container.y) / container.scale.y + container.pivot.y,
+      };
+    };
+
+    const toStagePoint = (localX: number, localY: number) => {
+      return {
+        x: container.x + (localX - container.pivot.x) * container.scale.x,
+        y: container.y + (localY - container.pivot.y) * container.scale.y,
+      };
+    };
+
+    const isPointerInsideCanvas = (event: PointerEvent) => {
+      const rect = canvasEl.getBoundingClientRect();
+      return (
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      );
+    };
+
+    const isClientInsideCanvas = (clientX: number, clientY: number) => {
+      const rect = canvasEl.getBoundingClientRect();
+      return (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+      );
+    };
 
     const drawCircle = (x: number, y: number) => {
       maskGraphics.circle(x, y, brushSize / 2);
       maskGraphics.fill({ color: 0xffffff }); // White color for A1111 mask (alpha makes it visible as gray)
+
+      const stagePoint = toStagePoint(x, y);
+      const radius = Math.max(1, (brushSize / 2) * Math.abs(container.scale.x));
+      maskPreviewGraphics.circle(stagePoint.x, stagePoint.y, radius);
+      maskPreviewGraphics.fill({ color: 0xffffff, alpha: 0.5 });
     };
 
     const drawLine = (x1: number, y1: number, x2: number, y2: number) => {
@@ -364,31 +527,109 @@ const Inpaint: React.FC = () => {
       }
     };
 
-    const onPointerDown = (event: FederatedPointerEvent) => {
+    const beginStroke = (
+      event: PointerEvent,
+      localPos: { x: number; y: number },
+    ) => {
       isDrawingRef.current = true;
-      const localPos = container.toLocal(event.global);
+      activePointerIdRef.current = event.pointerId;
       drawCircle(localPos.x, localPos.y);
       lastPosRef.current = { x: localPos.x, y: localPos.y };
       setHasDrawn(true);
+      if (cursorGraphicsRef.current) {
+        cursorGraphicsRef.current.visible = true;
+      }
+      requestPreviewComposite();
+    };
+
+    const beginStrokeFromClient = (
+      clientX: number,
+      clientY: number,
+      pointerId: number,
+    ) => {
+      const { x: globalX, y: globalY } = getGlobalFromClient(clientX, clientY);
+      const localPos = toContainerLocal(globalX, globalY);
+
+      isDrawingRef.current = true;
+      activePointerIdRef.current = pointerId;
+      drawCircle(localPos.x, localPos.y);
+      lastPosRef.current = { x: localPos.x, y: localPos.y };
+      setHasDrawn(true);
+      if (cursorGraphicsRef.current) {
+        cursorGraphicsRef.current.visible = true;
+      }
+      requestPreviewComposite();
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0 && event.pointerType !== "touch") {
+        return;
+      }
+
+      if (!isPointerInsideCanvas(event)) {
+        return;
+      }
+
+      if (activePointerIdRef.current !== null) {
+        return;
+      }
+
+      event.preventDefault();
+      const { x: globalX, y: globalY } = getGlobalFromPointerEvent(event);
+      const localPos = toContainerLocal(globalX, globalY);
+      beginStroke(event, localPos);
     };
 
     const updateCursor = (x: number, y: number) => {
       if (!cursorGraphicsRef.current) return;
       const cursor = cursorGraphicsRef.current;
+      const stagePoint = toStagePoint(x, y);
+      const radius = Math.max(2, (brushSize / 2) * Math.abs(container.scale.x));
+
+      if (cursor.parent === stage) {
+        stage.setChildIndex(cursor, stage.children.length - 1);
+      }
+
       cursor.clear();
-      cursor.circle(x, y, brushSize / 2);
+      cursor.circle(stagePoint.x, stagePoint.y, radius);
       cursor.stroke({ color: 0x000000, width: 2 });
-      cursor.circle(x, y, brushSize / 2);
+      cursor.circle(stagePoint.x, stagePoint.y, radius);
       cursor.stroke({ color: 0xffffff, width: 1 });
     };
 
-    const onPointerMove = (event: FederatedPointerEvent) => {
-      const localPos = container.toLocal(event.global);
+    const onPointerMove = (event: PointerEvent) => {
+      const { x: globalX, y: globalY } = getGlobalFromPointerEvent(event);
+      const localPos = toContainerLocal(globalX, globalY);
+      const isInsideCanvas = isPointerInsideCanvas(event);
+      const primaryButtonPressed = (event.buttons & 1) === 1;
 
       // Always update cursor position
       updateCursor(localPos.x, localPos.y);
+      if (cursorGraphicsRef.current) {
+        cursorGraphicsRef.current.visible =
+          isInsideCanvas || activePointerIdRef.current === event.pointerId;
+      }
+
+      // Fallback: if pointerdown was missed, begin stroke from move while pressed.
+      if (
+        !isDrawingRef.current &&
+        activePointerIdRef.current === null &&
+        primaryButtonPressed &&
+        isInsideCanvas
+      ) {
+        beginStroke(event, localPos);
+      }
 
       if (!isDrawingRef.current) return;
+
+      if (
+        activePointerIdRef.current !== null &&
+        activePointerIdRef.current !== event.pointerId
+      ) {
+        return;
+      }
+
+      event.preventDefault();
 
       if (lastPosRef.current) {
         drawLine(
@@ -402,15 +643,107 @@ const Inpaint: React.FC = () => {
       }
 
       lastPosRef.current = { x: localPos.x, y: localPos.y };
+      requestPreviewComposite();
     };
 
-    const onPointerUp = () => {
+    const onPointerUp = (event?: PointerEvent) => {
+      if (
+        event &&
+        activePointerIdRef.current !== null &&
+        activePointerIdRef.current !== event.pointerId
+      ) {
+        return;
+      }
+
       isDrawingRef.current = false;
+      activePointerIdRef.current = null;
       lastPosRef.current = null;
+      requestPreviewComposite();
+    };
+
+    const onMouseDown = (event: MouseEvent) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      if (!isClientInsideCanvas(event.clientX, event.clientY)) {
+        return;
+      }
+
+      if (activePointerIdRef.current !== null) {
+        return;
+      }
+
+      event.preventDefault();
+      beginStrokeFromClient(event.clientX, event.clientY, -1);
+    };
+
+    const onMouseMove = (event: MouseEvent) => {
+      const { x: globalX, y: globalY } = getGlobalFromClient(
+        event.clientX,
+        event.clientY,
+      );
+      const localPos = toContainerLocal(globalX, globalY);
+      const isInsideCanvas = isClientInsideCanvas(event.clientX, event.clientY);
+      const primaryButtonPressed = (event.buttons & 1) === 1;
+
+      updateCursor(localPos.x, localPos.y);
+      if (cursorGraphicsRef.current) {
+        cursorGraphicsRef.current.visible =
+          isInsideCanvas || isDrawingRef.current;
+      }
+
+      if (
+        !isDrawingRef.current &&
+        activePointerIdRef.current === null &&
+        primaryButtonPressed &&
+        isInsideCanvas
+      ) {
+        beginStrokeFromClient(event.clientX, event.clientY, -1);
+      }
+
+      if (!isDrawingRef.current) {
+        return;
+      }
+
+      if (
+        activePointerIdRef.current !== null &&
+        activePointerIdRef.current !== -1
+      ) {
+        return;
+      }
+
+      if (lastPosRef.current) {
+        drawLine(
+          lastPosRef.current.x,
+          lastPosRef.current.y,
+          localPos.x,
+          localPos.y,
+        );
+      } else {
+        drawCircle(localPos.x, localPos.y);
+      }
+
+      lastPosRef.current = { x: localPos.x, y: localPos.y };
+      requestPreviewComposite();
+    };
+
+    const onMouseUp = () => {
+      if (
+        activePointerIdRef.current !== -1 &&
+        activePointerIdRef.current !== null
+      ) {
+        return;
+      }
+
+      isDrawingRef.current = false;
+      activePointerIdRef.current = null;
+      lastPosRef.current = null;
+      requestPreviewComposite();
     };
 
     container.eventMode = "static";
-    container.cursor = "none"; // Hide default cursor
+    container.cursor = "none";
 
     // Hide cursor on the target sprite (sprites have cursor: "pointer" by default)
     let originalSpriteCursor: string | undefined;
@@ -419,21 +752,19 @@ const Inpaint: React.FC = () => {
       target.sprite.cursor = "none";
     }
 
-    // Hide cursor on all children in container
+    // Hide default cursor on all interactive children.
     container.children.forEach((child: any) => {
       if (child.cursor !== undefined) {
         child.cursor = "none";
       }
     });
 
-    // Hide cursor on the app stage (covers entire canvas)
-    if (app.current?.stage) {
-      app.current.stage.eventMode = "static";
-      app.current.stage.cursor = "none";
-      app.current.stage.hitArea = app.current.screen;
-    }
+    // Hide stage pointer so only brush ring is visible.
+    stage.eventMode = "static";
+    stage.cursor = "none";
+    stage.hitArea = app.current.screen;
 
-    // Also hide cursor on the canvas elements
+    // Hide native cursor on canvas surfaces.
     if (app.current?.canvas) {
       (app.current.canvas as HTMLCanvasElement).style.cursor = "none";
     }
@@ -441,33 +772,41 @@ const Inpaint: React.FC = () => {
       canvas.current.style.cursor = "none";
     }
 
-    // Global pointer move on stage for cursor tracking anywhere on canvas
-    const onStagePointerMove = (event: FederatedPointerEvent) => {
-      const localPos = container.toLocal(event.global);
-      updateCursor(localPos.x, localPos.y);
-      if (cursorGraphicsRef.current) {
-        cursorGraphicsRef.current.visible = true;
-      }
-    };
-
-    const onStagePointerLeave = () => {
-      if (cursorGraphicsRef.current) {
+    const onCanvasPointerLeave = () => {
+      if (cursorGraphicsRef.current && !isDrawingRef.current) {
         cursorGraphicsRef.current.visible = false;
       }
     };
 
-    if (app.current?.stage) {
-      app.current.stage.on("pointermove", onStagePointerMove);
-      app.current.stage.on("pointerleave", onStagePointerLeave);
+    if (cursorGraphicsRef.current) {
+      cursorGraphicsRef.current.visible = false;
     }
 
-    container.on("pointerdown", onPointerDown);
-    container.on("pointermove", onPointerMove);
-    container.on("pointerup", onPointerUp);
-    container.on("pointerupoutside", onPointerUp);
+    window.addEventListener("pointerdown", onPointerDown);
+    canvasEl.addEventListener("pointerleave", onCanvasPointerLeave);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
 
     return () => {
-      container.cursor = "default"; // Restore default cursor
+      isDrawingRef.current = false;
+      activePointerIdRef.current = null;
+      lastPosRef.current = null;
+
+      window.removeEventListener("pointerdown", onPointerDown);
+      canvasEl.removeEventListener("pointerleave", onCanvasPointerLeave);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+
+      container.cursor = previousContainerCursor;
+      container.eventMode = previousContainerEventMode;
 
       // Restore cursor on the target sprite
       if (target instanceof ImageLayer && originalSpriteCursor !== undefined) {
@@ -475,34 +814,29 @@ const Inpaint: React.FC = () => {
       }
 
       // Restore cursor on all children in container
-      container.children.forEach((child: any) => {
+      previousChildCursors.forEach((previousCursor, child) => {
         if (child.cursor !== undefined) {
-          child.cursor = "pointer";
+          child.cursor = previousCursor;
         }
       });
 
-      // Restore cursor on stage
-      if (app.current?.stage) {
-        app.current.stage.cursor = "default";
-        app.current.stage.off("pointermove", onStagePointerMove);
-        app.current.stage.off("pointerleave", onStagePointerLeave);
-      }
+      // Restore cursor and interaction state on stage
+      stage.cursor = previousStageCursor;
+      stage.eventMode = previousStageEventMode;
+      stage.hitArea = previousStageHitArea;
 
       // Restore cursor on canvas elements
-      if (app.current?.canvas) {
-        (app.current.canvas as HTMLCanvasElement).style.cursor = "default";
-      }
+      canvasEl.style.cursor = previousCanvasCursor;
       if (canvas.current) {
-        canvas.current.style.cursor = "default";
+        canvas.current.style.cursor = previousWrapperCanvasCursor ?? "";
       }
 
-      container.off("pointerdown", onPointerDown);
-      container.off("pointermove", onPointerMove);
-      container.off("pointerup", onPointerUp);
-      container.off("pointerupoutside", onPointerUp);
       if (cursorGraphicsRef.current) {
         cursorGraphicsRef.current.clear();
+        cursorGraphicsRef.current.visible = false;
       }
+
+      requestPreviewComposite();
     };
   }, [editMode, container, brushSize, app, canvas, target]);
 
@@ -535,7 +869,135 @@ const Inpaint: React.FC = () => {
       maskGraphicsRef.current.clear();
       setHasDrawn(false);
     }
-  }, []);
+    if (maskPreviewGraphicsRef.current) {
+      maskPreviewGraphicsRef.current.clear();
+    }
+    if (container) {
+      container.compositeNeeded = true;
+    }
+  }, [container]);
+
+  const normalizeImageDimensions = useCallback(
+    async (
+      src: string,
+      targetWidth: number,
+      targetHeight: number,
+      backgroundSrc?: string,
+    ): Promise<string> => {
+      const loadImage = (imageSrc: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error("Failed to load image"));
+          image.src = imageSrc;
+        });
+      };
+
+      try {
+        const image = await loadImage(src);
+        if (image.width === targetWidth && image.height === targetHeight) {
+          return src;
+        }
+
+        const resizeCanvas = document.createElement("canvas");
+        resizeCanvas.width = targetWidth;
+        resizeCanvas.height = targetHeight;
+
+        const context = resizeCanvas.getContext("2d");
+        if (!context) {
+          return src;
+        }
+
+        context.clearRect(0, 0, targetWidth, targetHeight);
+
+        // Keep missing edge pixels from the pre-inpaint image rather than
+        // globally resampling the result (which softens the whole image).
+        if (backgroundSrc) {
+          try {
+            const backgroundImage = await loadImage(backgroundSrc);
+            context.drawImage(backgroundImage, 0, 0, targetWidth, targetHeight);
+          } catch {
+            // If fallback source fails, continue with transparent background.
+          }
+        }
+
+        const drawWidth = Math.min(image.width, targetWidth);
+        const drawHeight = Math.min(image.height, targetHeight);
+        const sourceX = Math.max(0, Math.floor((image.width - drawWidth) / 2));
+        const sourceY = Math.max(
+          0,
+          Math.floor((image.height - drawHeight) / 2),
+        );
+        const destX = Math.max(0, Math.floor((targetWidth - drawWidth) / 2));
+        const destY = Math.max(0, Math.floor((targetHeight - drawHeight) / 2));
+
+        context.imageSmoothingEnabled = false;
+        context.drawImage(
+          image,
+          sourceX,
+          sourceY,
+          drawWidth,
+          drawHeight,
+          destX,
+          destY,
+          drawWidth,
+          drawHeight,
+        );
+
+        return resizeCanvas.toDataURL("image/png");
+      } catch {
+        return src;
+      }
+    },
+    [],
+  );
+
+  const applyImageToTargetSprite = useCallback(
+    async (src: string) => {
+      if (!(target instanceof ImageLayer)) {
+        return;
+      }
+
+      const sprite = target.sprite;
+      const previousWidth = Math.abs(sprite.width);
+      const previousHeight = Math.abs(sprite.height);
+      const previousScaleX = sprite.scale.x;
+      const previousScaleY = sprite.scale.y;
+      const previousPositionX = sprite.position.x;
+      const previousPositionY = sprite.position.y;
+      const previousRotation = sprite.rotation;
+      const previousSkewX = sprite.skew.x;
+      const previousSkewY = sprite.skew.y;
+      const texture = await base64StringToTexture(src);
+
+      sprite.texture = texture;
+
+      // Restore the exact transform first.
+      sprite.scale.set(previousScaleX, previousScaleY);
+      sprite.position.set(previousPositionX, previousPositionY);
+      sprite.rotation = previousRotation;
+      sprite.skew.set(previousSkewX, previousSkewY);
+
+      // If source dimensions still differ, force displayed bounds to match exactly.
+      const nextWidth = Math.abs(sprite.width);
+      const nextHeight = Math.abs(sprite.height);
+
+      if (nextWidth > 0 && Math.abs(nextWidth - previousWidth) > 0.0001) {
+        const widthCorrection = previousWidth / nextWidth;
+        sprite.scale.x *= widthCorrection;
+      }
+
+      if (nextHeight > 0 && Math.abs(nextHeight - previousHeight) > 0.0001) {
+        const heightCorrection = previousHeight / nextHeight;
+        sprite.scale.y *= heightCorrection;
+      }
+
+      if (container) {
+        container.compositeNeeded = true;
+      }
+    },
+    [container, target],
+  );
 
   const getMaskAsBase64 = useCallback(async (): Promise<string | null> => {
     if (!app.current || !maskGraphicsRef.current || !target) return null;
@@ -622,13 +1084,16 @@ const Inpaint: React.FC = () => {
   }, [app, container, target]);
 
   const saveResult = async () => {
-    setEditMode("view");
+    setEditMode("move");
     const currentSrc = getCurrentImageSrc();
     if (currentSrc && target instanceof ImageLayer && historyIndex >= 0) {
       setLayerManager((draft) => {
         draft.layers = draft.layers.map((layer) => {
           if (layer.id === target.id) {
-            (layer as ImageLayer).imageData.src = currentSrc;
+            const imageLayer = layer as ImageLayer;
+            imageLayer.imageData.src = currentSrc;
+            imageLayer.imageData.imageWidth = target.imageData.imageWidth;
+            imageLayer.imageData.imageHeight = target.imageData.imageHeight;
           }
           return layer;
         });
@@ -649,8 +1114,7 @@ const Inpaint: React.FC = () => {
       newSrc = target.imageData.src;
     }
 
-    const texture = await base64StringToTexture(newSrc);
-    target.sprite.texture = texture;
+    await applyImageToTargetSprite(newSrc);
     setTrigger(!trigger);
   };
 
@@ -714,6 +1178,8 @@ const Inpaint: React.FC = () => {
       return;
     }
 
+    const initImageSource = getCurrentImageSrc() || target.imageData.src;
+
     setLoading(true);
     setLoadingTask("inpainting");
     startProgressPolling();
@@ -733,7 +1199,7 @@ const Inpaint: React.FC = () => {
           prompt,
           negative_prompt: negativePrompt,
           // Use current history position (could be previous generation or original)
-          init_images: [getCurrentImageSrc() || target.imageData.src],
+          init_images: [initImageSource],
           mask: maskBase64,
           width: target.imageData.imageWidth,
           height: target.imageData.imageHeight,
@@ -760,21 +1226,20 @@ const Inpaint: React.FC = () => {
 
       if (data.images && data.images.length > 0) {
         console.log("Applying new texture to sprite...");
-        const newTexture = await base64StringToTexture(data.images[0]);
-        console.log(
-          "Texture created:",
-          newTexture.width,
-          "x",
-          newTexture.height,
+
+        const normalizedImage = await normalizeImageDimensions(
+          data.images[0],
+          target.imageData.imageWidth,
+          target.imageData.imageHeight,
+          initImageSource,
         );
 
-        // Update the layer sprite texture
-        target.sprite.texture = newTexture;
+        await applyImageToTargetSprite(normalizedImage);
 
         // Add to history - truncate any "future" history if we're not at the end
         const newHistory = [
           ...history.slice(0, historyIndex + 1),
-          data.images[0],
+          normalizedImage,
         ];
         setHistory(newHistory);
         setHistoryIndex(newHistory.length - 1);

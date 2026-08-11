@@ -1,10 +1,10 @@
-import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useImageTransformActions } from "@/hooks/useImageTransformActions";
 import { useProject } from "@/hooks/useProject";
 import { ImageLayer } from "@/models/project/Layers/Layers";
 import { LockClosedIcon, LockOpen1Icon } from "@radix-ui/react-icons";
@@ -20,7 +20,9 @@ const Dimensions: React.FC<DimensionsProps> = ({ target, update }) => {
   const [isRatio, setIsRatio] = useState<boolean>(true);
   const [width, setWidth] = useState<number>(target.sprite.width);
   const [height, setHeight] = useState<number>(target.sprite.height);
-  const { project, setLayerManager } = useProject();
+  const { editDocument } = useProject();
+  const { dispatchSelectedImageActions } = useImageTransformActions();
+  const documentTransform = editDocument.imageLayers[target.id]?.transform;
 
   useEffect(
     () => {
@@ -28,13 +30,13 @@ const Dimensions: React.FC<DimensionsProps> = ({ target, update }) => {
       setHeight(target.sprite.height);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [update]
+    [documentTransform, target.sprite.height, target.sprite.width, update],
   );
 
   const handleDimensionEnter = (
     dimension: string,
     value: number,
-    isRatio: boolean
+    isRatio: boolean,
   ) => {
     if (isRatio) {
       const aspectRatio =
@@ -48,31 +50,72 @@ const Dimensions: React.FC<DimensionsProps> = ({ target, update }) => {
           newHeight = "0";
         }
 
-        target.sprite.width = Number(value);
-        target.sprite.height = Number(newHeight);
-
-        setWidth(value);
-        setHeight(Number(newHeight));
+        const result = dispatchSelectedImageActions(
+          [
+            {
+              type: "image.setDimensions",
+              width: Number(value),
+              height: Number(newHeight),
+            },
+          ],
+          "Resize image",
+        );
+        if (result.ok) {
+          setWidth(target.sprite.width);
+          setHeight(target.sprite.height);
+        }
       } else {
         let newWidth = Math.round(value * aspectRatio);
         // Check if newWidth is NaN
         if (isNaN(Number(newWidth))) {
           newWidth = 0;
         }
-        target.sprite.height = Number(value);
-        target.sprite.width = Number(newWidth);
-        setWidth(Number(newWidth));
-        setHeight(value);
+        const result = dispatchSelectedImageActions(
+          [
+            {
+              type: "image.setDimensions",
+              width: Number(newWidth),
+              height: Number(value),
+            },
+          ],
+          "Resize image",
+        );
+        if (result.ok) {
+          setWidth(target.sprite.width);
+          setHeight(target.sprite.height);
+        }
 
         // Position the image in the center of the canvas
       }
     } else {
       if (dimension === "w") {
-        target.sprite.width = Number(value);
-        setWidth(value);
+        const result = dispatchSelectedImageActions(
+          [
+            {
+              type: "image.setDimensions",
+              width: Number(value),
+              height: target.sprite.height,
+            },
+          ],
+          "Resize image width",
+        );
+        if (result.ok) {
+          setWidth(target.sprite.width);
+        }
       } else {
-        target.sprite.height = Number(value);
-        setHeight(value);
+        const result = dispatchSelectedImageActions(
+          [
+            {
+              type: "image.setDimensions",
+              width: target.sprite.width,
+              height: Number(value),
+            },
+          ],
+          "Resize image height",
+        );
+        if (result.ok) {
+          setHeight(target.sprite.height);
+        }
       }
     }
     // const middleX = Math.round(project.settings.canvasSettings.width / 2);
@@ -82,93 +125,62 @@ const Dimensions: React.FC<DimensionsProps> = ({ target, update }) => {
   };
 
   return (
-    <div className="flex flex-row items-center justify-center">
-      <div className="w-40 h-7 flex flex-row items-center justify-center cursor-fancy ">
-        <Label className="text-xs mr-2" htmlFor="widthTool">
-          Width
-        </Label>
+    <div className="flex shrink-0 flex-row items-center gap-1.5 border-r border-gray-500/40 pr-3">
+      {/* Width */}
+      <div className="flex items-center gap-1 cursor-fancy" data-show-me-control="transform.scale-percent">
+        <span className="select-none rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
+          W
+        </span>
         <NumberInput
           value={width}
           min={1}
           setValue={setWidth}
-          onBlur={(e) => {
-            handleDimensionEnter(
-              "w",
-              parseFloat(e.currentTarget.value),
-              isRatio
-            );
-          }}
+          onBlur={(e) =>
+            handleDimensionEnter("w", parseFloat(e.currentTarget.value), isRatio)
+          }
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleDimensionEnter(
-                "w",
-                parseFloat(e.currentTarget.value),
-                isRatio
-              );
-            }
+            if (e.key === "Enter")
+              handleDimensionEnter("w", parseFloat(e.currentTarget.value), isRatio);
           }}
         />
-
-        {isRatio && (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger>
-                {" "}
-                <button
-                  className="ml-2 w-5 h-5 flex items-center justify-center"
-                  onClick={() => setIsRatio(false)}
-                >
-                  <LockClosedIcon className="w-5 h-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                <p>Maintain aspect ratio</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-        {!isRatio && (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger>
-                {" "}
-                <button
-                  className="ml-2 w-5 h-5 flex items-center justify-center"
-                  onClick={() => setIsRatio(true)}
-                >
-                  <LockOpen1Icon className="w-5 h-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className=" text-xs">
-                <p>Neglect aspect ratio</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
       </div>
-      <div className="w-40 h-7 flex flex-row items-center justify-center cursor-fancy">
-        <Label className="text-xs mr-2" htmlFor="heightTool">
-          Height
-        </Label>
+
+      {/* Aspect ratio lock */}
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+              onClick={() => setIsRatio((r) => !r)}
+            >
+              {isRatio ? (
+                <LockClosedIcon className="h-3.5 w-3.5" />
+              ) : (
+                <LockOpen1Icon className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            {isRatio ? "Aspect ratio locked" : "Aspect ratio unlocked"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {/* Height */}
+      <div className="flex items-center gap-1 cursor-fancy">
+        <span className="select-none rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
+          H
+        </span>
         <NumberInput
           value={height}
           min={1}
           setValue={setHeight}
-          onBlur={(e) => {
-            handleDimensionEnter(
-              "h",
-              parseFloat(e.currentTarget.value),
-              isRatio
-            );
-          }}
+          onBlur={(e) =>
+            handleDimensionEnter("h", parseFloat(e.currentTarget.value), isRatio)
+          }
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleDimensionEnter(
-                "h",
-                parseFloat(e.currentTarget.value),
-                isRatio
-              );
-            }
+            if (e.key === "Enter")
+              handleDimensionEnter("h", parseFloat(e.currentTarget.value), isRatio);
           }}
         />
       </div>

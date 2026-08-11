@@ -23,6 +23,7 @@ import {
 } from "@/models/project/Layers/Layers";
 import { toast } from "sonner";
 import { DraftFunction } from "use-immer";
+import { EditDocument } from "@/interfaces/editor/EditDocument";
 
 export async function handleDuplication(
   layer: LayerX,
@@ -41,7 +42,7 @@ const handleCommand = (
   command: Command,
   setUndoRedoManager: (
     arg: UndoRedoManager | DraftFunction<UndoRedoManager>
-  ) => void
+  ) => void,
 ) => {
   // Add to the undoredo stack
   setUndoRedoManager((draft) => {
@@ -62,7 +63,8 @@ export function handleDeleteLayer(
   setLayerManager: (arg: LayerManager | DraftFunction<LayerManager>) => void,
   setUndoRedoManager: (
     arg: UndoRedoManager | DraftFunction<UndoRedoManager>
-  ) => void
+  ) => void,
+  setEditDocument: (arg: EditDocument | DraftFunction<EditDocument>) => void
 ) {
   // Handle attepmt to delete the background layer
   if (targetLayer instanceof BackgroundLayer) {
@@ -82,7 +84,7 @@ export function handleDeleteLayer(
   // Handle deleting an image layer
   else if (targetLayer instanceof ImageLayer) {
     // Create a new delete layer command
-    const command = new DeleteImageLayerCommand(targetLayer, setLayerManager);
+    const command = new DeleteImageLayerCommand(targetLayer, setLayerManager, setEditDocument);
     handleCommand(command, setUndoRedoManager);
   }
 

@@ -30,6 +30,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCanvas } from "@/hooks/useCanvas";
+import { useImageTransformActions } from "@/hooks/useImageTransformActions";
 
 const TransformTool: React.FC = ({}) => {
   const {
@@ -40,9 +42,17 @@ const TransformTool: React.FC = ({}) => {
     layerManager,
     setLayerManager,
   } = useProject();
+  const { container } = useCanvas();
+  const { dispatchSelectedImageActions } = useImageTransformActions();
 
   const target = findLayer(layerManager.layers, layerManager.target);
   const [update, setUpdate] = React.useState(false);
+
+  const requestPreviewComposite = useCallback(() => {
+    if (container) {
+      container.compositeNeeded = true;
+    }
+  }, [container]);
 
   // Save the previous values of the target sprite in case the user cancels the transformation
   const rotateValueRef = React.useRef(0);
@@ -72,6 +82,26 @@ const TransformTool: React.FC = ({}) => {
 
   const handleCancel = useCallback(() => {
     if (target instanceof ImageLayer) {
+      const transformChanged =
+        target.sprite.angle !== rotateValueRef.current ||
+        target.sprite.width !== widthRef.current ||
+        target.sprite.height !== heightRef.current;
+      if (transformChanged) {
+        dispatchSelectedImageActions(
+          [
+            {
+              type: "image.setRotation",
+              degrees: rotateValueRef.current,
+            },
+            {
+              type: "image.setDimensions",
+              width: widthRef.current,
+              height: heightRef.current,
+            },
+          ],
+          "Cancel image transform",
+        );
+      }
       target.sprite.height = heightRef.current;
       target.sprite.width = widthRef.current;
       target.sprite.position.x = positionXRef.current;
@@ -81,9 +111,15 @@ const TransformTool: React.FC = ({}) => {
       target.sprite.scale.y = scaleYSignRef.current;
       target.sprite.skew.x = skewXRef.current;
       target.sprite.skew.y = skewYRef.current;
+      requestPreviewComposite();
     }
-    setEditMode("view");
-  }, [setEditMode, target]);
+    setEditMode("move");
+  }, [
+    dispatchSelectedImageActions,
+    requestPreviewComposite,
+    setEditMode,
+    target,
+  ]);
 
   // Create event listener for ctrl + t to toggle the showTransform state
   useEffect(() => {
@@ -146,11 +182,12 @@ const TransformTool: React.FC = ({}) => {
         });
       });
       setUpdate(!update);
+      requestPreviewComposite();
     }
   };
 
   const handleDone = () => {
-    setEditMode("view");
+    setEditMode("move");
   };
 
   return (
@@ -158,18 +195,31 @@ const TransformTool: React.FC = ({}) => {
       {target instanceof ImageLayer && editMode === "transform" && (
         <div className="relative h-full w-full">
           <div
-            className={`h-10 flex-wrap w-full z-10 bg-navbarBackground dark:bg-navbarBackground border-b-2 border-[#cdcdcd] dark:border-[#252525] flex justify-center items-center   text-black dark:text-white`}
+            className={`z-10 flex h-9 w-full flex-nowrap items-center gap-3 overflow-x-auto border-b-2 border-[#cdcdcd] bg-navbarBackground px-3 text-black dark:border-[#252525] dark:bg-navbarBackground dark:text-white`}
           >
-            <Skew target={target} update={update} />
+            <span className="shrink-0 select-none text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Size
+            </span>
             <Dimensions target={target} update={update} />
+            <span className="shrink-0 select-none text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Position
+            </span>
             <Position target={target} update={update} />
+            <span className="shrink-0 select-none text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Rotate
+            </span>
             <Rotation target={target} update={update} />
+            <span className="shrink-0 select-none text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Skew
+            </span>
+            <Skew target={target} update={update} />
           </div>
           <TransformModal
             target={target}
             handleCancel={handleCancel}
             handleDone={handleDone}
             handleReset={resetTransform}
+            requestPreviewComposite={requestPreviewComposite}
             setUpdate={setUpdate}
             update={update}
           />
@@ -185,6 +235,7 @@ interface TransformModalProps {
   handleCancel: () => void;
   handleDone: () => void;
   handleReset: () => void;
+  requestPreviewComposite: () => void;
   setUpdate: (update: boolean) => void;
   update: boolean;
 }
@@ -194,10 +245,12 @@ const TransformModal: React.FC<TransformModalProps> = ({
   handleCancel,
   handleDone,
   handleReset,
+  requestPreviewComposite,
   setUpdate,
   update,
 }) => {
   const { project } = useProject();
+  const { dispatchSelectedImageActions } = useImageTransformActions();
   return (
     <div
       className="h-12 z-10 w-72 fixed bottom-0 flex flex-row items-center justify-center mb-8  text-black dark:text-white animate-jump-in animate-once"
@@ -220,14 +273,24 @@ const TransformModal: React.FC<TransformModalProps> = ({
                     ? target.sprite.angle - 15
                     : target.sprite.angle + 15,
                   -360,
-                  360
+                  360,
                 );
                 const roundedValue = roundToDecimalPlaces(
                   newRotateValue,
-                  1
+                  1,
                 ).toFixed(1);
-                target.sprite.angle = Number(roundedValue);
-                setUpdate(!update);
+                const result = dispatchSelectedImageActions(
+                  [
+                    {
+                      type: "image.setRotation",
+                      degrees: Number(roundedValue),
+                    },
+                  ],
+                  "Rotate image left",
+                );
+                if (result.ok) {
+                  setUpdate(!update);
+                }
               }}
               disabled={
                 target.sprite.scale.x * target.sprite.scale.y === 1
@@ -253,15 +316,25 @@ const TransformModal: React.FC<TransformModalProps> = ({
                     ? target.sprite.angle + 15
                     : target.sprite.angle - 15,
                   -360,
-                  360
+                  360,
                 );
                 const roundedValue = roundToDecimalPlaces(newRotateValue, 0);
                 const preciseValue = Math.round(
-                  Number(roundedValue.toFixed(0))
+                  Number(roundedValue.toFixed(0)),
                 );
 
-                target.sprite.angle = preciseValue;
-                setUpdate(!update);
+                const result = dispatchSelectedImageActions(
+                  [
+                    {
+                      type: "image.setRotation",
+                      degrees: preciseValue,
+                    },
+                  ],
+                  "Rotate image right",
+                );
+                if (result.ok) {
+                  setUpdate(!update);
+                }
               }}
               disabled={
                 target.sprite.scale.x * target.sprite.scale.y === 1
@@ -283,12 +356,13 @@ const TransformModal: React.FC<TransformModalProps> = ({
               className="bg-navbarBackground dark:bg-navbarBackground hover:bg-buttonHover dark:hover:bg-buttonHover w-8 h-8 border border-gray-500 disabled:opacity-20 transition-opacity duration-300 ease-linear transform hover:scale-110 active:scale-95"
               onClick={() => {
                 const middleX = Math.round(
-                  project.settings.canvasSettings.width / 2
+                  project.settings.canvasSettings.width / 2,
                 );
                 const middleY = Math.round(
-                  project.settings.canvasSettings.height / 2
+                  project.settings.canvasSettings.height / 2,
                 );
                 target.sprite.position = { x: middleX, y: middleY };
+                requestPreviewComposite();
                 setUpdate(!update);
               }}
             >
@@ -306,6 +380,7 @@ const TransformModal: React.FC<TransformModalProps> = ({
               className="bg-navbarBackground dark:bg-navbarBackground hover:bg-buttonHover dark:hover:bg-buttonHover w-8 h-8 border border-gray-500 disabled:opacity-20 transition-opacity duration-300 ease-linear transform hover:scale-110 active:scale-95"
               onClick={() => {
                 target.sprite.scale.x *= -1;
+                requestPreviewComposite();
                 setUpdate(!update);
               }}
             >
@@ -325,6 +400,7 @@ const TransformModal: React.FC<TransformModalProps> = ({
               className="bg-navbarBackground dark:bg-navbarBackground hover:bg-buttonHover dark:hover:bg-buttonHover w-8 h-8 border border-gray-500 disabled:opacity-20 transition-opacity duration-300 ease-linear transform hover:scale-110 active:scale-95"
               onClick={() => {
                 target.sprite.scale.y *= -1;
+                requestPreviewComposite();
                 setUpdate(!update);
               }}
             >

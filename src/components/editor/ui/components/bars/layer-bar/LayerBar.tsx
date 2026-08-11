@@ -9,6 +9,12 @@ import { moveLayer } from "@/models/project/LayerManager";
 import { LayersIcon } from "@radix-ui/react-icons";
 import dynamic from "next/dynamic";
 import React from "react";
+
+const LayerEffectButton = dynamic(
+  () => import("./components/LayerEffectButton"),
+  { ssr: false },
+);
+
 import {
   DragDropContext,
   DropResult,
@@ -34,13 +40,6 @@ const LayerBar: React.FC = () => {
   } = useProject();
   const [showLayers, setShowLayers] = React.useState(true);
 
-  const LayerEffectButton = dynamic(
-    () => import("./components/LayerEffectButton"),
-    {
-      ssr: false,
-    }
-  );
-
   const handleLayerDropSwap = (result: DropResult) => {
     if (!result.destination) return; // dropped outside the list
 
@@ -56,12 +55,12 @@ const LayerBar: React.FC = () => {
       {showLayers && landing && (
         <aside
           id="logo-sidebar"
-          className="resize-x overflow-hidden  max-w-[30rem] min-w-[25rem] h-full border-l-2 border-[#cdcdcd] dark:border-[#252525]  py-6  bg-navbarBackground dark:bg-navbarBackground "
+          className="resize-x overflow-auto max-w-[30rem] min-w-[14rem] h-full border-l-2 border-[#cdcdcd] dark:border-[#252525] py-4 bg-navbarBackground dark:bg-navbarBackground"
           aria-label="Sidebar"
         >
           <div className=" flex flex-col max-h-full">
-            <div className="h-16 ml-4 flex flex-col dark:text-white mb-4">
-              <div className="mb-4 font-semibold ">Layers</div>
+            <div className="h-14 ml-3 flex flex-col dark:text-white mb-3">
+              <div className="mb-3 font-semibold text-sm">Layers</div>
               <div className="flex flex-row space-x-2 items-center">
                 <NewLayerButton />
 

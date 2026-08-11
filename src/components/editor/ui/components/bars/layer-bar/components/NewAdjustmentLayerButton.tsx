@@ -24,13 +24,48 @@ import { useProject } from "@/hooks/useProject";
 import { addLayer } from "@/models/project/LayerManager";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/hooks/useTheme";
+import { readAdjustmentEditState } from "@/models/editor/AdjustmentDocument";
+import { getAdjustmentTargets } from "@/models/editor/AdjustmentTargets";
+import { AdjustmentLayer, ImageLayer } from "@/models/project/Layers/Layers";
 
 const NewAdjustmentLayerButton = () => {
-  const { project, layerManager, setLayerManager } = useProject();
+  const {
+    project,
+    layerManager,
+    setLayerManager,
+    setEditDocument,
+  } = useProject();
   const { darkMode } = useTheme();
   const [active, setActive] = useState(false);
   const handleClick = (value: boolean) => {
     setActive(value);
+  };
+  const registerDocumentState = (newLayer: AdjustmentLayer) => {
+    const adjustmentState = readAdjustmentEditState(newLayer);
+    if (!adjustmentState) return;
+    const layers = [...layerManager.layers, newLayer];
+    const targetIds = getAdjustmentTargets(newLayer, layers).map(
+      (target) => target.id,
+    );
+    setEditDocument((draft) => {
+      draft.adjustmentLayers[newLayer.id] = adjustmentState;
+      for (const layer of layers) {
+        if (!(layer instanceof ImageLayer)) continue;
+        const existing = draft.imageLayers[layer.id];
+        draft.imageLayers[layer.id] = {
+          id: layer.id,
+          type: "image",
+          transform: existing?.transform ?? {
+            rotationDegrees: layer.sprite.angle,
+            width: layer.sprite.width,
+            height: layer.sprite.height,
+          },
+          adjustmentLayerIds: targetIds.includes(layer.id)
+            ? [...(existing?.adjustmentLayerIds ?? []), newLayer.id]
+            : existing?.adjustmentLayerIds ?? [],
+        };
+      }
+    });
   };
 
   return (
@@ -99,6 +134,7 @@ const NewAdjustmentLayerButton = () => {
                   draft.layers = addLayer(draft.layers, newLayer);
                   draft.target = newLayer.id;
                 });
+                registerDocumentState(newLayer);
               }}
             >
               <SunIcon className="w-5 h-5 mr-2 " />
@@ -117,6 +153,7 @@ const NewAdjustmentLayerButton = () => {
                   draft.layers = addLayer(draft.layers, newLayer);
                   draft.target = newLayer.id;
                 });
+                registerDocumentState(newLayer);
               }}
             >
               <ColorLens className="w-5 h-5 mr-2" />

@@ -6,16 +6,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  CheckIcon,
-  EyeOpenIcon,
-  MagicWandIcon,
-  MoveIcon,
-} from "@radix-ui/react-icons";
+import { CheckIcon, MagicWandIcon, MoveIcon } from "@radix-ui/react-icons";
 import React, { useEffect } from "react";
 
 import { useProject } from "@/hooks/useProject";
-import { Psychology } from "@mui/icons-material";
+import { Crop, Psychology, Gesture } from "@mui/icons-material";
 import { TransformIcon } from "@radix-ui/react-icons";
 import dynamic from "next/dynamic";
 import { findLayer } from "@/models/project/LayerManager";
@@ -27,7 +22,6 @@ import Generate from "./tools/artificial-intelligence/Generate";
 import { Brush, AutoAwesome } from "@mui/icons-material";
 
 const ToolBar: React.FC = () => {
-  const [openView, setOpenView] = React.useState(false);
   const [openGenerate, setOpenGenerate] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [openAI, setOpenAI] = React.useState(false);
@@ -37,19 +31,6 @@ const ToolBar: React.FC = () => {
 
   let timer: any;
   let aiTimer: any;
-  let viewTimer: any;
-
-  const handleMouseEnterView = () => {
-    clearTimeout(viewTimer); // Clear any existing timeout
-    setOpenView(true);
-  };
-
-  const handleMouseLeaveView = () => {
-    // Set a timeout to close the popover after a delay
-    viewTimer = setTimeout(() => {
-      setOpenView(false);
-    }, 200); // Adjust the delay time as needed
-  };
 
   const handleMouseEnter = () => {
     clearTimeout(timer); // Clear any existing timeout
@@ -80,6 +61,47 @@ const ToolBar: React.FC = () => {
       handleMouseLeaveAI();
     }
   }, [editMode]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      const activeElement = document.activeElement as HTMLElement | null;
+      const isTypingElement =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        activeElement?.isContentEditable;
+
+      if (isTypingElement) {
+        return;
+      }
+
+      if (event.key.toLowerCase() === "v") {
+        event.preventDefault();
+        setEditMode("move");
+      }
+      if (event.key.toLowerCase() === "c") {
+        event.preventDefault();
+        if (!(target instanceof ImageLayer)) {
+          toast.warning("Please select an image layer to crop");
+        } else {
+          setEditMode("crop");
+        }
+      }
+      if (event.key.toLowerCase() === "l" && target instanceof ImageLayer) {
+        event.preventDefault();
+        setEditMode("lasso");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [setEditMode, target]);
+
   return (
     <div>
       <aside
@@ -89,68 +111,6 @@ const ToolBar: React.FC = () => {
       >
         <div className="py-6 overflow-y-auto animate-fade animate-once animate-ease-linear mt-1 right-[3px] absolute">
           <ul className="space-y-6 font-medium">
-            <li className="">
-              <Popover open={openView}>
-                <PopoverTrigger
-                  asChild
-                  className="focus-visible:ring-offset-0 focus-visible:ring-0"
-                >
-                  <Button
-                    className={`w-6 flex flex-row items-center justify-center hover:bg-buttonHover dark:hover:bg-buttonHover ${
-                      editMode === "view"
-                        ? "bg-buttonHover dark:bg-[#3b3b3b]"
-                        : "bg-navbarBackground dark:bg-navbarBackground"
-                    }`}
-                    onMouseEnter={handleMouseEnterView}
-                    onMouseLeave={handleMouseLeaveView}
-                    variant={"outline"}
-                  >
-                    <span>
-                      <EyeOpenIcon
-                        aria-hidden="true"
-                        className="w-6 h-6 text-gray-500 dark:text-gray-100"
-                      ></EyeOpenIcon>
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  side="right"
-                  className={`w-72 select-none`}
-                  onMouseEnter={handleMouseEnterView}
-                  onMouseLeave={handleMouseLeaveView}
-                >
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <h4 className="font-medium leading-none">View</h4>
-                      <p className="text-sm text-muted-foreground">
-                        View the canvas with smooth animation
-                      </p>
-                    </div>
-                    <div className="grid gap-4">
-                      <div
-                        className="grid grid-cols-2 items-center hover:bg-buttonHover dark:hover:bg-buttonHover cursor-pointer"
-                        onClick={() => {
-                          setEditMode("view");
-                        }}
-                      >
-                        <span className="flex flex-row items-center space-x-1 col-span-1">
-                          {editMode === "view" && (
-                            <CheckIcon className={`w-6 h-6 text-blue-600`} />
-                          )}
-                          <EyeOpenIcon className="w-6 h-6" />
-                          <Label htmlFor="width" className="cursor-pointer">
-                            View
-                          </Label>
-                        </span>
-
-                        <DropdownMenuShortcut>V</DropdownMenuShortcut>
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </li>
-
             <li className="">
               <Popover open={open}>
                 <PopoverTrigger
@@ -216,7 +176,7 @@ const ToolBar: React.FC = () => {
                           </Label>
                         </span>
 
-                        <DropdownMenuShortcut>M</DropdownMenuShortcut>
+                        <DropdownMenuShortcut>V</DropdownMenuShortcut>
                       </div>
                       <div
                         className="grid grid-cols-2 items-center hover:bg-buttonHover dark:hover:bg-buttonHover cursor-pointer"
@@ -247,6 +207,38 @@ const ToolBar: React.FC = () => {
                   </div>
                 </PopoverContent>
               </Popover>
+            </li>
+            <li>
+              <Button aria-label="Lasso Tool (L)" title="Lasso Tool (L)" className={`w-6 flex items-center justify-center hover:bg-buttonHover ${editMode === "lasso" ? "bg-buttonHover" : "bg-navbarBackground"}`} variant="outline" onClick={() => {
+                if (!(target instanceof ImageLayer)) { toast.warning("Please select an image layer to make a selection"); return; }
+                setEditMode("lasso");
+              }}>
+                <Gesture aria-hidden="true" className="w-6 h-6 text-gray-500 dark:text-gray-100" />
+              </Button>
+            </li>
+            <li>
+              <Button
+                aria-label="Crop Tool (C)"
+                className={`w-6 flex flex-row items-center justify-center hover:bg-buttonHover dark:hover:bg-buttonHover ${
+                  editMode === "crop"
+                    ? "bg-buttonHover dark:bg-[#3b3b3b]"
+                    : "bg-navbarBackground dark:bg-navbarBackground"
+                }`}
+                title="Crop Tool (C)"
+                variant="outline"
+                onClick={() => {
+                  if (!(target instanceof ImageLayer)) {
+                    toast.warning("Please select an image layer to crop");
+                    return;
+                  }
+                  setEditMode("crop");
+                }}
+              >
+                <Crop
+                  aria-hidden="true"
+                  className="w-6 h-6 text-gray-500 dark:text-gray-100"
+                />
+              </Button>
             </li>
 
             <li>

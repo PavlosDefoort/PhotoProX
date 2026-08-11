@@ -21,9 +21,9 @@ const BackgroundLayerBarItem: React.FC<BackgroundLayerBarItemProps> = ({
     layer.opacity === 0 ? transparentStyle : nonTransparentStyle;
 
   return (
-    <div className="flex flex-row items-center justify-between space-x-4">
+    <div className="flex flex-row items-center justify-between">
       <div
-        className={`w-40 h-40 aspect-square relative `}
+        className="w-12 h-12 aspect-square relative shrink-0 border border-slate-300"
         style={currentStyle}
       ></div>
     </div>

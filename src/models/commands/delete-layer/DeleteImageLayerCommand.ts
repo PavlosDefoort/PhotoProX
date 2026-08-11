@@ -8,6 +8,7 @@ import {
 } from "../../project/LayerManager";
 import { ImageLayer } from "../../project/Layers/Layers";
 import { DeleteLayerCommand } from "./DeleteLayerCommand";
+import { EditDocument, ImageSelectionState } from "@/interfaces/editor/EditDocument";
 export class DeleteImageLayerCommand implements DeleteLayerCommand {
   private layerData: ImageData;
   private sprite: SpriteX;
@@ -16,10 +17,12 @@ export class DeleteImageLayerCommand implements DeleteLayerCommand {
   public zIndex: number;
   public setLayerManager: (draft: DraftFunction<LayerManager>) => void;
   public title: string = "Delete Image Layer";
+  private selection?: ImageSelectionState;
 
   constructor(
     layer: ImageLayer,
     setter: (draft: DraftFunction<LayerManager>) => void,
+    private setEditDocument: (draft: DraftFunction<EditDocument>) => void,
   ) {
     this.layerData = { ...layer.imageData }; // Copy the image data
     this.layerId = layer.id; // Copy
@@ -39,6 +42,7 @@ export class DeleteImageLayerCommand implements DeleteLayerCommand {
       draft.layers = removeLayer(draft.layers, this.layerId);
       draft.target = "";
     });
+    this.setEditDocument((draft) => { this.selection = draft.selections[this.layerId]; delete draft.selections[this.layerId]; });
   }
 
   undo() {
@@ -51,12 +55,13 @@ export class DeleteImageLayerCommand implements DeleteLayerCommand {
         this.layerData,
         this.sprite,
       );
-      this.layerId = newLayer.id;
+      newLayer.id = this.layerId;
       // Now, update the state with the result
       this.setLayerManager((draft) => {
         draft.layers = addLayerAtIndex(draft.layers, newLayer, this.zIndex);
         draft.target = newLayer.id;
       });
+      if (this.selection) this.setEditDocument((draft) => { draft.selections[this.layerId] = this.selection!; });
     }
   }
 

@@ -47,6 +47,7 @@ const LayerBarItem: React.FC<LayerBarItemProps> = ({ layer, daKey }) => {
     trigger,
     setTrigger,
     setUndoRedoManager,
+    setEditDocument,
   } = useProject();
   const target = findLayer(layerManager.layers, layerManager.target);
 
@@ -68,7 +69,8 @@ const LayerBarItem: React.FC<LayerBarItemProps> = ({ layer, daKey }) => {
           project.settings.canvasSettings.width,
           project.settings.canvasSettings.height,
           setLayerManager,
-          setUndoRedoManager
+          setUndoRedoManager,
+          setEditDocument,
         );
       }
     };
@@ -101,7 +103,7 @@ const LayerBarItem: React.FC<LayerBarItemProps> = ({ layer, daKey }) => {
               ref={provided.innerRef}
               {...provided.draggableProps}
               {...provided.dragHandleProps}
-              className={`flex flex-row items-center  w-full h-44 rounded-lg shadow-md dark:shadow-lg p-2 space-x-2 transition duration-300 ease-in-out hover:shadow-xl dark:hover:shadow-xl  ${
+              className={`flex flex-row items-center w-full h-16 rounded-lg shadow-md dark:shadow-lg px-2 py-2 space-x-2 transition duration-300 ease-in-out hover:shadow-xl dark:hover:shadow-xl  ${
                 layer.visible ? "opacity-100" : "opacity-50"
               } ${
                 target?.id === layer.id

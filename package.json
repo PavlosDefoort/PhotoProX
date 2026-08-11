@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:show-me": "tsc -p tsconfig.tests.json && node -r ./tests/register-paths.js --test \".test-dist/tests/*.test.js\""
   },
   "dependencies": {
     "@cortex-js/compute-engine": "^0.24.1",

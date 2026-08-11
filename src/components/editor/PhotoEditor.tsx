@@ -18,7 +18,11 @@ import MovementHandler from "./tasks/MovementLogic";
 import UpdateCanvas, { UpdateCanvasProps } from "./tasks/UpdateCanvas";
 import LayerBar from "./ui/components/bars/layer-bar/LayerBar";
 import ToolBar from "./ui/components/bars/tool-bar/ToolBar";
+import MoveTool from "./ui/components/bars/tool-bar/tools/move/MoveTool";
 import TransformTool from "./ui/components/bars/tool-bar/tools/transform/TransformTool";
+import CropTool from "./ui/components/bars/tool-bar/tools/crop/CropTool";
+import LassoTool from "./ui/components/bars/tool-bar/tools/lasso/LassoTool";
+import ShowMePanel from "@/features/show-me/ShowMePanel";
 import TopBar from "./ui/components/bars/top-bar/TopBar";
 import CreateProject from "./ui/modals/CreateProject";
 
@@ -177,13 +181,16 @@ const PhotoEditor: React.FC = () => {
           <div>
             <TopBar />
           </div>
-          <div className="flex flex-row h-full justify-between">
+          <div className="flex min-h-0 flex-1 flex-row justify-between">
             <ToolBar />
 
-            <div className="flex-grow flex flex-col h-full">
+            <div className="flex min-h-0 flex-grow flex-col">
+              <MoveTool />
               <TransformTool />
+              <CropTool />
+              <LassoTool />
               <div
-                className="flex-grow w-full "
+                className="min-h-0 w-full flex-grow"
                 style={{
                   background:
                     "repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 20px 20px",
@@ -201,21 +208,22 @@ const PhotoEditor: React.FC = () => {
                 <MovementHandler
                   target={target} // Pass the targetRef as the target
                 />
-                <div className="w-full h-full ">
+                <div className="h-full w-full">
                   <div
                     id="stage-container"
                     ref={target}
-                    className="w-full h-full relative "
+                    className="relative h-full w-full"
                   >
                     <canvas
                       id="canvas"
                       ref={canvasRef}
-                      className="w-full h-full absolute top-0 left-0 "
+                      className="absolute left-0 top-0 h-full w-full"
                     ></canvas>
                   </div>
                 </div>
               </div>
             </div>
+            <ShowMePanel />
             <LayerBar />
           </div>
         </div>

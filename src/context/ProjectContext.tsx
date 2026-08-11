@@ -4,6 +4,7 @@ import { DraftFunction } from "use-immer";
 import { Project } from "@/models/project/Project";
 import { LayerManager } from "@/models/project/LayerManager";
 import { UndoRedoManager } from "@/models/data-structures/UndoRedoManager";
+import { createEditDocument } from "@/models/editor/EditDocument";
 
 // Define the default context value
 export const ProjectContext = createContext<ProjectContextValue>({
@@ -13,6 +14,8 @@ export const ProjectContext = createContext<ProjectContextValue>({
   },
   layerManager: new LayerManager(),
   setLayerManager: (arg: LayerManager | DraftFunction<LayerManager>) => {},
+  editDocument: createEditDocument(),
+  setEditDocument: () => {},
   undoRedoManager: new UndoRedoManager(),
   setUndoRedoManager: (
     arg: UndoRedoManager | DraftFunction<UndoRedoManager>,
@@ -29,7 +32,7 @@ export const ProjectContext = createContext<ProjectContextValue>({
   setLoading: (value: boolean) => {
     // Add your implementation here
   },
-  editMode: "view",
+  editMode: "move",
   setEditMode: (value) => {
     // Add your implementation here
   },

@@ -2,16 +2,16 @@ import {
   Accessibility,
   CogIcon,
   KeyboardIcon,
-  PaintbrushIcon,
+  LucideIcon,
   PaletteIcon,
-  PowerIcon,
   Settings2Icon,
   UserIcon,
+  Wrench,
 } from "lucide-react";
 
 type NavigationInstance = {
   name: string;
-  icon: React.FC;
+  icon: LucideIcon;
 };
 
 type NavigationList = NavigationInstance[];
@@ -33,6 +33,7 @@ export const navigationData: NavigationData[] = [
     title: "Editor Settings",
     content: [
       { name: "Preferences", icon: Settings2Icon },
+      { name: "Developer", icon: Wrench },
       { name: "Performance", icon: CogIcon },
       { name: "Keybindings", icon: KeyboardIcon },
       { name: "Appearance", icon: PaletteIcon },

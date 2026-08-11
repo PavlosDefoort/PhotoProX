@@ -25,6 +25,7 @@ export class ContainerX extends Container {
   renderTexture: RenderTexture | null = null;
   compositeNeeded: boolean = false;
   alwaysComposite: boolean = false;
+  directRenderMode: boolean = false;
 
   constructor(width: number, height: number) {
     super();

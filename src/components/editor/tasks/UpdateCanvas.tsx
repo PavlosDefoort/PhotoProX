@@ -3,7 +3,7 @@ import { useProject } from "@/hooks/useProject";
 import { useTheme } from "@/hooks/useTheme";
 import { ContainerX } from "@/models/pixi-extends/SpriteX";
 import { LayerX } from "@/models/project/Layers/Layers";
-import { fitImageToScreen } from "@/utils/CalcUtils";
+import { getOptimalInitialZoom } from "@/utils/CalcUtils";
 import { createProjectApp } from "@/utils/PixiUtils";
 import { debounce } from "lodash";
 import { Application } from "pixi.js";
@@ -45,6 +45,7 @@ const UpdateCanvas = ({
     trigger,
     setTrigger,
     setLayerManager,
+    editDocument,
   } = useProject();
   const { darkMode } = useTheme();
   const { zoomFromUser, targetMousePos, targetWorldMousePos } = useCanvas();
@@ -58,11 +59,18 @@ const UpdateCanvas = ({
   const renderLayersMemo = useMemo(
     () =>
       debounce((layers: LayerX[], container: ContainerX, targetId: string) => {
-        renderLayers(layers, container, editMode, setLayerManager, targetId);
+        renderLayers(
+          layers,
+          container,
+          editMode,
+          setLayerManager,
+          editDocument,
+          targetId,
+        );
         // Mark container for re-composite after layer changes
         container.compositeNeeded = true;
       }, 100),
-    [editMode, setLayerManager],
+    [editDocument, editMode, setLayerManager],
   );
 
   // Cancel any pending debounced render when dependencies change or on unmount
@@ -87,7 +95,7 @@ const UpdateCanvas = ({
           roundedHeight !== Math.floor(app.current.renderer.height) ||
           roundedWidth !== Math.floor(app.current.renderer.width)
         ) {
-          const newScale = fitImageToScreen(
+          const newScale = getOptimalInitialZoom(
             project.settings.canvasSettings.width,
             project.settings.canvasSettings.height,
             roundedWidth,
@@ -160,6 +168,7 @@ const UpdateCanvas = ({
     photoProXUser?.settings.performance,
     layerManager.layers,
     layerManager.target,
+    editDocument,
     zoomFromUser,
     targetPosition,
   ]);

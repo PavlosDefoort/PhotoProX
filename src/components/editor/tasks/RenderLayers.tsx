@@ -9,58 +9,9 @@ import {
 } from "@/models/project/Layers/Layers";
 import { Container, Filter, Graphics } from "pixi.js";
 import { DraftFunction } from "use-immer";
-
-/**
- * For a clip-to-below adjustment, find the image layer(s) it targets.
- * Follows the same logic as the old recursive container nesting:
- *  - Find the nearest image and nearest adjustment below
- *  - If image is closer → target that image
- *  - If a clipping adjustment is closer → follow its targets (chain)
- *  - If a non-clipping adjustment is closer → target the nearest image
- */
-function getClipTargets(
-  adjustment: AdjustmentLayer,
-  layers: LayerX[],
-): ImageLayer[] {
-  const below = layers
-    .filter((l) => l.zIndex < adjustment.zIndex)
-    .sort((a, b) => b.zIndex - a.zIndex); // highest first
-
-  const nearestImage = below.find((l) => l instanceof ImageLayer) as
-    | ImageLayer
-    | undefined;
-  const nearestAdj = below.find((l) => l instanceof AdjustmentLayer) as
-    | AdjustmentLayer
-    | undefined;
-
-  if (nearestImage && nearestAdj) {
-    if (nearestImage.zIndex > nearestAdj.zIndex) {
-      return [nearestImage];
-    } else if (nearestAdj.clipToBelow) {
-      return getClipTargets(nearestAdj, layers);
-    } else {
-      return [nearestImage];
-    }
-  } else if (nearestImage) {
-    return [nearestImage];
-  } else if (nearestAdj?.clipToBelow) {
-    return getClipTargets(nearestAdj, layers);
-  }
-
-  return [];
-}
-
-/**
- * For a non-clip adjustment, it targets ALL image layers below it.
- */
-function getNonClipTargets(
-  adjustment: AdjustmentLayer,
-  layers: LayerX[],
-): ImageLayer[] {
-  return layers.filter(
-    (l) => l instanceof ImageLayer && l.zIndex < adjustment.zIndex,
-  ) as ImageLayer[];
-}
+import { EditDocument } from "@/interfaces/editor/EditDocument";
+import { getAdjustmentTargets } from "@/models/editor/AdjustmentTargets";
+import { projectAdjustmentStateToRuntime } from "@/models/editor/AdjustmentDocument";
 
 /**
  * Collect the adjustment filters that should be applied to each image sprite.
@@ -70,7 +21,10 @@ function getNonClipTargets(
  * stacked adjustments produce the correct filter pipeline order
  * (inner adjustment first, outer adjustment last).
  */
-function collectAdjustmentFilters(layers: LayerX[]): Map<string, Filter[]> {
+function collectAdjustmentFilters(
+  layers: LayerX[],
+  editDocument: EditDocument,
+): Map<string, Filter[]> {
   const filterMap = new Map<string, Filter[]>();
 
   // Initialize an empty filter list for every image layer
@@ -86,9 +40,11 @@ function collectAdjustmentFilters(layers: LayerX[]): Map<string, Filter[]> {
     .sort((a, b) => a.zIndex - b.zIndex) as AdjustmentLayer[];
 
   for (const adj of adjustments) {
-    const targets = adj.clipToBelow
-      ? getClipTargets(adj, layers)
-      : getNonClipTargets(adj, layers);
+    const documentState = editDocument.adjustmentLayers[adj.id];
+    if (documentState) {
+      projectAdjustmentStateToRuntime(adj, documentState);
+    }
+    const targets = getAdjustmentTargets(adj, layers);
 
     const adjFilters = (adj.container.filters as Filter[]) || [];
 
@@ -148,6 +104,7 @@ export function renderLayers(
   container: ContainerX,
   editMode: EditMode,
   setLayerManager: (draft: DraftFunction<LayerManager>) => void,
+  editDocument: EditDocument,
   targetId?: string,
 ): void {
   const renderedLayers = new Set<LayerX>();
@@ -231,7 +188,10 @@ export function renderLayers(
   }
 
   // Pass 2: Collect adjustment filters and assign to target sprites
-  const adjustmentFilters = collectAdjustmentFilters(sortedLayers);
+  const adjustmentFilters = collectAdjustmentFilters(
+    sortedLayers,
+    editDocument,
+  );
 
   for (const layer of sortedLayers) {
     if (layer instanceof ImageLayer) {

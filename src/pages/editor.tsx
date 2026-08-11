@@ -4,6 +4,10 @@ import { EditMode } from "@/interfaces/types/ProjectRelatedTypes";
 import { UndoRedoManager } from "@/models/data-structures/UndoRedoManager";
 import { LayerManager } from "@/models/project/LayerManager";
 import { Project } from "@/models/project/Project";
+import {
+  createEditDocument,
+} from "@/models/editor/EditDocument";
+import { EditDocument } from "@/interfaces/editor/EditDocument";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useImmer } from "use-immer";
@@ -18,12 +22,15 @@ export default function Editor({}) {
   const [layerManager, setLayerManager] = useImmer<LayerManager>(
     new LayerManager(),
   );
+  const [editDocument, setEditDocument] = useImmer<EditDocument>(
+    createEditDocument(),
+  );
   const [undoRedoManager, setUndoRedoManager] = useImmer<UndoRedoManager>(
     new UndoRedoManager(),
   );
   const [trigger, setTrigger] = useState(false);
   const [landing, setLanding] = useState(false);
-  const [editMode, setEditMode] = useState<EditMode>("view");
+  const [editMode, setEditMode] = useState<EditMode>("move");
   const [loading, setLoading] = useState(false);
   const [isLoadingBar, setIsLoadingBar] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -51,6 +58,8 @@ export default function Editor({}) {
             setUndoRedoManager,
             layerManager,
             setLayerManager,
+            editDocument,
+            setEditDocument,
             trigger,
             setTrigger,
             landing,
