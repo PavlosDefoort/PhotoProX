@@ -1,6 +1,6 @@
 export type AssistantProviderMode = "auto" | "deterministic" | "ollama-local";
 
-const STORAGE_KEY = "photoprox.show-me.assistant-provider-mode";
+const STORAGE_KEY = "zynalo.show-me.assistant-provider-mode";
 
 export const readAssistantProviderMode = (): AssistantProviderMode => {
   if (typeof window === "undefined") {

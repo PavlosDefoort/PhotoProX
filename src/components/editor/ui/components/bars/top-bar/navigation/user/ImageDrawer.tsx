@@ -116,6 +116,7 @@ const ImageDrawer: React.FC<DrawerProps> = ({ open, setOpen }) => {
       a.href = url;
       a.download = photos[currentIndex].name;
       a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
   };
 

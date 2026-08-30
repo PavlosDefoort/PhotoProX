@@ -1,0 +1,51 @@
+node_modules/
+.tools/
+apps/diffusion/dist/
+out/
+coverage/
+.test-output/
+*.log
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+*.pyc
+
+# Models, runtimes, and generated artifacts
+models/
+weights/
+checkpoints/
+generated/
+outputs/
+huggingface/
+hub/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.gguf
+portable-python/
+portable-node/
+*.asar
+installers/
+benchmark-output/
+benchmarks/
+*.trace
+*.nvprof
+*.nsys-rep
+*.jsonl
+
+# Optional adult-capable upstream vocabulary; keep the public repository clean
+resources/tag-catalog/danbooru.csv

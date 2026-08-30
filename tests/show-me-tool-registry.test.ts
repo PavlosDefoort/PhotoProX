@@ -5,7 +5,7 @@ import {
   validateExecutableShowMePlan,
 } from "../src/features/show-me/createShowMePlan";
 import { parseShowMeRequest } from "../src/features/show-me/parseShowMeRequest";
-import { getPhotoProxToolManifest } from "../src/features/show-me/tools/photoProxToolRegistry";
+import { getZynaloToolManifest } from "../src/features/show-me/tools/zynaloToolRegistry";
 
 const imageContext = { selectedLayerKind: "image" as const };
 
@@ -68,12 +68,12 @@ test("rejects an unknown tool before it can create actions", () => {
 
   assert.equal(result.ok, false);
   if (!result.ok) {
-    assert.match(result.error, /Unknown PhotoProx tool/);
+    assert.match(result.error, /Unknown Zynalo tool/);
   }
 });
 
 test("exports a data-only manifest for the current selection", () => {
-  const manifest = getPhotoProxToolManifest(imageContext);
+  const manifest = getZynaloToolManifest(imageContext);
   assert.deepEqual(
     manifest.tools.map((tool) => tool.id),
     [

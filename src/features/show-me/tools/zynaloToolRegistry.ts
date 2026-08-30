@@ -1,10 +1,10 @@
 import {
   AdjustmentValueParameters,
-  PhotoProxTool,
-  PhotoProxToolId,
-  PhotoProxToolManifest,
-  PhotoProxToolParameters,
-  PhotoProxToolRegistry,
+  ZynaloTool,
+  ZynaloToolId,
+  ZynaloToolManifest,
+  ZynaloToolParameters,
+  ZynaloToolRegistry,
   RotateParameters,
   ScalePercentParameters,
 } from "./types";
@@ -52,7 +52,7 @@ const validateAdjustmentParameters = (
 const formatPercent = (percent: number) =>
   Number.isInteger(percent) ? percent.toFixed(0) : percent.toFixed(1);
 
-export const PHOTO_PROX_TOOL_REGISTRY: PhotoProxToolRegistry = {
+export const ZYNALO_TOOL_REGISTRY: ZynaloToolRegistry = {
   version: 1,
   tools: {
     "image.rotate.clockwise": {
@@ -277,37 +277,37 @@ export const PHOTO_PROX_TOOL_REGISTRY: PhotoProxToolRegistry = {
   },
 };
 
-export const isPhotoProxToolId = (
+export const isZynaloToolId = (
   toolId: string,
-): toolId is PhotoProxToolId =>
+): toolId is ZynaloToolId =>
   Object.prototype.hasOwnProperty.call(
-    PHOTO_PROX_TOOL_REGISTRY.tools,
+    ZYNALO_TOOL_REGISTRY.tools,
     toolId,
   );
 
-export const getPhotoProxTool = <K extends PhotoProxToolId>(
+export const getZynaloTool = <K extends ZynaloToolId>(
   toolId: K,
-): PhotoProxTool<K> =>
-  PHOTO_PROX_TOOL_REGISTRY.tools[toolId] as PhotoProxTool<K>;
+): ZynaloTool<K> =>
+  ZYNALO_TOOL_REGISTRY.tools[toolId] as ZynaloTool<K>;
 
-export const validateToolParameters = <K extends PhotoProxToolId>(
+export const validateToolParameters = <K extends ZynaloToolId>(
   toolId: K,
   parameters: unknown,
-): parameters is PhotoProxToolParameters[K] =>
-  getPhotoProxTool(toolId).validateParameters(parameters);
+): parameters is ZynaloToolParameters[K] =>
+  getZynaloTool(toolId).validateParameters(parameters);
 
-export const getAvailablePhotoProxTools = (
-  context: Parameters<PhotoProxTool["supports"]>[0],
+export const getAvailableZynaloTools = (
+  context: Parameters<ZynaloTool["supports"]>[0],
 ) =>
-  Object.values(PHOTO_PROX_TOOL_REGISTRY.tools).filter((tool) =>
+  Object.values(ZYNALO_TOOL_REGISTRY.tools).filter((tool) =>
     tool.supports(context),
   );
 
-export const getPhotoProxToolManifest = (
-  context: Parameters<PhotoProxTool["supports"]>[0],
-): PhotoProxToolManifest => ({
-  version: PHOTO_PROX_TOOL_REGISTRY.version,
-  tools: getAvailablePhotoProxTools(context).map((tool) => ({
+export const getZynaloToolManifest = (
+  context: Parameters<ZynaloTool["supports"]>[0],
+): ZynaloToolManifest => ({
+  version: ZYNALO_TOOL_REGISTRY.version,
+  tools: getAvailableZynaloTools(context).map((tool) => ({
     id: tool.id,
     displayName: tool.displayName,
     description: tool.description,

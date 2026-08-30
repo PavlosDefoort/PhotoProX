@@ -3,6 +3,8 @@ import { ProjectContext } from "../context/ProjectContext";
 
 export function useProject() {
   const {
+    workspace,
+    setWorkspace,
     project,
     setProject,
     layerManager,
@@ -27,9 +29,22 @@ export function useProject() {
     setLoadingTask,
     loadingProgressText,
     setLoadingProgressText,
+    activeDocumentId,
+    activeDocument,
+    createBlankDocument,
+    openImageFile,
+    openProjectFile,
+    activateDocument,
+    reorderDocuments,
+    closeDocument,
+    cycleDocuments,
+    markDocumentSaved,
+    updateActiveCanvasView,
   } = useContext(ProjectContext);
 
   return {
+    workspace,
+    setWorkspace,
     project,
     setProject,
     layerManager,
@@ -54,5 +69,16 @@ export function useProject() {
     setLoadingTask,
     loadingProgressText,
     setLoadingProgressText,
+    activeDocumentId,
+    activeDocument,
+    createBlankDocument,
+    openImageFile,
+    openProjectFile,
+    activateDocument,
+    reorderDocuments,
+    closeDocument,
+    cycleDocuments,
+    markDocumentSaved,
+    updateActiveCanvasView,
   };
 }

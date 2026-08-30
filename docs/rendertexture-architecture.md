@@ -1,4 +1,4 @@
-# PhotoProX RenderTexture Architecture
+# Zynalo RenderTexture Architecture
 
 ## Purpose
 

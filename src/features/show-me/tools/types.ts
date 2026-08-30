@@ -1,6 +1,6 @@
 import { SerializableEditorAction } from "@/interfaces/editor/EditDocument";
 
-export type PhotoProxToolId =
+export type ZynaloToolId =
   | "image.rotate.clockwise"
   | "image.rotate.counterclockwise"
   | "image.scale.percent"
@@ -24,7 +24,7 @@ export type SelectedLayerKind =
 
 export interface ToolAvailabilityContext {
   selectedLayerKind: SelectedLayerKind;
-  availableAdjustmentToolIds?: PhotoProxToolId[];
+  availableAdjustmentToolIds?: ZynaloToolId[];
 }
 
 export type ToolExecutionPolicy =
@@ -45,7 +45,7 @@ export interface AdjustmentValueParameters {
   value: number;
 }
 
-export interface PhotoProxToolParameters {
+export interface ZynaloToolParameters {
   "image.rotate.clockwise": RotateParameters;
   "image.rotate.counterclockwise": RotateParameters;
   "image.scale.percent": ScalePercentParameters;
@@ -71,7 +71,7 @@ export interface ToolEducation {
   caveats: string;
 }
 
-export interface PhotoProxTool<K extends PhotoProxToolId = PhotoProxToolId> {
+export interface ZynaloTool<K extends ZynaloToolId = ZynaloToolId> {
   id: K;
   displayName: string;
   description: string;
@@ -83,23 +83,23 @@ export interface PhotoProxTool<K extends PhotoProxToolId = PhotoProxToolId> {
   supports: (context: ToolAvailabilityContext) => boolean;
   validateParameters: (
     parameters: unknown,
-  ) => parameters is PhotoProxToolParameters[K];
-  formatTitle: (parameters: PhotoProxToolParameters[K]) => string;
-  formatExplanation: (parameters: PhotoProxToolParameters[K]) => string;
+  ) => parameters is ZynaloToolParameters[K];
+  formatTitle: (parameters: ZynaloToolParameters[K]) => string;
+  formatExplanation: (parameters: ZynaloToolParameters[K]) => string;
   createActions?: (
-    parameters: PhotoProxToolParameters[K],
+    parameters: ZynaloToolParameters[K],
   ) => SerializableEditorAction[];
 }
 
-export type PhotoProxToolRegistry = {
+export type ZynaloToolRegistry = {
   version: 1;
   tools: {
-    [K in PhotoProxToolId]: PhotoProxTool<K>;
+    [K in ZynaloToolId]: ZynaloTool<K>;
   };
 };
 
-export interface PhotoProxToolManifestEntry {
-  id: PhotoProxToolId;
+export interface ZynaloToolManifestEntry {
+  id: ZynaloToolId;
   displayName: string;
   description: string;
   education: ToolEducation;
@@ -109,14 +109,14 @@ export interface PhotoProxToolManifestEntry {
   executionPolicy: ToolExecutionPolicy;
 }
 
-export interface PhotoProxToolManifest {
+export interface ZynaloToolManifest {
   version: 1;
-  tools: PhotoProxToolManifestEntry[];
+  tools: ZynaloToolManifestEntry[];
 }
 
-export type PhotoProxToolRequest = {
-  [K in PhotoProxToolId]: {
+export type ZynaloToolRequest = {
+  [K in ZynaloToolId]: {
     toolId: K;
-    parameters: PhotoProxToolParameters[K];
+    parameters: ZynaloToolParameters[K];
   };
-}[PhotoProxToolId];
+}[ZynaloToolId];

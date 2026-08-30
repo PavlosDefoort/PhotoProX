@@ -9,7 +9,7 @@ import { DeterministicEditPlanProvider } from "../src/features/show-me/providers
 import { toEditPlanToolManifest } from "../src/features/show-me/providers";
 import { resolveUntrustedShowMeResponse, validateExecutableShowMePlan } from "../src/features/show-me/createShowMePlan";
 import { parseShowMeRequest } from "../src/features/show-me/parseShowMeRequest";
-import { getPhotoProxToolManifest } from "../src/features/show-me/tools/photoProxToolRegistry";
+import { getZynaloToolManifest } from "../src/features/show-me/tools/zynaloToolRegistry";
 import {
   parseVisualAnalysis,
   toPlannerVisualContext,
@@ -21,14 +21,14 @@ const imageContext = {
   availableAdjustmentToolIds: [],
   imageDimensions: { width: 1920, height: 1080 },
   currentAdjustmentValues: {},
-  supportedToolIds: getPhotoProxToolManifest({
+  supportedToolIds: getZynaloToolManifest({
     selectedLayerKind: "image" as const,
     availableAdjustmentToolIds: [],
   }).tools.map((tool) => tool.id),
 };
 
 const toolManifest = toEditPlanToolManifest(
-  getPhotoProxToolManifest({
+  getZynaloToolManifest({
     selectedLayerKind: "image" as const,
     availableAdjustmentToolIds: [],
   }),
@@ -265,7 +265,7 @@ test("no model-generated response bypasses registry validation", () => {
   );
   assert.equal(resolved.ok, false);
   if (!resolved.ok) {
-    assert.match(resolved.error, /Unknown PhotoProx tool/i);
+    assert.match(resolved.error, /Unknown Zynalo tool/i);
   }
 
   const modelOutputOutOfRange = {

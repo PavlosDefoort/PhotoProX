@@ -4,9 +4,9 @@ import { createContext } from "react";
 
 export const AuthContext = createContext<AuthContextValue>({
   user: null,
-  photoProXUser: DEFAULT_GUEST_USER,
+  zynaloUser: DEFAULT_GUEST_USER,
   loading: true,
-  setPhotoProXUser: (value) => {
+  setZynaloUser: (value) => {
     // Add your implementation here
   },
 });

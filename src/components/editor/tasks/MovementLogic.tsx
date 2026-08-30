@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import { useCanvas } from "@/hooks/useCanvas";
 import { compositeToRT } from "@/utils/PixiUtils";
+import { MAX_ZOOM_SCALE, MIN_ZOOM_SCALE, shouldUseNearestPreview } from "@/utils/PixelInspection";
 
 interface PinchHandlerProps {
   target: React.RefObject<Element>;
@@ -16,6 +17,7 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
     targetZoom,
     setTargetZoom,
     targetPosition,
+    pendingZoomSnap,
   } = useCanvas();
 
   const isPinching = useRef(false);
@@ -47,8 +49,8 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      const maxZoom = 5;
-      const minZoom = 0.05;
+      const maxZoom = MAX_ZOOM_SCALE;
+      const minZoom = MIN_ZOOM_SCALE;
       const zoomSensitivity = 0.0015;
 
       const canvasBounds = app.current?.canvas.getBoundingClientRect();
@@ -133,6 +135,31 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
     const animate = () => {
       if (!container) return;
 
+      // If a document switch has queued a synchronous snap, apply it now —
+      // before any interpolation so the container is at the correct position
+      // for this frame, eliminating the multi-frame lag that causes the flash.
+      const snap = pendingZoomSnap.current;
+      if (snap) {
+        pendingZoomSnap.current = null;
+        currentZoomRef.current = snap.zoom;
+        targetZoomRef.current = snap.zoom;
+        zoomAnchor.current = null;
+        container.scale.set(snap.zoom);
+        container.x = snap.x;
+        container.y = snap.y;
+        if (container.displaySprite) {
+          container.displaySprite.x = snap.x;
+          container.displaySprite.y = snap.y;
+          container.displaySprite.scale.set(snap.zoom);
+        }
+        // Composite the render texture immediately so the display sprite shows
+        // the correct pixels at the new transform without waiting another frame.
+        if (app.current) {
+          compositeToRT(app.current.renderer, container);
+          container.compositeNeeded = false;
+        }
+      }
+
       const tZoom = targetZoomRef.current;
 
       // Logarithmic zoom interpolation for perceptually uniform smoothing
@@ -209,6 +236,10 @@ const MovementHandler: React.FC<PinchHandlerProps> = ({ target }) => {
         container.displaySprite.x = container.x;
         container.displaySprite.y = container.y;
         container.displaySprite.scale.set(container.scale.x, container.scale.y);
+        const scaleMode = shouldUseNearestPreview(container.scale.x) ? "nearest" : "linear";
+        if (container.displaySprite.texture.source.style.scaleMode !== scaleMode) {
+          container.displaySprite.texture.source.style.scaleMode = scaleMode;
+        }
       }
 
       if (container.directRenderMode) {

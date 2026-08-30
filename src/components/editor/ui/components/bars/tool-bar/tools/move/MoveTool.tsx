@@ -1,8 +1,13 @@
 import { useCanvas } from "@/hooks/useCanvas";
 import { useProject } from "@/hooks/useProject";
 import { ImageLayer } from "@/models/project/Layers/Layers";
-import { Graphics, PointData } from "pixi.js";
+import { CanvasSource, Graphics, PointData, Texture } from "pixi.js";
 import React, { useEffect, useRef } from "react";
+import { rasterizeSelectionMask, sampleSelectionCoverage, sourcePixelFromSpriteLocal, translateSelection } from "@/utils/SelectionGeometry";
+import { extractSelectedPixels, translateSelectedPixels } from "@/utils/RasterOperations";
+import { findLayer } from "@/models/project/LayerManager";
+import { setFullResolutionWorkingSource } from "@/utils/ImageUtils";
+import { crossProjectDragSession } from "@/models/editor/CrossProjectDragSession";
 
 const DEBUG_MOVE_TOOL = false;
 
@@ -19,7 +24,7 @@ const debugMove = (message: string, payload?: unknown) => {
 
 const MoveTool: React.FC = () => {
   const { app, container } = useCanvas();
-  const { editMode, layerManager, setLayerManager } = useProject();
+  const { editMode, layerManager, setLayerManager, editDocument, setEditDocument, activeDocumentId } = useProject();
 
   const draggingRef = useRef(false);
   const dragLayerRef = useRef<ImageLayer | null>(null);
@@ -28,6 +33,8 @@ const MoveTool: React.FC = () => {
   const moveLogCounterRef = useRef(0);
   const activePointerIdRef = useRef<number | null>(null);
   const lineRef = useRef<Graphics | null>(null);
+  const selectionMoveRef = useRef<{ pointerId: number; layer: ImageLayer; start: { x: number; y: number }; dx: number; dy: number; previewBaseX: number; previewBaseY: number; selection: NonNullable<typeof editDocument.selections[string]>; raster: { width: number; height: number; pixels: Uint8ClampedArray }; originalTexture: Texture; previewTexture: Texture | null } | null>(null);
+  const floatingSelectionRef = useRef<{ layerId: string; baseSelection: NonNullable<typeof editDocument.selections[string]>; baseRaster: { width: number; height: number; pixels: Uint8ClampedArray }; offsetX: number; offsetY: number } | null>(null);
 
   useEffect(() => {
     if (!app.current || !container || editMode !== "move") {
@@ -39,8 +46,9 @@ const MoveTool: React.FC = () => {
       return;
     }
 
-    const stage = app.current.stage;
-    const canvasEl = app.current.canvas as HTMLCanvasElement | null;
+    const pixiApp = app.current;
+    const stage = pixiApp.stage;
+    const canvasEl = pixiApp.canvas as HTMLCanvasElement | null;
 
     if (!canvasEl) {
       debugMove("inactive", {
@@ -109,10 +117,10 @@ const MoveTool: React.FC = () => {
       const rect = canvasEl.getBoundingClientRect();
       const x =
         ((event.clientX - rect.left) / rect.width) *
-        app.current!.renderer.width;
+        pixiApp.renderer.screen.width;
       const y =
         ((event.clientY - rect.top) / rect.height) *
-        app.current!.renderer.height;
+        pixiApp.renderer.screen.height;
       return { x, y };
     };
 
@@ -122,7 +130,88 @@ const MoveTool: React.FC = () => {
       return { x, y };
     };
 
+    const toSourcePoint = (layer: ImageLayer, globalX: number, globalY: number) =>
+      sourcePixelFromSpriteLocal(layer.sprite.toLocal({ x: globalX, y: globalY }), layer.sprite.texture.width, layer.sprite.texture.height);
+
+    const sourceToRaster = (layer: ImageLayer) => {
+      const resource = layer.sprite.texture.source.resource;
+      if (!(resource instanceof HTMLCanvasElement || resource instanceof HTMLImageElement || resource instanceof ImageBitmap)) return null;
+      const width = Math.max(1, Math.round(layer.sprite.texture.width)), height = Math.max(1, Math.round(layer.sprite.texture.height));
+      const canvas = document.createElement("canvas"); canvas.width = width; canvas.height = height;
+      const context = canvas.getContext("2d", { willReadFrequently: true }); if (!context) return null;
+      context.drawImage(resource as CanvasImageSource, 0, 0, width, height);
+      return { width, height, pixels: new Uint8ClampedArray(context.getImageData(0, 0, width, height).data) };
+    };
+
+    const cropRasterToContent = (raster: { width: number; height: number; pixels: Uint8ClampedArray }) => {
+      let minX = raster.width, minY = raster.height, maxX = -1, maxY = -1;
+      for (let i = 3; i < raster.pixels.length; i += 4) {
+        if (!raster.pixels[i]) continue;
+        const pixel = (i - 3) / 4;
+        const x = pixel % raster.width, y = Math.floor(pixel / raster.width);
+        minX = Math.min(minX, x); minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+      }
+      if (maxX < minX || maxY < minY) return { ...raster, offsetX: 0, offsetY: 0 };
+      const width = maxX - minX + 1, height = maxY - minY + 1;
+      const pixels = new Uint8ClampedArray(width * height * 4);
+      for (let y = 0; y < height; y++) {
+        const sourceStart = ((minY + y) * raster.width + minX) * 4;
+        pixels.set(raster.pixels.subarray(sourceStart, sourceStart + width * 4), y * width * 4);
+      }
+      return { width, height, pixels, offsetX: minX, offsetY: minY };
+    };
+
+    const commitSelectionMove = () => {
+      const move = selectionMoveRef.current;
+      if (!move) return;
+      selectionMoveRef.current = null;
+      if (move.previewTexture) move.previewTexture.destroy(true);
+      const dx = Math.round(move.dx), dy = Math.round(move.dy);
+      move.layer.sprite.cursor = "grab";
+      if (!dx && !dy) return;
+      const { selection, raster } = move;
+      const pixels = translateSelectedPixels(raster.pixels, raster.width, raster.height, selection, dx, dy);
+      const canvas = document.createElement("canvas"); canvas.width = raster.width; canvas.height = raster.height;
+      const context = canvas.getContext("2d"); if (!context) return;
+      context.putImageData(new ImageData(pixels, raster.width, raster.height), 0, 0);
+      const texture = new Texture(new CanvasSource({ resource: canvas, width: raster.width, height: raster.height, antialias: true, scaleMode: "linear", autoDensity: true }));
+      const src = canvas.toDataURL("image/png");
+      setLayerManager(draft => { const layer = findLayer(draft.layers, move.layer.id); if (!(layer instanceof ImageLayer)) return; layer.sprite.texture = texture; setFullResolutionWorkingSource(layer, src, raster.width, raster.height); });
+      setEditDocument(draft => { draft.selections[move.layer.id] = translateSelection(selection, dx, dy); });
+      floatingSelectionRef.current = { layerId: move.layer.id, baseSelection: selection, baseRaster: raster, offsetX: dx, offsetY: dy };
+      container.compositeNeeded = true;
+    };
+
+    const setSelectionMoveDragState = (dragging: boolean) => {
+      window.dispatchEvent(
+        new CustomEvent("zynalo:selection-move-state", {
+          detail: { dragging },
+        }),
+      );
+    };
+
+    let previewFrame: number | null = null;
+    const previewSelectionMove = () => {
+      const move = selectionMoveRef.current;
+      if (!move) return;
+      window.dispatchEvent(new CustomEvent("zynalo:selection-move-preview", { detail: { layerId: move.layer.id, dx: move.dx - move.previewBaseX, dy: move.dy - move.previewBaseY } }));
+    };
+    const schedulePreview = () => {
+      if (previewFrame !== null) return;
+      previewFrame = window.requestAnimationFrame(() => { previewFrame = null; previewSelectionMove(); });
+    };
+
     const onPointerMove = (event: PointerEvent) => {
+      if (selectionMoveRef.current?.pointerId === event.pointerId) {
+        const { x: globalX, y: globalY } = getGlobalFromPointerEvent(event);
+        const point = toSourcePoint(selectionMoveRef.current.layer, globalX, globalY);
+        selectionMoveRef.current.dx += point.x - selectionMoveRef.current.start.x;
+        selectionMoveRef.current.dy += point.y - selectionMoveRef.current.start.y;
+        selectionMoveRef.current.start = point;
+        schedulePreview();
+        return;
+      }
       if (!draggingRef.current || !dragLayerRef.current) {
         return;
       }
@@ -321,6 +410,7 @@ const MoveTool: React.FC = () => {
     };
 
     const onWindowPointerUp = (event: PointerEvent) => {
+      if (selectionMoveRef.current?.pointerId === event.pointerId) { const layerId = selectionMoveRef.current.layer.id; if (previewFrame !== null) { window.cancelAnimationFrame(previewFrame); previewFrame = null; } commitSelectionMove(); setSelectionMoveDragState(false); window.dispatchEvent(new CustomEvent("zynalo:selection-move-preview", { detail: { layerId, dx: 0, dy: 0 } })); detachDragListeners(); return; }
       if (
         activePointerIdRef.current !== null &&
         event.pointerId !== activePointerIdRef.current
@@ -331,6 +421,7 @@ const MoveTool: React.FC = () => {
     };
 
     const onWindowPointerCancel = (event: PointerEvent) => {
+      if (selectionMoveRef.current?.pointerId === event.pointerId) { const move = selectionMoveRef.current; move.layer.sprite.cursor = "grab"; move.layer.sprite.texture = move.originalTexture; if (move.previewTexture) move.previewTexture.destroy(true); selectionMoveRef.current = null; setSelectionMoveDragState(false); if (previewFrame !== null) { window.cancelAnimationFrame(previewFrame); previewFrame = null; } window.dispatchEvent(new CustomEvent("zynalo:selection-move-preview", { detail: { layerId: move.layer.id, dx: 0, dy: 0 } })); detachDragListeners(); return; }
       if (
         activePointerIdRef.current !== null &&
         event.pointerId !== activePointerIdRef.current
@@ -397,6 +488,65 @@ const MoveTool: React.FC = () => {
         return;
       }
 
+      const selection = editDocument.selections[hitLayer.id];
+      const sourcePoint = toSourcePoint(hitLayer, globalX, globalY);
+      const floating = floatingSelectionRef.current;
+      const floatingSelection = floating?.layerId === hitLayer.id ? translateSelection(floating.baseSelection, floating.offsetX, floating.offsetY) : null;
+      const floatingStillMatches = Boolean(floatingSelection && selection && JSON.stringify(floatingSelection) === JSON.stringify(selection));
+      const raster = selection && floatingStillMatches ? floating!.baseRaster : selection ? sourceToRaster(hitLayer) : null;
+      if (selection && raster && sampleSelectionCoverage(selection, sourcePoint) >= .5) {
+        const baseSelection = floatingStillMatches ? floating!.baseSelection : structuredClone(selection);
+        const baseOffsetX = floatingStillMatches ? floating!.offsetX : 0;
+        const baseOffsetY = floatingStillMatches ? floating!.offsetY : 0;
+        selectionMoveRef.current = { pointerId: event.pointerId, layer: hitLayer, start: sourcePoint, dx: baseOffsetX, dy: baseOffsetY, previewBaseX: baseOffsetX, previewBaseY: baseOffsetY, selection: baseSelection, raster, originalTexture: hitLayer.sprite.texture, previewTexture: null };
+        const selectedRaster = cropRasterToContent({
+          width: raster.width,
+          height: raster.height,
+          pixels: extractSelectedPixels(raster.pixels, raster.width, raster.height, baseSelection),
+        });
+        const fullMask = rasterizeSelectionMask(baseSelection, raster.width, raster.height);
+        const outlineMask = new Uint8ClampedArray(selectedRaster.width * selectedRaster.height);
+        for (let y = 0; y < selectedRaster.height; y++) {
+          for (let x = 0; x < selectedRaster.width; x++) {
+            const sourceIndex = (selectedRaster.offsetY + y) * raster.width + selectedRaster.offsetX + x;
+            outlineMask[y * selectedRaster.width + x] = Math.round(fullMask[sourceIndex] * 255);
+          }
+        }
+        const canvasRect = pixiApp.canvas.getBoundingClientRect();
+        const cssScaleX = canvasRect.width / pixiApp.renderer.screen.width;
+        const cssScaleY = canvasRect.height / pixiApp.renderer.screen.height;
+        const viewport = container.displaySprite?.worldTransform;
+        const layerTransform = hitLayer.sprite.localTransform;
+        const sourcePixelScreenScaleX = viewport
+          ? Math.hypot(
+              viewport.a * layerTransform.a + viewport.c * layerTransform.b,
+              viewport.b * layerTransform.a + viewport.d * layerTransform.b,
+            ) * cssScaleX
+          : Math.abs(hitLayer.sprite.scale.x * container.scale.x) * cssScaleX;
+        const sourcePixelScreenScaleY = viewport
+          ? Math.hypot(
+              viewport.a * layerTransform.c + viewport.c * layerTransform.d,
+              viewport.b * layerTransform.c + viewport.d * layerTransform.d,
+            ) * cssScaleY
+          : Math.abs(hitLayer.sprite.scale.y * container.scale.y) * cssScaleY;
+        crossProjectDragSession.begin({
+          sourceProjectId: activeDocumentId ?? "",
+          sourceLayerIds: [hitLayer.id],
+          pointerId: event.pointerId,
+          pointerScreenX: event.clientX,
+          pointerScreenY: event.clientY,
+          grabOffsetX: (sourcePoint.x - selectedRaster.offsetX) * sourcePixelScreenScaleX,
+          grabOffsetY: (sourcePoint.y - selectedRaster.offsetY) * sourcePixelScreenScaleY,
+          status: "dragging",
+          payload: { kind: "raster", width: selectedRaster.width, height: selectedRaster.height, displayWidth: selectedRaster.width * sourcePixelScreenScaleX, displayHeight: selectedRaster.height * sourcePixelScreenScaleY, pixels: selectedRaster.pixels, outlineMask, name: hitLayer.name, opacity: hitLayer.opacity },
+        });
+        setSelectionMoveDragState(true);
+        hitLayer.sprite.cursor = "grabbing";
+        attachDragListeners();
+        event.preventDefault();
+        return;
+      }
+
       event.preventDefault();
       startDrag(hitLayer, hitLayer.sprite, event, globalX, globalY);
     };
@@ -414,6 +564,14 @@ const MoveTool: React.FC = () => {
     return () => {
       debugMove("cleanup start");
       finishDrag("cleanup");
+      if (selectionMoveRef.current) {
+        const move = selectionMoveRef.current;
+        move.layer.sprite.cursor = "grab";
+        move.layer.sprite.texture = move.originalTexture;
+        if (move.previewTexture) move.previewTexture.destroy(true);
+        selectionMoveRef.current = null;
+        setSelectionMoveDragState(false);
+      }
       canvasEl.removeEventListener("pointerdown", onCanvasPointerDown);
       lineRef.current?.clear();
 
@@ -433,6 +591,8 @@ const MoveTool: React.FC = () => {
     editMode,
     layerManager.layers,
     layerManager.target,
+    editDocument.selections,
+    setEditDocument,
     setLayerManager,
   ]);
 

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zynalo-sdxl-spike"
+version = "0.1.0"
+description = "Isolated Diffusers SDXL single-checkpoint inference and benchmark spike"
+requires-python = ">=3.10,<3.15"
+dependencies = [
+  "accelerate==1.14.0",
+  "diffusers==0.40.0",
+  "Pillow==12.1.0",
+  "numpy==2.2.6",
+  "safetensors==0.8.0",
+  "transformers==5.15.1",
+]
+
+[project.scripts]
+zynalo-sdxl = "zynalo_sdxl_spike.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,6 @@
+# Install the CUDA build of torch first, as documented in README.md.
+accelerate==1.14.0
+diffusers==0.40.0
+Pillow==12.1.0
+safetensors==0.8.0
+transformers==5.15.1

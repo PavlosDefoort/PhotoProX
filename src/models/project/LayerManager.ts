@@ -1,6 +1,6 @@
 import { LayerXInterface } from "@/interfaces/project/LayerInterfaces";
 import { ImageData } from "@/interfaces/project/SettingsInterfaces";
-import { base64StringToTexture } from "@/utils/ImageUtils";
+import { base64StringToTexture, getFullResolutionImageSrc } from "@/utils/ImageUtils";
 import { immerable } from "immer";
 import { SpriteX } from "../pixi-extends/SpriteX";
 import {
@@ -11,6 +11,7 @@ import {
 } from "./Layers/AdjustmentLayer";
 import { AdjustmentLayer, BackgroundLayer, ImageLayer } from "./Layers/Layers";
 import { BlurFilter, Graphics, MaskFilter } from "pixi.js";
+import { CONSERVATIVE_MAX_TEXTURE_DIMENSION, getOversizedProxySize, requiresTextureProxy } from "@/utils/TextureCapabilities";
 
 /**
  * @description Adds a layer to the project
@@ -59,16 +60,41 @@ export function checkZIndex(layers: LayerXInterface[]) {
 export async function createImageLayer(
   containerWidth: number,
   containerHeight: number,
-  imageData: ImageData
+  imageData: ImageData,
+  maxTextureDimension = CONSERVATIVE_MAX_TEXTURE_DIMENSION,
 ) {
+  let textureSource = getFullResolutionImageSrc(imageData);
+  let proxy = false;
+  if (maxTextureDimension && requiresTextureProxy(
+    imageData.fullResolutionWidth ?? imageData.imageWidth,
+    imageData.fullResolutionHeight ?? imageData.imageHeight,
+    maxTextureDimension,
+  )) {
+    const size = getOversizedProxySize(
+      imageData.fullResolutionWidth ?? imageData.imageWidth,
+      imageData.fullResolutionHeight ?? imageData.imageHeight,
+      maxTextureDimension,
+    );
+    textureSource = await createProxyDataUrl(getFullResolutionImageSrc(imageData), size.width, size.height);
+    imageData.previewSrc = textureSource;
+    imageData.previewWidth = size.width;
+    imageData.previewHeight = size.height;
+    imageData.previewReason = "Canonical image exceeds the active GPU texture limit.";
+    proxy = true;
+  }
   // Create the texture
-  const texture = await base64StringToTexture(imageData.src);
+  const texture = await base64StringToTexture(textureSource);
 
   // Create the sprite
   const sprite = SpriteX.from(texture, false);
 
   // Center the sprite
   sprite.center(containerWidth, containerHeight);
+  // Oversized imports may use a smaller GPU-safe proxy texture. Keep the
+  // document and displayed image at the original dimensions so the proxy
+  // still fills the imported image canvas when it is fit to view.
+  sprite.width = containerWidth;
+  sprite.height = containerHeight;
   sprite.cursor = "pointer";
   sprite.eventMode = "static";
 
@@ -77,9 +103,30 @@ export async function createImageLayer(
 
   // Create the image layer
   const imageLayer = new ImageLayer(1, name, imageData, sprite);
+  imageLayer.textureIsProxy = proxy;
   // Add the layer to the project
   return imageLayer;
 }
+
+const createProxyDataUrl = (src: string, width: number, height: number) =>
+  new Promise<string>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) return reject(new Error("Unable to allocate oversized-image preview canvas."));
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(image, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/png"));
+      canvas.width = 1;
+      canvas.height = 1;
+    };
+    image.onerror = () => reject(new Error("Unable to decode image for oversized-image preview."));
+    image.src = src;
+  });
 
 export function sortLayers(layers: LayerXInterface[]) {
   // Criteria for sorting:
@@ -406,30 +453,11 @@ export class LayerManager {
   createImageLayer = async (
     containerWidth: number,
     containerHeight: number,
-    imageData: ImageData
+    imageData: ImageData,
+    maxTextureDimension?: number,
   ) => {
-    // Create the texture
-    const texture = await base64StringToTexture(imageData.src);
-
-    // Create the sprite
-    const sprite = SpriteX.from(texture, false);
-
-    // Center the sprite
-    sprite.center(containerWidth, containerHeight);
-    sprite.cursor = "pointer";
-    sprite.eventMode = "static";
-
-    // Modify the name to remove the file extension
-    const name = imageData.name.split(".")[0];
-
-    // Create the image layer
-    const imageLayer = new ImageLayer(
-      this.layers.length,
-      name,
-      imageData,
-      sprite
-    );
-    // Add the layer to the project
-    return imageLayer;
+    const layer = await createImageLayer(containerWidth, containerHeight, imageData, maxTextureDimension);
+    layer.zIndex = this.layers.length;
+    return layer;
   };
 }

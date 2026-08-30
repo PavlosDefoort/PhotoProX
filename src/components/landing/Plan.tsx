@@ -9,7 +9,7 @@ export const Plan: React.FC = () => {
             Completely Free!
           </h1>
           <p className="lg:w-2/3 mx-auto leading-relaxed text-base text-gray-500 dark:text-zinc-100">
-            PhotoProX is completely free to use. No hidden fees or charges.
+            Zynalo is completely free to use. No hidden fees or charges.
           </p>
         </div>
         <div className="flex flex-row items-center justify-center -m-4">
@@ -53,7 +53,7 @@ export const Plan: React.FC = () => {
                 </span>
                 Did we mention everything?
               </p>
-              <Link href={"./editor"}>
+              <Link href={"/studio"}>
                 <button className="flex items-center mt-auto text-white bg-gray-400 border-0 py-2 px-4 w-full focus:outline-none hover:bg-gray-500 rounded">
                   Get Started
                   <svg

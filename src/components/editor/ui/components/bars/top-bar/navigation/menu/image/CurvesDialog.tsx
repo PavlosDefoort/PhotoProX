@@ -21,12 +21,14 @@
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogPortal,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCanvas } from "@/hooks/useCanvas";
+import { useDirectCanvasPreview } from "@/hooks/useDirectCanvasPreview";
 import { useProject } from "@/hooks/useProject";
 import { ImageSelectionState } from "@/interfaces/editor/EditDocument";
 import { EditorStateCommand } from "@/models/commands/editor/EditorStateCommand";
@@ -44,9 +46,10 @@ import {
   applySelectionAwareRasterOperation,
   curvesOperation,
 } from "@/utils/RasterOperations";
+import { GpuAdjustmentPreviewFilter } from "@/utils/GpuAdjustmentPreview";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { CanvasSource, Texture } from "pixi.js";
+import { CanvasSource, Filter, Texture } from "pixi.js";
 import React, {
   useCallback,
   useEffect,
@@ -54,6 +57,7 @@ import React, {
   useState,
 } from "react";
 import { toast } from "sonner";
+import { setFullResolutionWorkingSource } from "@/utils/ImageUtils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -93,13 +97,10 @@ const sourceToRaster = (layer: ImageLayer) => {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return null;
   ctx.drawImage(source as CanvasImageSource, 0, 0, width, height);
-  return {
-    width,
-    height,
-    pixels: new Uint8ClampedArray(
-      ctx.getImageData(0, 0, width, height).data,
-    ),
-  };
+  const pixels = new Uint8ClampedArray(
+    ctx.getImageData(0, 0, width, height).data,
+  );
+  return { width, height, pixels };
 };
 
 const pixelsToCanvas = (
@@ -123,7 +124,9 @@ const canvasToTexture = (canvas: HTMLCanvasElement): Texture => {
     height: canvas.height,
     antialias: true,
     scaleMode: "linear",
-    autoDensity: true,
+    // Keep adjustment output dimensions in image pixels so selection masks
+    // remain aligned on HiDPI displays and after successive adjustments.
+    autoDensity: false,
     mipmapFilter: "linear",
   });
   return new Texture(source);
@@ -137,12 +140,6 @@ const pixelsToState = (
   const canvas = pixelsToCanvas(pixels, width, height);
   return { texture: canvasToTexture(canvas), src: canvas.toDataURL("image/png") };
 };
-
-const pixelsToPreviewTexture = (
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-): Texture => canvasToTexture(pixelsToCanvas(pixels, width, height));
 
 // ---------------------------------------------------------------------------
 // Curve graph rendering
@@ -281,10 +278,10 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
     state: RasterState;
     selection?: ImageSelectionState;
     histogram: Float32Array;
+    previewFilter: GpuAdjustmentPreviewFilter;
+    originalFilters: Filter[];
   } | null>(null);
 
-  const previewTextureRef = useRef<Texture | null>(null);
-  const frameRef = useRef<number | null>(null);
 
   // Graph canvas
   const graphCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -305,6 +302,8 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
   // Input/Output field values for selected point
   const [inputVal, setInputVal] = useState("");
   const [outputVal, setOutputVal] = useState("");
+
+  useDirectCanvasPreview(container, open);
 
   // ---------------------------------------------------------------------------
   // Helpers: current channel's points and LUT
@@ -375,25 +374,23 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
       setLayerManager((draft) => {
         const layer = findLayer(draft.layers, layerId);
         if (!(layer instanceof ImageLayer)) return;
-        layer.sprite.texture = state.texture;
-        layer.imageData.src = state.src;
+    layer.sprite.texture = state.texture;
+    setFullResolutionWorkingSource(layer, state.src, state.texture.width, state.texture.height);
       });
       if (container) container.compositeNeeded = true;
     },
     [container, setLayerManager],
   );
 
-  const applyPreviewTexture = useCallback(
-    (layerId: string, texture: Texture) => {
-      setLayerManager((draft) => {
-        const layer = findLayer(draft.layers, layerId);
-        if (!(layer instanceof ImageLayer)) return;
-        layer.sprite.texture = texture;
-      });
-      if (container) container.compositeNeeded = true;
-    },
-    [container, setLayerManager],
-  );
+  const detachPreviewFilter = useCallback(() => {
+    const original = originalRef.current;
+    if (!original) return;
+    const layer = findLayer(layerManager.layers, original.layerId);
+    if (layer instanceof ImageLayer) {
+      layer.sprite.filters = original.originalFilters;
+    }
+    original.previewFilter.destroy();
+  }, [layerManager.layers]);
 
   // ---------------------------------------------------------------------------
   // Open / close lifecycle
@@ -413,13 +410,26 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
       return;
     }
     const selection = editDocument.selections[target.id];
+    const storedSelection = selection ? structuredClone(selection) : undefined;
     const histogram = computeHistogram(raster.pixels);
+    const originalFilters = target.sprite.filters
+      ? [...target.sprite.filters]
+      : [];
+    const previewFilter = new GpuAdjustmentPreviewFilter(
+      storedSelection,
+      raster.width,
+      raster.height,
+      target.sprite,
+    );
+    target.sprite.filters = [...originalFilters, previewFilter];
     originalRef.current = {
       layerId: target.id,
       raster,
       state: { texture: target.sprite.texture, src: target.imageData.src },
-      selection: selection ? structuredClone(selection) : undefined,
+      selection: storedSelection,
       histogram,
+      previewFilter,
+      originalFilters,
     };
     setCurves(defaultPoints());
     setChannel("rgb");
@@ -428,7 +438,6 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
     setInputVal("");
     setOutputVal("");
     renderDialogPosition(0, 0);
-    previewTextureRef.current = null;
   }, [editDocument.selections, onOpenChange, open, renderDialogPosition, target]);
 
   useEffect(() => {
@@ -470,10 +479,6 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
     (state: ChannelCurves, enabled: boolean) => {
       const original = originalRef.current;
       if (!original) return;
-      if (frameRef.current !== null) {
-        cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
-      }
       const luts = buildAllLUTs(state);
       const isIdentity =
         luts.rgb.every((v, i) => v === i) &&
@@ -482,53 +487,19 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
         luts.blue.every((v, i) => v === i);
 
       if (!enabled || isIdentity) {
-        if (
-          previewTextureRef.current &&
-          previewTextureRef.current !== original.state.texture
-        ) {
-          previewTextureRef.current.destroy(true);
-        }
-        previewTextureRef.current = null;
-        applyState(original.layerId, original.state);
+        original.previewFilter.enabled = false;
         return;
       }
-      frameRef.current = requestAnimationFrame(() => {
-        const output = applySelectionAwareRasterOperation(
-          original.raster.pixels,
-          original.raster.width,
-          original.raster.height,
-          original.selection,
-          curvesOperation(luts),
-        );
-        const texture = pixelsToPreviewTexture(
-          output,
-          original.raster.width,
-          original.raster.height,
-        );
-        if (
-          previewTextureRef.current &&
-          previewTextureRef.current !== original.state.texture
-        ) {
-          previewTextureRef.current.destroy(true);
-        }
-        previewTextureRef.current = texture;
-        applyPreviewTexture(original.layerId, texture);
-        frameRef.current = null;
-      });
+      original.previewFilter.enabled = true;
+      original.previewFilter.setCurves(luts);
     },
-    [applyPreviewTexture, applyState, buildAllLUTs],
+    [buildAllLUTs],
   );
 
   // Trigger preview whenever curves or preview toggle changes
   useEffect(() => {
     if (!open) return;
     schedulePreview(curves, preview);
-    return () => {
-      if (frameRef.current !== null) {
-        cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
-      }
-    };
   }, [open, curves, preview, schedulePreview]);
 
   // ---------------------------------------------------------------------------
@@ -538,9 +509,7 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
   const updateChannelPoints = useCallback(
     (ch: Channel, newPoints: ControlPoint[], newSelIdx: number | null) => {
       setCurves((prev) => {
-        const next = { ...prev, [ch]: newPoints };
-        schedulePreview(next, preview);
-        return next;
+        return { ...prev, [ch]: newPoints };
       });
       setSelectedIndex(newSelIdx);
       const sorted = normalizePoints(newPoints);
@@ -552,7 +521,7 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
         setOutputVal("");
       }
     },
-    [preview, schedulePreview],
+    [],
   );
 
   // ---------------------------------------------------------------------------
@@ -740,8 +709,7 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
     setSelectedIndex(null);
     setInputVal("");
     setOutputVal("");
-    schedulePreview(fresh, preview);
-  }, [preview, schedulePreview]);
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Cancel
@@ -749,23 +717,11 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
 
   const cancel = useCallback(() => {
     stopDialogDragging();
-    if (frameRef.current !== null) {
-      cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
     const original = originalRef.current;
-    if (original) applyState(original.layerId, original.state);
-    if (
-      previewTextureRef.current &&
-      original &&
-      previewTextureRef.current !== original.state.texture
-    ) {
-      previewTextureRef.current.destroy(true);
-    }
-    previewTextureRef.current = null;
+    if (original) detachPreviewFilter();
     originalRef.current = null;
     onOpenChange(false);
-  }, [applyState, onOpenChange, stopDialogDragging]);
+  }, [detachPreviewFilter, onOpenChange, stopDialogDragging]);
 
   // ---------------------------------------------------------------------------
   // Apply
@@ -775,10 +731,7 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
     stopDialogDragging();
     const original = originalRef.current;
     if (!original?.raster) return;
-    if (frameRef.current !== null) {
-      cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
+    detachPreviewFilter();
     const luts = buildAllLUTs(curves);
     const pixels = applySelectionAwareRasterOperation(
       original.raster.pixels,
@@ -803,17 +756,9 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
       draft.undoStack.push(command);
       draft.redoStack = [];
     });
-    if (
-      previewTextureRef.current &&
-      previewTextureRef.current !== after.texture &&
-      previewTextureRef.current !== original.state.texture
-    ) {
-      previewTextureRef.current.destroy(true);
-    }
-    previewTextureRef.current = null;
     originalRef.current = null;
     onOpenChange(false);
-  }, [applyState, buildAllLUTs, curves, onOpenChange, setUndoRedoManager, stopDialogDragging]);
+  }, [applyState, buildAllLUTs, curves, detachPreviewFilter, onOpenChange, setUndoRedoManager, stopDialogDragging]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -849,9 +794,9 @@ const CurvesDialog: React.FC<Props> = ({ open, onOpenChange }) => {
             onPointerDown={handleDragStart}
           >
             <DialogTitle className="text-base">Curves</DialogTitle>
-            <p className="text-xs text-muted-foreground">
+            <DialogDescription className="text-xs">
               Drag this top bar to move the window
-            </p>
+            </DialogDescription>
           </DialogHeader>
 
           {/* Channel selector */}

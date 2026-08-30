@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-08-24T04:12:16Z",
+  "tag_count_total": 186699,
+  "translated_count_total": 127523,
+  "translated_ratio": 0.683,
+  "by_category": {
+    "general": 36488,
+    "artists": 50000,
+    "copyrights": 19616,
+    "characters": 80000,
+    "meta": 595
+  },
+  "translated_by_category": {
+    "general": 25341,
+    "artists": 29182,
+    "copyrights": 15010,
+    "characters": 57643,
+    "meta": 347
+  },
+  "translation_sources": [
+    {
+      "source": "https://raw.githubusercontent.com/boorutan/booru-japanese-tag/main/danbooru-jp.csv",
+      "entries": 427,
+      "newly_added": 427
+    },
+    {
+      "source": "https://raw.githubusercontent.com/boorutan/booru-japanese-tag/main/danbooru-machine-jp.csv",
+      "entries": 99993,
+      "newly_added": 99566
+    }
+  ],
+  "ja_source_counts": {
+    "wiki": 81487,
+    "csv": 46036,
+    "none": 59176
+  },
+  "wiki_other_names_used": true
+}

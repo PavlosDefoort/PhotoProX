@@ -5,9 +5,12 @@ import { Project } from "@/models/project/Project";
 import { LayerManager } from "@/models/project/LayerManager";
 import { UndoRedoManager } from "@/models/data-structures/UndoRedoManager";
 import { createEditDocument } from "@/models/editor/EditDocument";
+import { createEditorWorkspace } from "@/models/editor/EditorWorkspace";
 
 // Define the default context value
 export const ProjectContext = createContext<ProjectContextValue>({
+  workspace: createEditorWorkspace(),
+  setWorkspace: () => {},
   project: new Project(),
   setProject: (arg: Project | DraftFunction<Project>) => {
     // Add your implementation here
@@ -52,4 +55,15 @@ export const ProjectContext = createContext<ProjectContextValue>({
   setLoadingProgressText: (value) => {
     // Add your implementation here
   },
+  activeDocumentId: null,
+  activeDocument: null,
+  createBlankDocument: () => "",
+  openImageFile: async () => null,
+  openProjectFile: async () => false,
+  activateDocument: () => {},
+  reorderDocuments: () => {},
+  closeDocument: () => {},
+  cycleDocuments: () => {},
+  markDocumentSaved: () => {},
+  updateActiveCanvasView: () => {},
 });

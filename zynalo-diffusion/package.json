@@ -1,0 +1,55 @@
+{
+  "name": "zynalo-diffusion",
+  "productName": "Zynalo Diffusion",
+  "version": "0.1.0",
+  "description": "A secure desktop foundation for approachable local image generation.",
+  "author": "Zynalo",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "apps/diffusion/dist/main/index.cjs",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "config": {
+    "forge": "./apps/diffusion/forge.config.ts"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "catalog:update": "node scripts/update-tag-catalog.mjs",
+    "dev": "npm run build && electron-forge start",
+    "lint": "eslint .",
+    "make": "npm run build && electron-forge make",
+    "package": "npm run build && electron-forge package",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.8.3",
+    "@electron-forge/maker-zip": "^7.8.3",
+    "@eslint/js": "^9.28.0",
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.1",
+    "electron": "^36.4.0",
+    "eslint": "^9.28.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.34.0",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.3"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.18.6",
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/lint": "^6.8.5",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.1"
+  }
+}

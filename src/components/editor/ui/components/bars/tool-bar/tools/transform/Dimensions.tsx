@@ -9,25 +9,27 @@ import { useProject } from "@/hooks/useProject";
 import { ImageLayer } from "@/models/project/Layers/Layers";
 import { LockClosedIcon, LockOpen1Icon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import NumberInput from "../../../../input/NumberInput";
 
 interface DimensionsProps {
   target: ImageLayer;
   update: boolean;
+  isRatio: boolean;
+  setIsRatio: Dispatch<SetStateAction<boolean>>;
 }
 
-const Dimensions: React.FC<DimensionsProps> = ({ target, update }) => {
-  const [isRatio, setIsRatio] = useState<boolean>(true);
-  const [width, setWidth] = useState<number>(target.sprite.width);
-  const [height, setHeight] = useState<number>(target.sprite.height);
+const Dimensions: React.FC<DimensionsProps> = ({ target, update, isRatio, setIsRatio }) => {
+  const [width, setWidth] = useState<number>(Math.round(target.sprite.width));
+  const [height, setHeight] = useState<number>(Math.round(target.sprite.height));
   const { editDocument } = useProject();
   const { dispatchSelectedImageActions } = useImageTransformActions();
   const documentTransform = editDocument.imageLayers[target.id]?.transform;
 
   useEffect(
     () => {
-      setWidth(target.sprite.width);
-      setHeight(target.sprite.height);
+      setWidth(Math.round(target.sprite.width));
+      setHeight(Math.round(target.sprite.height));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [documentTransform, target.sprite.height, target.sprite.width, update],
@@ -61,8 +63,8 @@ const Dimensions: React.FC<DimensionsProps> = ({ target, update }) => {
           "Resize image",
         );
         if (result.ok) {
-          setWidth(target.sprite.width);
-          setHeight(target.sprite.height);
+          setWidth(Math.round(target.sprite.width));
+          setHeight(Math.round(target.sprite.height));
         }
       } else {
         let newWidth = Math.round(value * aspectRatio);
@@ -81,8 +83,8 @@ const Dimensions: React.FC<DimensionsProps> = ({ target, update }) => {
           "Resize image",
         );
         if (result.ok) {
-          setWidth(target.sprite.width);
-          setHeight(target.sprite.height);
+          setWidth(Math.round(target.sprite.width));
+          setHeight(Math.round(target.sprite.height));
         }
 
         // Position the image in the center of the canvas
@@ -100,7 +102,7 @@ const Dimensions: React.FC<DimensionsProps> = ({ target, update }) => {
           "Resize image width",
         );
         if (result.ok) {
-          setWidth(target.sprite.width);
+          setWidth(Math.round(target.sprite.width));
         }
       } else {
         const result = dispatchSelectedImageActions(
@@ -114,7 +116,7 @@ const Dimensions: React.FC<DimensionsProps> = ({ target, update }) => {
           "Resize image height",
         );
         if (result.ok) {
-          setHeight(target.sprite.height);
+          setHeight(Math.round(target.sprite.height));
         }
       }
     }

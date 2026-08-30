@@ -13,17 +13,21 @@ import { useProject } from "@/hooks/useProject";
 import { EditorStateCommand } from "@/models/commands/editor/EditorStateCommand";
 import { findLayer } from "@/models/project/LayerManager";
 import { ImageLayer } from "@/models/project/Layers/Layers";
-import { base64StringToTexture } from "@/utils/ImageUtils";
+import { base64StringToTexture, setFullResolutionWorkingSource } from "@/utils/ImageUtils";
+import { getOptimalInitialZoom } from "@/utils/CalcUtils";
 import { texturePixelFromSpriteLocal } from "@/utils/CropCoordinates";
 import { SwapHoriz } from "@mui/icons-material";
 import { Graphics, Text, Texture } from "pixi.js";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { BEFORE_DOCUMENT_SWITCH_EVENT } from "@/components/editor/editorEvents";
 
 type CropSession = {
   layerId: string;
   textureWidth: number;
   textureHeight: number;
+  canvasWidth: number;
+  canvasHeight: number;
   before: CropLayerState;
   originalRatio: number;
 };
@@ -52,6 +56,10 @@ type CropLayerState = {
 type CropCommandState = {
   layerId: string;
   layer: CropLayerState;
+  canvas: {
+    width: number;
+    height: number;
+  };
 };
 
 type CropRect = {
@@ -178,17 +186,26 @@ const cloneLayerState = (
   adjustmentLayerIds: [...adjustmentLayerIds],
 });
 
-const CropTool: React.FC = () => {
+const CropTool: React.FC<{ showToolOptions?: boolean }> = ({ showToolOptions = true }) => {
   const {
     editMode,
     setEditMode,
     layerManager,
     setLayerManager,
+    project,
+    setProject,
     editDocument,
     setEditDocument,
     setUndoRedoManager,
   } = useProject();
-  const { app, container } = useCanvas();
+  const {
+    app,
+    container,
+    setCurrentZoom,
+    setTargetZoom,
+    targetPosition,
+    pendingZoomSnap,
+  } = useCanvas();
   const target = findLayer(layerManager.layers, layerManager.target);
   const sessionRef = useRef<CropSession | null>(null);
   const overlayRef = useRef<Graphics | null>(null);
@@ -238,6 +255,11 @@ const CropTool: React.FC = () => {
 
   const applyCropLayerState = useCallback(
     (state: CropCommandState) => {
+      setProject((draft) => {
+        draft.settings.canvasSettings.width = state.canvas.width;
+        draft.settings.canvasSettings.height = state.canvas.height;
+      });
+
       setLayerManager((draft) => {
         const imageLayer = findLayer(draft.layers, state.layerId);
         if (!(imageLayer instanceof ImageLayer)) {
@@ -253,9 +275,12 @@ const CropTool: React.FC = () => {
         imageLayer.sprite.position.y = state.layer.transform.positionY;
         imageLayer.sprite.skew.x = state.layer.transform.skewX;
         imageLayer.sprite.skew.y = state.layer.transform.skewY;
-        imageLayer.imageData.src = state.layer.imageData.src;
-        imageLayer.imageData.imageWidth = state.layer.imageData.imageWidth;
-        imageLayer.imageData.imageHeight = state.layer.imageData.imageHeight;
+        setFullResolutionWorkingSource(
+          imageLayer,
+          state.layer.imageData.src,
+          state.layer.imageData.imageWidth,
+          state.layer.imageData.imageHeight,
+        );
       });
 
       setEditDocument((draft) => {
@@ -270,9 +295,43 @@ const CropTool: React.FC = () => {
           adjustmentLayerIds: [...state.layer.adjustmentLayerIds],
         };
       });
+
+      const renderer = app.current?.renderer;
+      if (renderer) {
+        const availableWidth = Math.max(1, Math.round(renderer.width));
+        const availableHeight = Math.max(1, Math.round(renderer.height));
+        const fittedZoom = getOptimalInitialZoom(
+          state.canvas.width,
+          state.canvas.height,
+          Math.max(1, availableWidth - 96),
+          Math.max(1, availableHeight - 96),
+          0,
+        );
+        const fittedPosition = {
+          x: availableWidth / 2,
+          y: availableHeight / 2,
+        };
+        setCurrentZoom(fittedZoom);
+        setTargetZoom(fittedZoom);
+        targetPosition.current = fittedPosition;
+        pendingZoomSnap.current = {
+          zoom: fittedZoom,
+          ...fittedPosition,
+        };
+      }
       requestComposite();
     },
-    [requestComposite, setEditDocument, setLayerManager],
+    [
+      app,
+      pendingZoomSnap,
+      requestComposite,
+      setCurrentZoom,
+      setEditDocument,
+      setLayerManager,
+      setProject,
+      setTargetZoom,
+      targetPosition,
+    ],
   );
 
   const restorePreCropState = useCallback(() => {
@@ -282,6 +341,10 @@ const CropTool: React.FC = () => {
     applyCropLayerState({
       layerId: target.id,
       layer: session.before,
+      canvas: {
+        width: session.canvasWidth,
+        height: session.canvasHeight,
+      },
     });
   }, [applyCropLayerState, target]);
 
@@ -628,6 +691,8 @@ const CropTool: React.FC = () => {
       layerId: target.id,
       textureWidth,
       textureHeight,
+      canvasWidth: project.settings.canvasSettings.width,
+      canvasHeight: project.settings.canvasSettings.height,
       originalRatio: textureWidth / textureHeight,
       before: cloneLayerState(target, adjustmentLayerIds),
     };
@@ -639,7 +704,7 @@ const CropTool: React.FC = () => {
     setCropY(0);
     setCropWidth(textureWidth);
     setCropHeight(textureHeight);
-  }, [editDocument.imageLayers, setEditMode, target]);
+  }, [editDocument.imageLayers, project.settings.canvasSettings.height, project.settings.canvasSettings.width, setEditMode, target]);
 
   useEffect(() => {
     if (editMode !== "crop") return;
@@ -717,9 +782,21 @@ const CropTool: React.FC = () => {
       const previousTextureHeight = Math.max(1, Math.round(layer.sprite.texture.height));
       const widthRatio = safeRect.width / previousTextureWidth;
       const heightRatio = safeRect.height / previousTextureHeight;
+      const croppedWidth = Math.max(
+        1,
+        Math.round(Math.abs(pre.width) * widthRatio),
+      );
+      const croppedHeight = Math.max(
+        1,
+        Math.round(Math.abs(pre.height) * heightRatio),
+      );
 
       return {
         layerId: layer.id,
+        canvas: {
+          width: croppedWidth,
+          height: croppedHeight,
+        },
         layer: {
           texture: nextTexture,
           imageData: {
@@ -730,12 +807,12 @@ const CropTool: React.FC = () => {
           adjustmentLayerIds: [...session.before.adjustmentLayerIds],
           transform: {
             angle: pre.angle + straightenDegrees,
-            width: Math.max(1, Math.round(Math.abs(pre.width) * widthRatio)),
-            height: Math.max(1, Math.round(Math.abs(pre.height) * heightRatio)),
+            width: croppedWidth,
+            height: croppedHeight,
             scaleX: pre.scaleX,
             scaleY: pre.scaleY,
-            positionX: pre.positionX,
-            positionY: pre.positionY,
+            positionX: croppedWidth / 2,
+            positionY: croppedHeight / 2,
             skewX: pre.skewX,
             skewY: pre.skewY,
           },
@@ -760,6 +837,10 @@ const CropTool: React.FC = () => {
       const beforeState: CropCommandState = {
         layerId: target.id,
         layer: session.before,
+        canvas: {
+          width: session.canvasWidth,
+          height: session.canvasHeight,
+        },
       };
       const afterState = await buildAfterState(target, session);
       const command = new EditorStateCommand<CropCommandState>(
@@ -789,6 +870,22 @@ const CropTool: React.FC = () => {
     setUndoRedoManager,
     target,
   ]);
+
+  useEffect(() => {
+    const handleDocumentSwitch = () => {
+      if (editMode === "crop") {
+        handleCancel();
+      }
+    };
+
+    window.addEventListener(BEFORE_DOCUMENT_SWITCH_EVENT, handleDocumentSwitch);
+    return () => {
+      window.removeEventListener(
+        BEFORE_DOCUMENT_SWITCH_EVENT,
+        handleDocumentSwitch,
+      );
+    };
+  }, [editMode, handleCancel]);
 
   useEffect(() => {
     if (editMode !== "crop" || !(target instanceof ImageLayer)) return;
@@ -947,7 +1044,7 @@ const CropTool: React.FC = () => {
 
   return (
     <div className="w-full">
-      {target instanceof ImageLayer && editMode === "crop" && (
+      {showToolOptions && target instanceof ImageLayer && editMode === "crop" && (
         <div className="z-10 flex h-9 w-full flex-nowrap items-center gap-2 overflow-x-auto border-b-2 border-[#cdcdcd] bg-navbarBackground px-3 text-black dark:border-[#252525] dark:bg-navbarBackground dark:text-white">
           <span className="shrink-0 select-none text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             Crop

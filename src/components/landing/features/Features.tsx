@@ -10,7 +10,7 @@ export const Features: React.FC = () => {
             Features
           </h1>
           <p className="lg:w-1/2 w-full leading-relaxed text-gray-500 dark:text-zinc-200">
-            PhotoProX comes equipped with a variety of features to help you
+            Zynalo comes equipped with a variety of features to help you
             create stunning images.
           </p>
         </div>
@@ -31,7 +31,7 @@ export const Features: React.FC = () => {
             </div>
           ))}
         </div>
-        <Link href={"/editor"}>
+        <Link href={"/studio"}>
           <button className="flex mx-auto mt-16 text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">
             Get Started
           </button>

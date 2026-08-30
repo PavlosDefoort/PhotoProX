@@ -40,6 +40,6 @@ export const features = [
     icon: PhotoFilter,
     title: "Secure Cloud Storage",
     description:
-      "All your work done on PhotoProX is saved to the cloud. No need to worry about downloading your projects.",
+      "All your work done on Zynalo is saved to the cloud. No need to worry about downloading your projects.",
   },
 ];

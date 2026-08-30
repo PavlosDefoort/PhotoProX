@@ -1,4 +1,4 @@
-const PhotoProXDocsIcon: React.FC = () => {
+const ZynaloDocsIcon: React.FC = () => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -15,4 +15,4 @@ const PhotoProXDocsIcon: React.FC = () => {
   );
 };
 
-export default PhotoProXDocsIcon;
+export default ZynaloDocsIcon;

@@ -8,6 +8,7 @@ import { useProject } from "@/hooks/useProject";
 import { Redo2Icon, Undo2Icon } from "lucide-react";
 import { ReactNode, useEffect } from "react";
 import { toast } from "sonner";
+import { HISTORY_REDO_EVENT, HISTORY_UNDO_EVENT } from "@/components/editor/editorEvents";
 
 const UndoRedoButtons: React.FC = () => {
   const { undoRedoManager, setUndoRedoManager } = useProject();
@@ -19,12 +20,15 @@ const UndoRedoButtons: React.FC = () => {
 
   useEffect(() => {
     const handleUndo = () => {
+      const command =
+        undoRedoManager.undoStack[undoRedoManager.undoStack.length - 1];
+      if (!command) return;
+      command.undo();
       setUndoRedoManager((draft) => {
-        const command = draft.undoStack.pop();
-        if (command) {
-          command.undo();
-          draft.redoStack.push(command);
-          toast("Undoing " + command.title, {
+        const movedCommand = draft.undoStack.pop();
+        if (movedCommand) {
+          draft.redoStack.push(movedCommand);
+          toast("Undoing " + movedCommand.title, {
             duration: 3000,
             icon: UndoIcon,
 
@@ -49,12 +53,15 @@ const UndoRedoButtons: React.FC = () => {
     const UndoIcon: ReactNode = <Undo2Icon className="w-5 h-5" />;
 
     const handleRedo = () => {
+      const command =
+        undoRedoManager.redoStack[undoRedoManager.redoStack.length - 1];
+      if (!command) return;
+      command.execute();
       setUndoRedoManager((draft) => {
-        const command = draft.redoStack.pop();
-        if (command) {
-          command.execute();
-          draft.undoStack.push(command);
-          toast("Redoing " + command.title, {
+        const movedCommand = draft.redoStack.pop();
+        if (movedCommand) {
+          draft.undoStack.push(movedCommand);
+          toast("Redoing " + movedCommand.title, {
             duration: 3000,
             icon: RedoIcon,
             cancel: {
@@ -75,31 +82,46 @@ const UndoRedoButtons: React.FC = () => {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "z") {
+      const target = e.target as HTMLElement | null;
+      if (target?.isContentEditable || target?.matches("input, textarea, select")) return;
+      const modifier = e.ctrlKey || e.metaKey;
+      if (modifier && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        e.preventDefault();
         handleUndo();
-      } else if (e.ctrlKey && e.key === "y") {
+      } else if (modifier && (e.key.toLowerCase() === "y" || (e.shiftKey && e.key.toLowerCase() === "z"))) {
+        e.preventDefault();
         handleRedo();
       }
     };
 
+    const undoFromCommand = () => handleUndo();
+    const redoFromCommand = () => handleRedo();
+
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener(HISTORY_UNDO_EVENT, undoFromCommand);
+    window.addEventListener(HISTORY_REDO_EVENT, redoFromCommand);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener(HISTORY_UNDO_EVENT, undoFromCommand);
+      window.removeEventListener(HISTORY_REDO_EVENT, redoFromCommand);
     };
-  }, [setUndoRedoManager]);
+  }, [setUndoRedoManager, undoRedoManager]);
 
   const RedoIcon: ReactNode = <Redo2Icon className="w-5 h-5" />;
 
   const UndoIcon: ReactNode = <Undo2Icon className="w-5 h-5" />;
 
   const handleRedoButton = () => {
+    const command =
+      undoRedoManager.redoStack[undoRedoManager.redoStack.length - 1];
+    if (!command) return;
+    command.execute();
     setUndoRedoManager((draft) => {
-      const command = draft.redoStack.pop();
-      if (command) {
-        command.execute();
-        draft.undoStack.push(command);
-        toast("Redoing " + command.title, {
+      const movedCommand = draft.redoStack.pop();
+      if (movedCommand) {
+        draft.undoStack.push(movedCommand);
+        toast("Redoing " + movedCommand.title, {
           duration: 3000,
           icon: RedoIcon,
           cancel: {
@@ -120,12 +142,15 @@ const UndoRedoButtons: React.FC = () => {
   };
 
   const handleUndoButton = () => {
+    const command =
+      undoRedoManager.undoStack[undoRedoManager.undoStack.length - 1];
+    if (!command) return;
+    command.undo();
     setUndoRedoManager((draft) => {
-      const command = draft.undoStack.pop();
-      if (command) {
-        command.undo();
-        draft.redoStack.push(command);
-        toast("Undoing " + command.title, {
+      const movedCommand = draft.undoStack.pop();
+      if (movedCommand) {
+        draft.redoStack.push(movedCommand);
+        toast("Undoing " + movedCommand.title, {
           duration: 3000,
           icon: UndoIcon,
 

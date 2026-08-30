@@ -13,8 +13,9 @@ import { useCanvas } from "@/hooks/useCanvas";
 import { useProject } from "@/hooks/useProject";
 import { fillImageToScreen, fitImageToScreen } from "@/utils/CalcUtils";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
-import { set } from "lodash";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { HIGH_ZOOM_PRESETS, MAX_ZOOM_SCALE, MIN_ZOOM_SCALE, zoomScaleToPercent } from "@/utils/PixelInspection";
+import { snapCssCoordinateToDevicePixels } from "@/utils/ViewportInspection";
 
 const ZoomDropDown: React.FC = () => {
   const {
@@ -22,21 +23,38 @@ const ZoomDropDown: React.FC = () => {
     setCurrentZoom,
     app,
     container,
-    setContainer,
     setTargetZoom,
     targetPosition,
     targetMousePos,
     targetWorldMousePos,
     zoomFromUser,
+    pixelGridEnabled,
+    setPixelGridEnabled,
+    pixelViewEnabled,
+    setPixelViewEnabled,
   } = useCanvas();
   const { project } = useProject();
+  const [typedPercent, setTypedPercent] = useState("");
 
   const applyZoom = (zoom: number) => {
-    if (container && currentZoom !== zoom) {
+    if (container && Number.isFinite(zoom)) {
+      const clamped = Math.min(MAX_ZOOM_SCALE, Math.max(MIN_ZOOM_SCALE, zoom));
       console.log("Applying zoom:", zoom);
-      setTargetZoom(zoom);
+      setTargetZoom(clamped);
       zoomFromUser.current = false;
     }
+  };
+
+  const applyTypedPercent = () => {
+    const percent = Number(typedPercent);
+    if (Number.isFinite(percent) && percent > 0) applyZoom(percent / 100);
+    setTypedPercent("");
+  };
+
+  const handlePixelView = () => {
+    setPixelViewEnabled(!pixelViewEnabled);
+    setPixelGridEnabled(true);
+    if (currentZoom < 16) applyZoom(16);
   };
 
   const applyCenterZoom = (
@@ -91,10 +109,31 @@ const ZoomDropDown: React.FC = () => {
     }
   };
 
+  const handle100Percent = () => {
+    if (!container || !app.current) return;
+    const canvas = app.current.canvas as HTMLCanvasElement;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    setCurrentZoom(1);
+    setTargetZoom(1);
+    container.scale.set(1);
+    container.displaySprite?.scale.set(1);
+    zoomFromUser.current = false;
+    targetPosition.current.x = snapCssCoordinateToDevicePixels(rect.width / 2, dpr);
+    targetPosition.current.y = snapCssCoordinateToDevicePixels(rect.height / 2, dpr);
+    container.position.set(targetPosition.current.x, targetPosition.current.y);
+    container.displaySprite?.position.set(targetPosition.current.x, targetPosition.current.y);
+    targetMousePos.current = { ...targetPosition.current };
+    targetWorldMousePos.current = {
+      x: project.settings.canvasSettings.width / 2,
+      y: project.settings.canvasSettings.height / 2,
+    };
+  };
+
   const handleIncrementZoom = () => {
     if (container && currentZoom) {
       const newZoom = currentZoom + 0.1;
-      const adjustedZoom = Math.min(newZoom, 5);
+      const adjustedZoom = Math.min(newZoom, MAX_ZOOM_SCALE);
       applyZoom(adjustedZoom);
     }
   };
@@ -102,7 +141,7 @@ const ZoomDropDown: React.FC = () => {
   const handleDecrementZoom = () => {
     if (container && currentZoom) {
       const newZoom = currentZoom - 0.1;
-      const adjustedZoom = Math.max(newZoom, 0.05);
+      const adjustedZoom = Math.max(newZoom, MIN_ZOOM_SCALE);
       applyZoom(adjustedZoom);
     }
   };
@@ -138,7 +177,7 @@ const ZoomDropDown: React.FC = () => {
   });
 
   return (
-    <div className="w-16">
+    <div className="w-auto">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -146,13 +185,26 @@ const ZoomDropDown: React.FC = () => {
             variant="outline"
           >
             <span className="inline-block w-16 text-xs">
-              {Math.round(Number(currentZoom) * 100)}%
+              {Math.round(zoomScaleToPercent(Number(currentZoom)))}%
             </span>
             <ChevronDownIcon className="ml-0.5 w-6" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>Zoom Settings</DropdownMenuLabel>
+          <div className="flex gap-1 px-2 py-1">
+            <input
+              className="h-7 w-full rounded border bg-background px-2 text-xs"
+              placeholder="Zoom %"
+              value={typedPercent}
+              onChange={(event) => setTypedPercent(event.target.value)}
+              onKeyDown={(event) => { if (event.key === "Enter") applyTypedPercent(); }}
+              type="number"
+              min="5"
+              max="12800"
+            />
+            <Button className="h-7 px-2 text-xs" onClick={applyTypedPercent}>Set</Button>
+          </div>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem>
@@ -174,7 +226,25 @@ const ZoomDropDown: React.FC = () => {
               Fill screen
               <DropdownMenuShortcut>Ctrl+9</DropdownMenuShortcut>
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={handle100Percent}>
+              100% (Pixel inspection)
+            </DropdownMenuItem>
           </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            {HIGH_ZOOM_PRESETS.map((preset) => (
+              <DropdownMenuItem key={preset} onClick={() => applyZoom(preset)}>
+                {preset * 100}%
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handlePixelView}>
+            {pixelViewEnabled ? "✓ " : ""}Pixel View
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setPixelGridEnabled(!pixelGridEnabled)}>
+            {pixelGridEnabled ? "✓ " : ""}Pixel Grid
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

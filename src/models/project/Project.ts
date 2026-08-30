@@ -5,7 +5,7 @@ import { Container } from "pixi.js";
 import { v4 as uuidv4 } from "uuid";
 import { LayerX } from "./Layers/Layers";
 
-const INITIAL_SETTINGS: ProjectSettings = {
+const createInitialSettings = (): ProjectSettings => ({
   name: "New Project",
   dateCreated: Date.now(),
   dateModified: Date.now(),
@@ -15,12 +15,16 @@ const INITIAL_SETTINGS: ProjectSettings = {
     height: 1,
     antialias: false,
   },
-};
+});
 
 export class Project implements ProjectInterface {
-  settings: ProjectSettings = INITIAL_SETTINGS;
+  settings: ProjectSettings;
   id: string = uuidv4();
   container: Container | null = null;
+
+  constructor() {
+    this.settings = createInitialSettings();
+  }
 
   static [immerable] = true;
 }

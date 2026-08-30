@@ -13,7 +13,15 @@ import {
   RenderTexture,
   Sprite,
 } from "pixi.js";
-import imageCompression, { Options } from "browser-image-compression";
+import { getTextureCapability, getSafeTextureDimension } from "@/utils/TextureCapabilities";
+
+let desktopPixiCspFallback: Promise<unknown> | null = null;
+
+const ensureDesktopPixiCspSupport = async () => {
+  if (typeof window === "undefined" || !window.zynaloDesktop) return;
+  desktopPixiCspFallback ??= import("pixi.js/unsafe-eval");
+  await desktopPixiCspFallback;
+};
 
 export async function createMiniApp(
   canvasRef: React.MutableRefObject<ICanvas | null>,
@@ -77,14 +85,29 @@ export async function exportProjectImage(
 ): Promise<string> {
   // Temporarily enable rendering for export (RT architecture sets renderable=false)
   const wasRenderable = container.renderable;
+  const transparencyGrid = container.children[0];
+  const wasGridVisible = transparencyGrid?.visible;
   container.renderable = true;
+  // The checkerboard is editor chrome, not document content.
+  if (transparencyGrid) transparencyGrid.visible = false;
   try {
     let newFormat = format === "jpeg" ? "jpg" : format;
     const renderer = app.renderer;
+    const capability = getTextureCapability(renderer);
+    const limit = getSafeTextureDimension(capability.maxTextureDimension);
+    const documentWidth = Math.round((container as ContainerX).originalWidth ?? container.width);
+    const documentHeight = Math.round((container as ContainerX).originalHeight ?? container.height);
+    if (documentWidth > limit || documentHeight > limit) {
+      throw new Error(
+        `Full-resolution export is unavailable: the document (${documentWidth}×${documentHeight}) exceeds the safe GPU texture limit (${limit}). Tiled export is not implemented.`,
+      );
+    }
 
     const base64 = await renderer.extract.base64({
       antialias: true,
-      clearColor: 0xcdcdcd,
+      // Alpha-capable formats retain transparent pixels. JPEG has no alpha,
+      // so transparent areas are flattened onto the editor's default white.
+      clearColor: newFormat === "jpg" ? 0xffffff : "#00000000",
       resolution: 1,
       target: container,
       format: newFormat as "png" | "jpg" | "webp",
@@ -94,23 +117,17 @@ export async function exportProjectImage(
     const newFile = base64ToFile(base64, `project.${newFormat}`);
     console.log("Created new file");
 
-    const compressedImage = await imageCompression(newFile, {
-      maxSizeMB: 4.0,
-      alwaysKeepResolution: true,
-      fileType: `image/${format}`,
-      useWebWorker: true,
-    });
-    console.log("Compressed image");
-
-    const compressedBase64 = await fileToBase64(compressedImage);
-
-    console.log("Converted compressed image to base64");
-
-    return compressedBase64;
+    // The renderer already encoded exactly once in the requested format.
+    // Do not run browser-image-compression here: that would create a second
+    // lossy JPEG/WebP encode and could mutate the effective export dimensions.
+    return fileToBase64(newFile);
   } catch (error) {
     console.error("Error exporting project image:", error);
     throw error;
   } finally {
+    if (transparencyGrid && wasGridVisible !== undefined) {
+      transparencyGrid.visible = wasGridVisible;
+    }
     container.renderable = wasRenderable;
   }
 }
@@ -138,6 +155,11 @@ export function compositeToRT(renderer: any, container: ContainerX) {
   container.y = container.pivot.y;
   container.renderable = true;
 
+  // zIndex changes and move-tool updates must be reflected in the exact pass
+  // that refreshes the display texture, even if React's debounced render has
+  // not run yet.
+  if (container.sortableChildren) container.sortChildren();
+
   renderer.render({ container, target: rt, clear: true });
 
   // Restore zoom/pan transform and non-renderable state
@@ -145,6 +167,17 @@ export function compositeToRT(renderer: any, container: ContainerX) {
   container.x = px;
   container.y = py;
   container.renderable = false;
+
+  // If syncContainerBM deferred the texture swap to avoid a blank-frame flash,
+  // apply it now that the new RT has content. Destroy the stale RT only after
+  // the displaySprite is pointing at the live one.
+  if (container.displaySprite && container.displaySprite.texture !== rt) {
+    container.displaySprite.texture = rt;
+    if (container.staleRenderTexture) {
+      container.staleRenderTexture.destroy(true);
+      container.staleRenderTexture = null;
+    }
+  }
 }
 
 /**
@@ -198,6 +231,7 @@ async function createApp(
   color: number,
   settings: PerformanceSettings,
 ) {
+  await ensureDesktopPixiCspSupport();
   const newApp = new Application();
   console.log("Settings:", settings);
   await newApp.init({
@@ -207,12 +241,17 @@ async function createApp(
     antialias: true,
     preserveDrawingBuffer: true,
     resolution: window.devicePixelRatio,
-    powerPreference: settings.powerPreference,
+    ...(navigator.userAgent.includes("Windows")
+      ? {}
+      : { powerPreference: settings.powerPreference }),
     clearBeforeRender: settings.clearBeforeRender,
     backgroundColor: color,
     hello: true,
     autoDensity: true,
-    preference: "webgpu",
+    // Electron's WebGPU path can render only one triangle of Pixi's textured
+    // quad on some Windows/D3D configurations. Use the mature WebGL backend
+    // for desktop; the web app can continue honoring the user's preference.
+    preference: window.zynaloDesktop ? "webgl" : settings.graphicsAPI,
   });
   newApp.stage.eventMode = "static";
 
@@ -340,6 +379,78 @@ export function createContainerBM(
   newContainer.displaySprite = displaySprite;
 
   return newContainer;
+}
+
+export function syncContainerBM(
+  container: ContainerX,
+  containerWidth: number,
+  containerHeight: number,
+) {
+  if (
+    container.originalWidth === containerWidth &&
+    container.originalHeight === containerHeight
+  ) {
+    return;
+  }
+
+  const existingBackground = container.children[0] as Graphics | undefined;
+  const existingMask = container.children[1] as Graphics | undefined;
+  existingBackground?.removeFromParent();
+  existingMask?.removeFromParent();
+  existingBackground?.destroy();
+  existingMask?.destroy();
+
+  if (existingMask) {
+    container.mask = null;
+  }
+
+  container.originalWidth = containerWidth;
+  container.originalHeight = containerHeight;
+  container.width = containerWidth;
+  container.height = containerHeight;
+  container.pivot.set(
+    Math.round(containerWidth / 2),
+    Math.round(containerHeight / 2),
+  );
+
+  const background = createCheckerboardPattern(
+    containerWidth,
+    containerHeight,
+    20,
+  );
+  const mask = createMask(containerWidth, containerHeight);
+  container.addChildAt(mask, 0);
+  container.addChildAt(background, 0);
+  container.mask = mask;
+
+  // Replace the RT at the correct dimensions, but deliberately DO NOT update
+  // displaySprite.texture yet. Keep the old RT alive so the displaySprite
+  // keeps showing its previous content until compositeToRT has new pixels
+  // ready — preventing a blank-frame flash when switching between documents
+  // with different canvas dimensions.
+  if (container.renderTexture) {
+    // Park the old RT as stale so compositeToRT can destroy it after swapping.
+    container.staleRenderTexture = container.renderTexture;
+  }
+  container.renderTexture = RenderTexture.create({
+    width: containerWidth,
+    height: containerHeight,
+    resolution: 1,
+  });
+
+  if (!container.displaySprite) {
+    // No existing sprite — safe to assign immediately (nothing to preserve).
+    container.displaySprite = new Sprite(container.renderTexture);
+  }
+  // If displaySprite already exists, leave its texture alone here.
+  // compositeToRT will swap it once new content is ready and will destroy
+  // the stale RT at that point.
+
+  container.displaySprite.pivot.set(
+    Math.round(containerWidth / 2),
+    Math.round(containerHeight / 2),
+  );
+  container.compositeNeeded = true;
 }
 
 export function createAdjustmentContainer(

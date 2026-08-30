@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zynalo.local/schemas/diffusion/sdxl-spike-benchmark-v1.json",
+  "title": "Zynalo SDXL spike benchmark report",
+  "type": "object",
+  "required": [
+    "schema",
+    "parameters",
+    "checkpoint_sha256",
+    "runtime",
+    "timing",
+    "memory",
+    "deterministic_pixels_verified",
+    "runs"
+  ],
+  "properties": {
+    "schema": { "const": "zynalo.diffusion.sdxl-spike.benchmark/v1" },
+    "checkpoint_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "parameters": { "type": "object" },
+    "runtime": { "type": "object" },
+    "timing": { "type": "object" },
+    "memory": { "type": "object" },
+    "deterministic_pixels_verified": { "type": "boolean" },
+    "runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["run_index", "seed", "generation_ms", "memory", "pixel_sha256", "output"]
+      }
+    }
+  },
+  "additionalProperties": false
+}

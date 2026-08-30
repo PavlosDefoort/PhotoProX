@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+**/node_modules/
 
 # testing
 /coverage
@@ -11,9 +12,20 @@
 # next.js
 /.next/
 /out/
+/dist-electron/
+**/dist/
 
 # production
 /build
+/out-forge/
+**/build/
+**/out/
+**/coverage/
+**/.tools/
+**/.test-output/
+**/tmp/
+**/temp/
+*.log
 
 # misc
 .DS_Store
@@ -28,7 +40,11 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
+.env.*
+!.env.example
+!**/.env.example
 
 # vercel
 .vercel
@@ -43,3 +59,40 @@ next-env.d.ts
 
 
 .test-dist/
+
+# Python environments and caches
+.venv/
+venv/
+env/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/*.egg-info/
+*.pyc
+
+# Local models, weights, runtimes, and generated data
+**/models/
+**/weights/
+**/checkpoints/
+**/generated/
+**/outputs/
+**/huggingface/
+**/hub/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.gguf
+**/portable-python/
+**/portable-node/
+*.asar
+**/installers/
+**/benchmark-output/
+**/benchmarks/
+*.trace
+*.nvprof
+*.nsys-rep
+*.jsonl
+**/resources/tag-catalog/danbooru.csv

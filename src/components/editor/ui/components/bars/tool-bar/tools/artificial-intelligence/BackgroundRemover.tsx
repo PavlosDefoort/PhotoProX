@@ -23,7 +23,7 @@ import { useCanvas } from "@/hooks/useCanvas";
 import { useProject } from "@/hooks/useProject";
 import { findLayer } from "@/models/project/LayerManager";
 import { ImageLayer } from "@/models/project/Layers/Layers";
-import { base64StringToTexture } from "@/utils/ImageUtils";
+import { base64StringToTexture, setFullResolutionWorkingSource } from "@/utils/ImageUtils";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import {
@@ -587,7 +587,13 @@ const BackgroundRemover: React.FC = () => {
     setLayerManager((draft) => {
       draft.layers = draft.layers.map((layer) => {
         if (layer.id === target.id) {
-          (layer as ImageLayer).imageData.src = workingResult;
+          const imageLayer = layer as ImageLayer;
+          setFullResolutionWorkingSource(
+            imageLayer,
+            workingResult,
+            imageLayer.imageData.imageWidth,
+            imageLayer.imageData.imageHeight,
+          );
         }
         return layer;
       });

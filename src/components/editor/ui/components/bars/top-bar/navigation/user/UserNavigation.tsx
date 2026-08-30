@@ -70,7 +70,7 @@ const createComponents: { title: string; href: string; description: string }[] =
   [
     {
       title: "New Project",
-      href: "./editor",
+      href: "/studio",
       description: "Start a new fresh project from scratch.",
     },
     {
@@ -94,7 +94,7 @@ const components: { title: string; href: string; description: string }[] = [
   {
     title: "Basics",
     href: "https://photoproxdocs.vercel.app/basics",
-    description: "Start off your PhotoProX journey with learning the basics.",
+    description: "Start off your Zynalo journey with learning the basics.",
   },
   {
     title: "Colour Sciences",
@@ -111,19 +111,19 @@ const components: { title: string; href: string; description: string }[] = [
   {
     title: "Software Design",
     href: "/docs/primitives/scroll-area",
-    description: "Learn about the design of PhotoProX and how it was created.",
+    description: "Learn about the design of Zynalo and how it was created.",
   },
   {
     title: "Expert",
     href: "/docs/primitives/tabs",
     description:
-      "Become an expert in PhotoProX with these advanced level topics.",
+      "Become an expert in Zynalo with these advanced level topics.",
   },
   {
     title: "Graphic Design",
     href: "/docs/primitives/tooltip",
     description:
-      "Learn about graphic design and how it can be used in PhotoProX.",
+      "Learn about graphic design and how it can be used in Zynalo.",
   },
 ];
 
@@ -174,7 +174,7 @@ const UserNavigationMenu: React.FC = () => {
                     >
                       {/* <Icons.logo className="h-6 w-6" /> */}
                       <div className="mb-2 mt-4 text-lg font-medium">
-                        PhotoProX
+                        Zynalo
                       </div>
                       <p className="text-sm leading-tight text-muted-foreground">
                         Make Ordinary Photos Extraordinary

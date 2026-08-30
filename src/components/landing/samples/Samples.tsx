@@ -11,7 +11,7 @@ export const Samples: React.FC = () => {
             Enjoy some sample images
           </h1>
           <p className="lg:pl-6 lg:w-2/3 mx-auto leading-relaxed text-base">
-            Here are some sample images that have been edited with PhotoProX.
+            Here are some sample images that have been edited with Zynalo.
           </p>
         </div>
         <div className="flex flex-wrap md:-m-2 -m-1">

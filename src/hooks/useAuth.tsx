@@ -4,17 +4,17 @@ import { getUserState } from "@/services/FireBase";
 import { useContext, useEffect } from "react";
 
 export const useAuth = (): AuthContextValue => {
-  const { user, loading, photoProXUser, setPhotoProXUser } =
+  const { user, loading, zynaloUser, setZynaloUser } =
     useContext(AuthContext);
 
-  // Update the photoProXUser state through firebase
+  // Update the zynaloUser state through firebase
 
   useEffect(() => {
     if (!user) return;
-    getUserState(user).then((photoProXUser) => {
-      setPhotoProXUser(photoProXUser);
+    getUserState(user).then((zynaloUser) => {
+      setZynaloUser(zynaloUser);
     });
-  }, [setPhotoProXUser, user]);
+  }, [setZynaloUser, user]);
 
-  return { user, loading, photoProXUser, setPhotoProXUser };
+  return { user, loading, zynaloUser, setZynaloUser };
 };

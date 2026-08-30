@@ -1,5 +1,5 @@
 import type {
-  PhotoProxToolId,
+  ZynaloToolId,
   ToolAvailabilityContext,
   ToolParameterSchema,
 } from "../tools/types";
@@ -21,11 +21,11 @@ export interface SafeShowMeEditorContext extends ToolAvailabilityContext {
     contrast: number;
     saturation: number;
   }>;
-  supportedToolIds: PhotoProxToolId[];
+  supportedToolIds: ZynaloToolId[];
 }
 
 export interface EditPlanToolManifestEntry {
-  id: PhotoProxToolId;
+  id: ZynaloToolId;
   displayName: string;
   description: string;
   parameters: ToolParameterSchema;

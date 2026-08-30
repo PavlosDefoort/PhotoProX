@@ -29,7 +29,7 @@ export const DEFAULT_PERFORMANCE_SETTINGS: PerformanceSettings = {
   antialias: true,
   clearBeforeRender: true,
   graphicsAPI: "webgl",
-  useCompression: true,
+  useCompression: false,
   powerPreference: "high-performance",
   resolution: 1,
   roundPixels: true,
@@ -44,7 +44,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   performance: DEFAULT_PERFORMANCE_SETTINGS,
 };
 
-export const DEFAULT_GUEST_USER: PhotoProXUser = {
+export const DEFAULT_GUEST_USER: ZynaloUser = {
   uid: "guest",
   email: null,
   displayName: "Guest",
@@ -52,7 +52,7 @@ export const DEFAULT_GUEST_USER: PhotoProXUser = {
   settings: DEFAULT_USER_SETTINGS,
 };
 
-export interface PhotoProXUser {
+export interface ZynaloUser {
   uid: string;
   email: string | null;
   displayName: string | null;

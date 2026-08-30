@@ -15,6 +15,11 @@ export function useCanvas() {
     targetMousePos,
     targetWorldMousePos,
     zoomFromUser,
+    pendingZoomSnap,
+    pixelGridEnabled,
+    setPixelGridEnabled,
+    pixelViewEnabled,
+    setPixelViewEnabled,
   } = useContext(CanvasContext);
 
   return {
@@ -30,5 +35,10 @@ export function useCanvas() {
     targetMousePos,
     targetWorldMousePos,
     zoomFromUser,
+    pendingZoomSnap,
+    pixelGridEnabled,
+    setPixelGridEnabled,
+    pixelViewEnabled,
+    setPixelViewEnabled,
   };
 }

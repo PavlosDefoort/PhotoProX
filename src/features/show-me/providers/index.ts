@@ -5,7 +5,7 @@ import type {
   EditPlanProviderId,
   EditPlanToolManifest,
 } from "./types";
-import type { PhotoProxToolManifest } from "../tools/types";
+import type { ZynaloToolManifest } from "../tools/types";
 
 const deterministicProvider = new DeterministicEditPlanProvider();
 const ollamaProvider = new OllamaEditPlanProvider();
@@ -20,7 +20,7 @@ export const getEditPlanProvider = (
 ): EditPlanProvider => EDIT_PLAN_PROVIDERS[providerId];
 
 export const toEditPlanToolManifest = (
-  registryManifest: PhotoProxToolManifest,
+  registryManifest: ZynaloToolManifest,
 ): EditPlanToolManifest => ({
   version: registryManifest.version,
   tools: registryManifest.tools.map((tool) => ({

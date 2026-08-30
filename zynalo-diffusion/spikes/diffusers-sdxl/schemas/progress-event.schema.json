@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zynalo.local/schemas/diffusion/sdxl-spike-event-v1.json",
+  "title": "Zynalo SDXL spike JSONL event",
+  "type": "object",
+  "required": ["schema", "sequence", "timestamp", "event"],
+  "properties": {
+    "schema": { "const": "zynalo.diffusion.sdxl-spike.event/v1" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "event": {
+      "enum": [
+        "startup",
+        "checkpoint_hash_started",
+        "checkpoint_hash_completed",
+        "model_load_started",
+        "model_load_completed",
+        "run_started",
+        "progress",
+        "image_save_started",
+        "run_completed",
+        "benchmark_completed",
+        "error"
+      ]
+    },
+    "stage": { "type": "string" },
+    "progress": { "type": "number", "minimum": 0, "maximum": 1 },
+    "current_step": { "type": "integer", "minimum": 1 },
+    "total_steps": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": true
+}

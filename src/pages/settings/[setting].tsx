@@ -1,6 +1,24 @@
 import Layout from "@/components/settings/Layout";
+import type { GetStaticPaths, GetStaticProps } from "next";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
+
+const STATIC_SETTING_PAGES = [
+  "general",
+  "accessibility",
+  "preferences",
+  "developer",
+  "performance",
+  "appearance",
+  "models",
+] as const;
+
+export const getStaticPaths: GetStaticPaths = async () => ({
+  paths: STATIC_SETTING_PAGES.map((setting) => ({ params: { setting } })),
+  fallback: false,
+});
+
+export const getStaticProps: GetStaticProps = async () => ({ props: {} });
 
 const SettingPage: React.FC = () => {
   // Get the current state of the user's settings

@@ -1,0 +1,10 @@
+{
+  "name": "@zynalo/diffusion-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@zynalo/diffusion-contracts": "0.1.0",
+    "@zynalo/diffusion-engine": "0.1.0"
+  }
+}

@@ -32,8 +32,10 @@ import {
 } from "@/components/ui/tooltip";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useImageTransformActions } from "@/hooks/useImageTransformActions";
+import { BEFORE_DOCUMENT_SWITCH_EVENT } from "@/components/editor/editorEvents";
+import ScaleHandles from "./ScaleHandles";
 
-const TransformTool: React.FC = ({}) => {
+const TransformTool: React.FC<{ showToolOptions?: boolean }> = ({ showToolOptions = true }) => {
   const {
     project,
     setProject,
@@ -47,6 +49,11 @@ const TransformTool: React.FC = ({}) => {
 
   const target = findLayer(layerManager.layers, layerManager.target);
   const [update, setUpdate] = React.useState(false);
+  const [isRatioLocked, setIsRatioLocked] = React.useState(true);
+  const refreshTransformControls = useCallback(
+    () => setUpdate((value) => !value),
+    [],
+  );
 
   const requestPreviewComposite = useCallback(() => {
     if (container) {
@@ -144,6 +151,22 @@ const TransformTool: React.FC = ({}) => {
     };
   }, [editMode, handleCancel, setEditMode]);
 
+  useEffect(() => {
+    const handleDocumentSwitch = () => {
+      if (editMode === "transform") {
+        handleCancel();
+      }
+    };
+
+    window.addEventListener(BEFORE_DOCUMENT_SWITCH_EVENT, handleDocumentSwitch);
+    return () => {
+      window.removeEventListener(
+        BEFORE_DOCUMENT_SWITCH_EVENT,
+        handleDocumentSwitch,
+      );
+    };
+  }, [editMode, handleCancel]);
+
   const getOriginalValues = (targetSprite: SpriteX) => {
     const originalValues = {
       height: targetSprite.height,
@@ -192,7 +215,7 @@ const TransformTool: React.FC = ({}) => {
 
   return (
     <div className="w-full" id="transforming">
-      {target instanceof ImageLayer && editMode === "transform" && (
+      {showToolOptions && target instanceof ImageLayer && editMode === "transform" && (
         <div className="relative h-full w-full">
           <div
             className={`z-10 flex h-9 w-full flex-nowrap items-center gap-3 overflow-x-auto border-b-2 border-[#cdcdcd] bg-navbarBackground px-3 text-black dark:border-[#252525] dark:bg-navbarBackground dark:text-white`}
@@ -200,7 +223,12 @@ const TransformTool: React.FC = ({}) => {
             <span className="shrink-0 select-none text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Size
             </span>
-            <Dimensions target={target} update={update} />
+            <Dimensions
+              target={target}
+              update={update}
+              isRatio={isRatioLocked}
+              setIsRatio={setIsRatioLocked}
+            />
             <span className="shrink-0 select-none text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Position
             </span>
@@ -222,6 +250,11 @@ const TransformTool: React.FC = ({}) => {
             requestPreviewComposite={requestPreviewComposite}
             setUpdate={setUpdate}
             update={update}
+          />
+          <ScaleHandles
+            target={target}
+            onUpdate={refreshTransformControls}
+            isRatioLocked={isRatioLocked}
           />
         </div>
       )}

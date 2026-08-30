@@ -74,7 +74,9 @@ function renderImageLayer(
   }
   const imageSprite = layer.sprite;
   imageSprite.visible = layer.visible;
-  imageSprite.cullable = true;
+  // Layers are composited into a document-sized offscreen RenderTexture.
+  // Viewport culling can incorrectly drop moved sprites from that pass.
+  imageSprite.cullable = false;
   imageSprite.zIndex = layer.zIndex + 2;
   imageSprite.alpha = layer.opacity;
 
@@ -175,6 +177,19 @@ export function renderLayers(
 
   // Sort the layers from highest to lowest z-index
   const sortedLayers = filteredLayers.sort((a, b) => b.zIndex - a.zIndex);
+  const activeDisplayObjects = new Set<any>(
+    sortedLayers.flatMap<any>((layer) => {
+      if (layer instanceof ImageLayer) return [layer.sprite];
+      if (layer instanceof BackgroundLayer) return [layer.graphics];
+      return [];
+    }),
+  );
+
+  container.children.slice(2).forEach((child) => {
+    if (!activeDisplayObjects.has(child)) {
+      container.removeChild(child);
+    }
+  });
 
   container.sortableChildren = true;
 

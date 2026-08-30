@@ -13,7 +13,7 @@ const Navigation: React.FC = () => {
               className="hover:bg-buttonHover dark:hover:bg-buttonHover"
             >
               <Link
-                href={`/settings/${navItem.name}`}
+                href={`/settings/${navItem.name.toLowerCase()}`}
                 className="flex space-x-2"
               >
                 <navItem.icon />

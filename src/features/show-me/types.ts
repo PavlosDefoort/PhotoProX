@@ -1,16 +1,16 @@
 import {
-  PhotoProxToolId,
-  PhotoProxToolParameters,
+  ZynaloToolId,
+  ZynaloToolParameters,
   ShowMeControlId,
 } from "@/features/show-me/tools/types";
 import { SerializableEditorAction } from "@/interfaces/editor/EditDocument";
 
 export interface ShowMePlanStep<
-  K extends PhotoProxToolId = PhotoProxToolId,
+  K extends ZynaloToolId = ZynaloToolId,
 > {
   id: string;
   toolId: K;
-  parameters: PhotoProxToolParameters[K];
+  parameters: ZynaloToolParameters[K];
   title: string;
   explanation: string;
   controlId: ShowMeControlId;
@@ -40,7 +40,7 @@ export interface ShowMeAnalysisAnswer {
 export interface ShowMeLearningAnswer {
   answer: string;
   bullets: string[];
-  relatedTools: PhotoProxToolId[];
+  relatedTools: ZynaloToolId[];
   followUp?: string;
 }
 

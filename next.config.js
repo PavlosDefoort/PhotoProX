@@ -1,23 +1,32 @@
+const isDesktopBuild = process.env.ZYNALO_TARGET === "desktop";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: [
-          {
-            key: "Cross-Origin-Embedder-Policy",
-            value: "unsafe-none", // "same-origin-allow-popups"
-          },
-          {
-            key: "Cross-Origin-Opener-Policy",
-            value: "restrict-properties",
-          },
-        ],
-      },
-    ];
-  },
+  output: isDesktopBuild ? "export" : undefined,
+  trailingSlash: isDesktopBuild,
+  ...(isDesktopBuild
+    ? {}
+    : {
+        async headers() {
+          return [
+            {
+              source: "/(.*)",
+              headers: [
+                {
+                  key: "Cross-Origin-Embedder-Policy",
+                  value: "unsafe-none", // "same-origin-allow-popups"
+                },
+                {
+                  key: "Cross-Origin-Opener-Policy",
+                  value: "restrict-properties",
+                },
+              ],
+            },
+          ];
+        },
+      }),
   images: {
+    unoptimized: isDesktopBuild,
     remotePatterns: [
       {
         protocol: "https",

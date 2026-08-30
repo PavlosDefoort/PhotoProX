@@ -19,7 +19,7 @@ export const OpenSource: React.FC = () => {
               Open Source Philosophy
             </h1>
             <p className="text-base leading-relaxed xl:w-2/4 lg:w-3/4 mx-auto text-gray-500s">
-              PhotoProX is an open source project. We believe in the power of
+              Zynalo is an open source project. We believe in the power of
               community and collaboration.
             </p>
             <div className="flex mt-6 justify-center">

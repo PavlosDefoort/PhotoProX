@@ -1,14 +1,8 @@
 import { Container, RenderTexture, Sprite, Texture } from "pixi.js";
 
 export class SpriteX extends Sprite {
-  // getVertexData(): Float32Array | undefined {
-  //   // Access the protected vertexData property
-  //   return this.vertexData;
-  // }
   static from(source: Texture, skipCache?: boolean): SpriteX {
     const customSprite = new SpriteX(source);
-
-    // Add any custom logic here if needed
     return customSprite;
   }
 
@@ -23,6 +17,8 @@ export class ContainerX extends Container {
   originalHeight: number;
   displaySprite: Sprite | null = null;
   renderTexture: RenderTexture | null = null;
+  /** Old RT kept alive so displaySprite can still show it until compositeToRT swaps. */
+  staleRenderTexture: RenderTexture | null = null;
   compositeNeeded: boolean = false;
   alwaysComposite: boolean = false;
   directRenderMode: boolean = false;
@@ -41,6 +37,10 @@ export class ContainerX extends Container {
     if (this.renderTexture) {
       this.renderTexture.destroy(true);
       this.renderTexture = null;
+    }
+    if (this.staleRenderTexture) {
+      this.staleRenderTexture.destroy(true);
+      this.staleRenderTexture = null;
     }
     super.destroy(options);
   }

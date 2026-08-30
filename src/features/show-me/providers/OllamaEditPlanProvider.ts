@@ -34,7 +34,7 @@ const readOllamaConfig = (): OllamaConfig => ({
   timeoutMs: toSafeTimeout(process.env.NEXT_PUBLIC_SHOW_ME_OLLAMA_TIMEOUT_MS),
 });
 
-const EDIT_PLAN_SYSTEM_INSTRUCTIONS = `You are a constrained edit-planning model for PhotoProx.
+const EDIT_PLAN_SYSTEM_INSTRUCTIONS = `You are a constrained edit-planning model for Zynalo.
 Return JSON only. No markdown, prose, code fences, or explanations.
 Do not include UI selectors, control IDs, actions, policy text, or implementation notes.
 Do not access files, pixels, or external tools.
@@ -48,7 +48,7 @@ For overall appearance questions such as why the image looks flat, dark, muted, 
 Prefer short, editable plans using the registered tools only.
 If request is ambiguous or unsupported, return clarification.`;
 
-const ANALYSIS_ANSWER_SYSTEM_INSTRUCTIONS = `You are a constrained visual analysis assistant for PhotoProx.
+const ANALYSIS_ANSWER_SYSTEM_INSTRUCTIONS = `You are a constrained visual analysis assistant for Zynalo.
 Return JSON only. No markdown, prose, code fences, or explanations.
 Base your answer only on visualContext and the provided toolManifest.
 Treat visualContext as limited deterministic evidence, not certainty.
@@ -123,7 +123,7 @@ const ANALYSIS_ANSWER_OUTPUT_SCHEMA = {
   required: ["mode", "answer"],
 } as const;
 
-const INTERPRET_SYSTEM_INSTRUCTIONS = `You are a constrained request router for PhotoProx. You do NOT answer questions or invent facts.
+const INTERPRET_SYSTEM_INSTRUCTIONS = `You are a constrained request router for Zynalo. You do NOT answer questions or invent facts.
 Return JSON only. No markdown, prose, code fences, or explanations.
 Your only job is to classify the user's request into one route and, when it is an edit, map it onto supported tools.
 Routes:

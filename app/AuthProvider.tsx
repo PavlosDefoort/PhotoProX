@@ -5,7 +5,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { auth, ensureUserDocument } from "../src/services/FireBase"; // Import your Firebase authentication instance
 import {
   DEFAULT_GUEST_USER,
-  PhotoProXUser,
+  ZynaloUser,
 } from "@/interfaces/FirebaseInterfaces";
 
 interface AuthProviderProps {
@@ -15,8 +15,8 @@ interface AuthProviderProps {
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [photoProXUser, setPhotoProXUser] =
-    useState<PhotoProXUser>(DEFAULT_GUEST_USER);
+  const [zynaloUser, setZynaloUser] =
+    useState<ZynaloUser>(DEFAULT_GUEST_USER);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((authUser) => {
@@ -32,7 +32,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, photoProXUser, setPhotoProXUser }}
+      value={{ user, loading, zynaloUser, setZynaloUser }}
     >
       {children}
     </AuthContext.Provider>

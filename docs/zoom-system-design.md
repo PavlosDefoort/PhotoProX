@@ -1,4 +1,4 @@
-# PhotoProX Zoom System Design
+# Zynalo Zoom System Design
 
 ## Overview
 

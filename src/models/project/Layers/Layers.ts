@@ -32,6 +32,7 @@ export class ImageLayer extends LayerX implements ImageLayerInterface {
   imageData: ImageData;
   sprite: SpriteX;
   effects: LayerEffectInterface[] = [];
+  textureIsProxy = false;
 
   static [immerable] = true;
 

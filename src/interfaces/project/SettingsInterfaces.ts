@@ -3,6 +3,23 @@ export interface ImageData {
   imageWidth: number;
   imageHeight: number;
   name: string;
+  /** The original, untouched input when the layer came from a local file. */
+  originalBlob?: Blob;
+  originalMimeType?: string;
+  originalWidth?: number;
+  originalHeight?: number;
+  /** Persisted encoded original bytes, represented as a data URL in JSON. */
+  originalSourceSrc?: string;
+  workingMimeType?: string;
+  /** Full-resolution working representation. Kept separate from previews. */
+  fullResolutionSrc?: string;
+  fullResolutionWidth?: number;
+  fullResolutionHeight?: number;
+  /** Optional viewport-only proxy. It must never be used for committed edits. */
+  previewSrc?: string;
+  previewWidth?: number;
+  previewHeight?: number;
+  previewReason?: string;
 }
 
 export interface ImageLayerData {

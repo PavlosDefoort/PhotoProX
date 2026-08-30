@@ -4,13 +4,24 @@ import { MutableRefObject, ReactNode } from "react";
 import { Project } from "@/models/project/Project";
 import { EditMode } from "./types/ProjectRelatedTypes";
 import { Application } from "pixi.js";
-import { PhotoProXUser } from "./FirebaseInterfaces";
+import { ZynaloUser } from "./FirebaseInterfaces";
 import { LayerManager } from "@/models/project/LayerManager";
 import { UndoRedoManager } from "@/models/data-structures/UndoRedoManager";
 import { ContainerX } from "@/models/pixi-extends/SpriteX";
 import { EditDocument } from "./editor/EditDocument";
+import {
+  DocumentImageType,
+  DocumentSaveTarget,
+  EditorWorkspace,
+  ZynaloFileHandle,
+  WorkspaceDocumentState,
+} from "./editor/EditorWorkspace";
 
 export interface ProjectContextValue {
+  workspace: EditorWorkspace;
+  setWorkspace: (
+    arg: EditorWorkspace | DraftFunction<EditorWorkspace>,
+  ) => void;
   project: Project;
   setProject: (arg: Project | DraftFunction<Project>) => void;
   layerManager: LayerManager;
@@ -39,6 +50,35 @@ export interface ProjectContextValue {
   setLoadingTask: (value: "compressing" | "regular" | "inpainting") => void;
   loadingProgressText: string;
   setLoadingProgressText: (value: string) => void;
+  activeDocumentId: string | null;
+  activeDocument: WorkspaceDocumentState | null;
+  createBlankDocument: (options?: {
+    width?: number;
+    height?: number;
+    name?: string;
+    colorHex?: string;
+    opacity?: number;
+  }) => string;
+  openImageFile: (file: File, handle?: ZynaloFileHandle | null) => Promise<string | null>;
+  openProjectFile: (file: File, handle?: ZynaloFileHandle | null) => Promise<boolean>;
+  activateDocument: (documentId: string) => void;
+  reorderDocuments: (sourceIndex: number, destinationIndex: number) => void;
+  closeDocument: (documentId: string) => void;
+  cycleDocuments: (direction: 1 | -1) => void;
+  markDocumentSaved: (
+    documentId: string,
+    options?: {
+      fileName?: string | null;
+      preferredImageType?: DocumentImageType;
+      saveTarget?: DocumentSaveTarget | null;
+    },
+  ) => void;
+  updateActiveCanvasView: (view: {
+    currentZoom: number;
+    targetZoom: number;
+    position: { x: number; y: number };
+    initialized?: boolean;
+  }) => void;
 }
 
 export interface ThemeContextValue {
@@ -53,8 +93,8 @@ export interface ThemeProviderProps {
 export interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  photoProXUser: PhotoProXUser;
-  setPhotoProXUser: (value: PhotoProXUser) => void;
+  zynaloUser: ZynaloUser;
+  setZynaloUser: (value: ZynaloUser) => void;
 }
 
 export interface CanvasContextValue {
@@ -71,4 +111,18 @@ export interface CanvasContextValue {
   targetMousePos: MutableRefObject<{ x: number; y: number }>;
   targetWorldMousePos: MutableRefObject<{ x: number; y: number }>;
   zoomFromUser: MutableRefObject<boolean>;
+  /**
+   * Writing a value here asks the MovementLogic animation loop to synchronously
+   * snap the container transform and its internal zoom refs on the very next frame,
+   * bypassing React state batching. Set to null after the snap is consumed.
+   */
+  pendingZoomSnap: MutableRefObject<{
+    zoom: number;
+    x: number;
+    y: number;
+  } | null>;
+  pixelGridEnabled: boolean;
+  setPixelGridEnabled: (value: boolean) => void;
+  pixelViewEnabled: boolean;
+  setPixelViewEnabled: (value: boolean) => void;
 }

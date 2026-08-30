@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applySelectionAwareRasterOperation, brightnessContrastOperation } from "../src/utils/RasterOperations";
+import { applySelectionAwareRasterOperation, brightnessContrastOperation, extractSelectedPixels, translateSelectedPixels } from "../src/utils/RasterOperations";
 import { EditorStateCommand } from "../src/models/commands/editor/EditorStateCommand";
 import { ImageSelectionState, SelectionPath } from "../src/interfaces/editor/EditDocument";
 
@@ -46,4 +46,28 @@ test("preview cancellation and one-command apply/undo/redo retain exact snapshot
   command.redo(); assert.deepEqual([...current], [...changedPreview]);
   const laterSelection = selection([rectangle("new",0,1)], true); laterSelection.inverted = false;
   assert.deepEqual([...current], [...changedPreview]);
+});
+test("moving selected pixels cuts the source and composites at the destination", () => {
+  const pixels = new Uint8ClampedArray([
+    255,0,0,255, 0,255,0,255, 0,0,255,255,
+  ]);
+  const selection = { layerId: "layer", inverted: false, paths: [{ kind: "lasso" as const, mode: "new" as const, feather: 0, points: [{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1},{x:0,y:0}] }] };
+  const moved = translateSelectedPixels(pixels, 3, 1, selection, 1, 0);
+  assert.equal(moved[3], 0);
+  assert.deepEqual([...moved.slice(4, 8)], [255,0,0,255]);
+  assert.deepEqual([...moved.slice(8, 12)], [0,0,255,255]);
+});
+
+test("selection extraction makes unselected pixels transparent", () => {
+  const pixels = new Uint8ClampedArray([
+    255, 0, 0, 255, 0, 255, 0, 255,
+  ]);
+  const extracted = extractSelectedPixels(
+    pixels,
+    2,
+    1,
+    selection([rectangle("new", 0, 1)]),
+  );
+  assert.deepEqual([...extracted.slice(0, 4)], [255, 0, 0, 255]);
+  assert.deepEqual([...extracted.slice(4, 8)], [0, 0, 0, 0]);
 });

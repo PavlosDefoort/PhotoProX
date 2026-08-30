@@ -9,6 +9,7 @@ import {
   addLayer,
   LayerManager,
   moveLayer,
+  removeLayer,
 } from "@/models/project/LayerManager";
 import {
   BloomAdjustmentLayer,
@@ -17,6 +18,7 @@ import {
   SaturationAdjustmentLayer,
 } from "@/models/project/Layers/AdjustmentLayer";
 import {
+  AdjustmentLayer,
   BackgroundLayer,
   ImageLayer,
   LayerX,
@@ -24,6 +26,88 @@ import {
 import { toast } from "sonner";
 import { DraftFunction } from "use-immer";
 import { EditDocument } from "@/interfaces/editor/EditDocument";
+
+// The clipboard is deliberately a snapshot, rather than a reference to the live
+// layer. This makes Copy immune to later transforms or adjustment edits.
+let layerClipboard: LayerX | null = null;
+
+function copyValue<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function snapshotLayer(layer: LayerX): LayerX {
+  if (layer instanceof ImageLayer) {
+    const snapshot = Object.assign(
+      Object.create(Object.getPrototypeOf(layer)),
+      copyValue({ ...layer, sprite: undefined }),
+    ) as ImageLayer;
+    snapshot.id = layer.id;
+    snapshot.sprite = layer.sprite;
+    // Pixi objects are not safely JSON serializable. Capture the mutable display
+    // state that affects where the pasted image appears.
+    (snapshot as any).__spriteState = {
+      x: layer.sprite.x, y: layer.sprite.y, width: layer.sprite.width,
+      height: layer.sprite.height, angle: layer.sprite.angle,
+      scaleX: layer.sprite.scale.x, scaleY: layer.sprite.scale.y,
+      skewX: layer.sprite.skew.x, skewY: layer.sprite.skew.y,
+      anchorX: layer.sprite.anchor.x, anchorY: layer.sprite.anchor.y,
+    };
+    return snapshot;
+  }
+  return Object.assign(
+    Object.create(Object.getPrototypeOf(layer)),
+    copyValue(layer),
+  ) as LayerX;
+}
+
+export function copyLayer(layer: LayerX) {
+  if (layer instanceof BackgroundLayer) return;
+  layerClipboard = snapshotLayer(layer);
+}
+
+export function hasCopiedLayer() {
+  return layerClipboard !== null;
+}
+
+export async function pasteLayer(
+  layerManager: LayerManager,
+  setLayerManager: (arg: LayerManager | DraftFunction<LayerManager>) => void,
+) {
+  if (!layerClipboard) return;
+  const source = layerClipboard;
+  let pasted: LayerX;
+  if (source instanceof ImageLayer) {
+    const state = (source as any).__spriteState;
+    pasted = await layerManager.duplicateImageLayer(source as ImageLayer);
+    (pasted as ImageLayer).imageData = copyValue((source as ImageLayer).imageData);
+    if (state) {
+      const sprite = (pasted as ImageLayer).sprite;
+      sprite.position.set(state.x, state.y);
+      sprite.width = state.width; sprite.height = state.height;
+      sprite.angle = state.angle; sprite.scale.set(state.scaleX, state.scaleY);
+      sprite.skew.set(state.skewX, state.skewY);
+      sprite.anchor.set(state.anchorX, state.anchorY);
+    }
+    pasted.name = source.name + " copy";
+  } else if (source instanceof AdjustmentLayer) {
+    const type = source instanceof BrightnessAdjustmentLayer ? "Brightness" :
+      source instanceof SaturationAdjustmentLayer ? "Saturation" :
+      source instanceof BloomAdjustmentLayer ? "Bloom" : "Shadow";
+    pasted = layerManager.createAdjustmentLayer(source.clipToBelow, type,
+       layerManager.layers.length + 1, layerManager.layers.length + 1, source.open);
+    const adjustmentState = copyValue(source) as any;
+    delete adjustmentState.container;
+    delete adjustmentState.mask;
+    Object.assign(pasted, adjustmentState);
+  } else return;
+  setLayerManager((draft) => { draft.layers = addLayer(draft.layers, pasted); draft.target = pasted.id; });
+}
+
+export function cutLayer(layer: LayerX, setLayerManager: (arg: LayerManager | DraftFunction<LayerManager>) => void) {
+  if (layer instanceof BackgroundLayer) return;
+  copyLayer(layer);
+  setLayerManager((draft) => { draft.layers = removeLayer(draft.layers, layer.id); });
+}
 
 export async function handleDuplication(
   layer: LayerX,

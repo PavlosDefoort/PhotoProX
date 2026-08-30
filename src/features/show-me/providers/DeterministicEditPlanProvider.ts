@@ -309,7 +309,7 @@ export class DeterministicEditPlanProvider implements EditPlanProvider {
           : {
               mode: "learning-answer" as const,
               answer:
-                "I can explain brightness, contrast, saturation, rotation, and scaling using the trusted PhotoProx tool definitions.",
+                "I can explain brightness, contrast, saturation, rotation, and scaling using the trusted Zynalo tool definitions.",
               bullets: [],
               relatedTools: [],
               followUp:

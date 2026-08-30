@@ -1,48 +1,94 @@
-# PhotoProX
+# Zynalo
 
-Creator of PhotoProX, a cutting-edge web-based photo editor. Leveraging Next.js and Tailwind CSS, I blend graphical applications of calculus and linear algebra to deliver innovative image processing and transformation.
+Zynalo is the transitional home of two separate applications:
 
-## Features
+- **Zynalo Studio** — the existing web and desktop photo editor, historically
+  published as PhotoProX.
+- **Zynalo Diffusion** — a standalone Electron application for local/offline
+  image generation.
 
-- **Image Processing**: Apply filters, adjust brightness, and manipulate color channels.
-- **Image Transformation**: Crop, rotate, and resize images.
-- **Google Account Support**: Sign in with Google to save your work.
-- **Machine Learning**: Remove background using todays cutting-edge machine learning algorithms.
+The repository currently keeps the applications independent:
 
-## Technologies
-
-- **Next.js**: React framework for server-side rendering.
-- **Tailwind CSS**: Utility-first CSS framework for rapid styling.
-- **Firebase**: Cloud Firestore for user data storage.
-- **PixiJS**: 2D WebGL renderer for image editing.
-- **TensorFlow Python**: Machine learning library for image recognition.
-- **Stable Diffusion**: Image processing algorithm for denoising.
-- **AUTOMATIC 1111 WebUi API**: API to use stable diffusion and various other complex image processing algorithms.
-
-## Installation/User Guide
-
-Go to the [PhotoProX](https://photoprox.vercel.app/) website to start editing images. You can sign in with your Google account to save your work.
-
-Or, to run the project locally, follow these steps:
-
-1. Clone the repository:
-
-```bash
-git clone
+```text
+repository root/       Zynalo Studio / PhotoProX
+zynalo-diffusion/      Zynalo Diffusion and its private npm workspace
 ```
 
-2. Install the dependencies:
+This is intentionally not the final `apps/` and `packages/` monorepo layout.
+Both products remain separately buildable, packageable, installable,
+versionable, and releasable:
 
-```bash
+```text
+Zynalo Studio.exe
+Zynalo Diffusion.exe
+```
+
+## Studio
+
+Studio is the established Next.js photo editor. Existing root commands remain
+the source of truth:
+
+```powershell
 npm install
-```
-
-3. Run the development server:
-
-```bash
 npm run dev
+npm run build:web
+npm run dev:desktop
+npm run package:desktop
+npm run make:desktop
 ```
 
-## Appreciation
+See the root `package.json` for the complete command set. Studio may be worked
+on without installing or building Diffusion.
 
-I would like to thank my university professors for their guidance and support. I would also like to thank my family and friends for their encouragement and feedback.
+## Diffusion
+
+Diffusion is self-contained under [`zynalo-diffusion/`](zynalo-diffusion/).
+Read its [application README](zynalo-diffusion/README.md) for installation,
+development, typechecking, tests, Python setup, packaging, security, and
+offline model configuration. From that directory, the normal checks are:
+
+```powershell
+npm install
+npm run typecheck
+npm test
+npm run lint
+npm run build
+npm run package
+```
+
+Python, PyTorch, CUDA-enabled drivers, model checkpoints, and Hugging Face
+configuration are external prerequisites. They are deliberately not bundled
+or committed. Generated output, runtimes, caches, credentials, and model
+weights are excluded by the repository and Diffusion ignore rules.
+
+## Architecture direction
+
+The intended long-term model is one repository containing two applications and
+shared headless packages when justified. Potential shared boundaries include
+diffusion contracts, engine clients, generation recipes, prompt language,
+model profiles, model management, upscaler contracts, regional-generation
+contracts, and platform-neutral UI primitives.
+
+Application layouts, Electron main processes, preload bridges, storage,
+installers, release versions, update channels, and product-specific interfaces
+remain application-owned. Studio must not import Diffusion renderer components
+or Electron internals. Shared code must be platform-neutral and headless.
+
+The final `apps/studio`, `apps/diffusion`, and `packages/*` migration is
+deferred until **Studio first consumes the shared generation workflow**. The
+current boundary and migration inventory are documented in
+[docs/repository-architecture.md](docs/repository-architecture.md) and
+[zynalo-diffusion/docs/migration-inventory.md](zynalo-diffusion/docs/migration-inventory.md).
+
+## Development status and contribution notes
+
+Both products contain active experimental and transitional work; this README
+does not claim production readiness for unfinished features. Review the
+product-specific documentation before running optional real-engine or GPU
+checks. Do not commit secrets, local paths, model files, Python environments,
+packaged applications, or generated benchmark output. Preserve upstream
+notices for bundled source/data; see Diffusion's
+[dependency and licence inventory](zynalo-diffusion/docs/dependency-licence-inventory.md).
+
+The repository is currently hosted as `PhotoProx`; the Zynalo naming is the
+product direction during this transition.

@@ -5,6 +5,7 @@ import {
   LucideIcon,
   PaletteIcon,
   Settings2Icon,
+  Boxes,
   UserIcon,
   Wrench,
 } from "lucide-react";
@@ -37,6 +38,7 @@ export const navigationData: NavigationData[] = [
       { name: "Performance", icon: CogIcon },
       { name: "Keybindings", icon: KeyboardIcon },
       { name: "Appearance", icon: PaletteIcon },
+      { name: "Models", icon: Boxes },
     ],
   },
 ];

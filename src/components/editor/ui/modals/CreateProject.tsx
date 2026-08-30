@@ -29,9 +29,7 @@ import Image from "next/image";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useProject } from "@/hooks/useProject";
 import { useTheme } from "@/hooks/useTheme";
-import { BackgroundLayerInterface } from "@/interfaces/project/LayerInterfaces";
 import { Color, RGB } from "@/interfaces/types/ColorTypes";
-import { addLayer } from "@/models/project/LayerManager";
 import { convertFromTo } from "@/utils/CalcUtils";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { SketchPicker } from "react-color";
@@ -401,8 +399,7 @@ const SelectDimensions: React.FC<SelectDimensionsProps> = ({
 
 const CreateProject: React.FC = () => {
   const { darkMode } = useTheme();
-  const { project, setProject, setLanding, layerManager, setLayerManager } =
-    useProject();
+  const { createBlankDocument } = useProject();
   const [width, setWidth] = React.useState<string>("1920");
   const [stringWidth, setStringWidth] = React.useState<string>("1920");
   const [stringHeight, setStringHeight] = React.useState<string>("1080");
@@ -429,27 +426,13 @@ const CreateProject: React.FC = () => {
       300
     );
 
-    const backgroundLayer: BackgroundLayerInterface =
-      layerManager.createBackgroundLayer(
-        false,
-        color.hex,
-        Math.round(newPixels.width),
-        Math.round(newPixels.height),
-        color.rgb.a
-      );
-
-    // Convert the width and height to pixels, pixels are the goat unit
-    setLayerManager((draft) => {
-      draft.layers = addLayer(draft.layers, backgroundLayer);
-      draft.target = backgroundLayer.id;
+    createBlankDocument({
+      width: Math.round(newPixels.width),
+      height: Math.round(newPixels.height),
+      name,
+      colorHex: color.hex,
+      opacity: color.rgb.a,
     });
-    setProject((draft) => {
-      draft.settings.canvasSettings.width = Math.round(newPixels.width);
-      draft.settings.canvasSettings.height = Math.round(newPixels.height);
-      draft.settings.name = name;
-    });
-
-    setLanding(true);
   };
 
   useEffect(() => {

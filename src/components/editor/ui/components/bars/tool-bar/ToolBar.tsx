@@ -20,10 +20,17 @@ import BackgroundRemover from "./tools/artificial-intelligence/BackgroundRemover
 import Inpaint from "./tools/artificial-intelligence/Inpaint";
 import Generate from "./tools/artificial-intelligence/Generate";
 import { Brush, AutoAwesome } from "@mui/icons-material";
+import { LassoVariant, lassoVariants } from "./tools/lasso/LassoTool";
 
-const ToolBar: React.FC = () => {
+interface ToolBarProps {
+  lassoVariant: LassoVariant;
+  setLassoVariant: React.Dispatch<React.SetStateAction<LassoVariant>>;
+}
+
+const ToolBar: React.FC<ToolBarProps> = ({ lassoVariant, setLassoVariant }) => {
   const [openGenerate, setOpenGenerate] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+  const [openLasso, setOpenLasso] = React.useState(false);
   const [openAI, setOpenAI] = React.useState(false);
   const { editMode, setEditMode } = useProject();
   const { layerManager } = useProject();
@@ -31,6 +38,7 @@ const ToolBar: React.FC = () => {
 
   let timer: any;
   let aiTimer: any;
+  let lassoTimer: any;
 
   const handleMouseEnter = () => {
     clearTimeout(timer); // Clear any existing timeout
@@ -55,6 +63,9 @@ const ToolBar: React.FC = () => {
       setOpenAI(false);
     }, 200); // Adjust the delay time as needed
   };
+
+  const handleMouseEnterLasso = () => { clearTimeout(lassoTimer); setOpenLasso(true); };
+  const handleMouseLeaveLasso = () => { lassoTimer = setTimeout(() => setOpenLasso(false), 200); };
 
   useEffect(() => {
     if (editMode === "rembg" || editMode === "inpaint") {
@@ -209,12 +220,22 @@ const ToolBar: React.FC = () => {
               </Popover>
             </li>
             <li>
-              <Button aria-label="Lasso Tool (L)" title="Lasso Tool (L)" className={`w-6 flex items-center justify-center hover:bg-buttonHover ${editMode === "lasso" ? "bg-buttonHover" : "bg-navbarBackground"}`} variant="outline" onClick={() => {
+              <Popover open={openLasso}>
+                <PopoverTrigger asChild>
+                  <Button aria-label="Lasso Tool (L)" title="Lasso Tool (L)" className={`w-6 flex items-center justify-center hover:bg-buttonHover ${editMode === "lasso" ? "bg-buttonHover" : "bg-navbarBackground"}`} variant="outline" onMouseEnter={handleMouseEnterLasso} onMouseLeave={handleMouseLeaveLasso} onClick={() => {
                 if (!(target instanceof ImageLayer)) { toast.warning("Please select an image layer to make a selection"); return; }
                 setEditMode("lasso");
-              }}>
-                <Gesture aria-hidden="true" className="w-6 h-6 text-gray-500 dark:text-gray-100" />
-              </Button>
+              }}>{<Gesture aria-hidden="true" className="w-6 h-6 text-gray-500 dark:text-gray-100" />}</Button>
+                </PopoverTrigger>
+                <PopoverContent side="right" className="w-48 select-none" onMouseEnter={handleMouseEnterLasso} onMouseLeave={handleMouseLeaveLasso}>
+                  <div className="grid gap-1">
+                    {lassoVariants.map(([variant, label]) => <div key={variant} className="flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer hover:bg-buttonHover" onClick={() => { setLassoVariant(variant); setEditMode("lasso"); setOpenLasso(false); }}>
+                      {lassoVariant === variant && <CheckIcon className="h-4 w-4 text-blue-600" />}
+                      <Gesture className="h-5 w-5" /> <span>{label}</span>
+                    </div>)}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </li>
             <li>
               <Button

@@ -17,15 +17,15 @@ import SettingsSwitch from "./ui/SettingsSwitch";
 
 const Performance: React.FC = () => {
   const [hasChanged, setHasChanged] = useState(false);
-  const { user, loading, photoProXUser, setPhotoProXUser } = useAuth();
+  const { user, loading, zynaloUser, setZynaloUser } = useAuth();
   const [performanceSettings, setPerformanceSettings] =
     useState<PerformanceSettings>(DEFAULT_PERFORMANCE_SETTINGS);
 
   useEffect(() => {
-    if (!photoProXUser) return;
+    if (!zynaloUser) return;
     // Set the performance settings to the user's current settings
-    setPerformanceSettings(photoProXUser.settings.performance);
-  }, [photoProXUser, setPhotoProXUser]);
+    setPerformanceSettings(zynaloUser.settings.performance);
+  }, [zynaloUser, setZynaloUser]);
 
   const debouncedUpdateSettings = useMemo(
     () =>
@@ -46,15 +46,15 @@ const Performance: React.FC = () => {
   );
 
   useEffect(() => {
-    if (photoProXUser && hasChanged) {
+    if (zynaloUser && hasChanged) {
       // Set the performance settings to the user's current settings
-      debouncedUpdateSettings(photoProXUser.uid, performanceSettings);
+      debouncedUpdateSettings(zynaloUser.uid, performanceSettings);
     }
-  }, [debouncedUpdateSettings, performanceSettings, photoProXUser, hasChanged]);
+  }, [debouncedUpdateSettings, performanceSettings, zynaloUser, hasChanged]);
 
   return (
     <div>
-      {user && !loading && photoProXUser && (
+      {user && !loading && zynaloUser && (
         <div className="w-full flex-col space-y-5 mb-10">
           <div>
             <div className="border-b-2 pb-2">

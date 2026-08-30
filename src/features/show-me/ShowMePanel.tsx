@@ -45,10 +45,10 @@ import {
 } from "@/features/show-me/visual-analysis";
 import { createSelectedImageAnalysisRunner } from "@/features/show-me/visual-analysis/executor";
 import {
-  getPhotoProxTool,
-  getPhotoProxToolManifest,
-} from "@/features/show-me/tools/photoProxToolRegistry";
-import { PhotoProxToolId } from "@/features/show-me/tools/types";
+  getZynaloTool,
+  getZynaloToolManifest,
+} from "@/features/show-me/tools/zynaloToolRegistry";
+import { ZynaloToolId } from "@/features/show-me/tools/types";
 import {
   AssistantResponse,
   ShowMeAnalysisAnswer,
@@ -110,12 +110,12 @@ type ConversationEntry =
 const buildAssistantSummary = (plan: ShowMePlan) => {
   const toolNames = Array.from(
     new Set(
-      plan.steps.map((step) => getPhotoProxTool(step.toolId).displayName),
+      plan.steps.map((step) => getZynaloTool(step.toolId).displayName),
     ),
   );
   return `I can guide you with ${toolNames.join(
     ", ",
-  )} using real PhotoProx controls.`;
+  )} using real Zynalo controls.`;
 };
 
 const getStepStatus = (
@@ -276,9 +276,9 @@ const AssistantContent: React.FC<AssistantContentProps> = ({
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold">PhotoProx Assistant</h2>
+            <h2 className="text-sm font-semibold">Zynalo Assistant</h2>
             <p className="text-xs text-muted-foreground">
-              I answer, explain, and plan edits with real PhotoProx tools.
+              I answer, explain, and plan edits with real Zynalo tools.
             </p>
           </div>
         </div>
@@ -653,7 +653,7 @@ const AssistantContent: React.FC<AssistantContentProps> = ({
                   <div>
                     <CardTitle className="text-base">Tool explanation</CardTitle>
                     <CardDescription className="mt-1">
-                      Trusted guidance from the PhotoProx Tool Registry.
+                      Trusted guidance from the Zynalo Tool Registry.
                     </CardDescription>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -676,7 +676,7 @@ const AssistantContent: React.FC<AssistantContentProps> = ({
                   <div className="flex flex-wrap gap-2">
                     {learningAnswer.answer.relatedTools.map((toolId) => (
                       <Badge key={toolId} variant="outline">
-                        {getPhotoProxTool(toolId).displayName}
+                        {getZynaloTool(toolId).displayName}
                       </Badge>
                     ))}
                   </div>
@@ -715,7 +715,7 @@ const AssistantContent: React.FC<AssistantContentProps> = ({
                     <CardTitle className="text-base">Planned edit</CardTitle>
                     <CardDescription className="mt-1">
                       {plan.steps.length} step{plan.steps.length === 1 ? "" : "s"}{" "}
-                      using real PhotoProx tools.
+                      using real Zynalo tools.
                     </CardDescription>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -748,16 +748,16 @@ const AssistantContent: React.FC<AssistantContentProps> = ({
 
                 <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-200">
                   {guideActive
-                    ? "The matching PhotoProx control is highlighted in the editor."
+                    ? "The matching Zynalo control is highlighted in the editor."
                     : planCompleted
-                      ? "The plan was applied with the real PhotoProx controls and remains undoable."
+                      ? "The plan was applied with the real Zynalo controls and remains undoable."
                       : "Use Show me to walk through the real controls, or Do it for me to apply the same validated plan."}
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-3 p-4 pt-0">
                 {plan.steps.map((step, stepIndex) => {
-                  const tool = getPhotoProxTool(step.toolId as PhotoProxToolId);
+                  const tool = getZynaloTool(step.toolId as ZynaloToolId);
                   const status = getStepStatus(
                     stepIndex,
                     currentStep,
@@ -878,8 +878,8 @@ const AssistantContent: React.FC<AssistantContentProps> = ({
             Runs locally on this device.
           </p>
           <Input
-            aria-label="Ask PhotoProx how to edit"
-            placeholder="Ask PhotoProx how to edit..."
+            aria-label="Ask Zynalo how to edit"
+            placeholder="Ask Zynalo how to edit..."
             value={draftRequest}
             onChange={(event) => onChangeRequest(event.target.value)}
           />
@@ -963,7 +963,7 @@ const ShowMePanel = () => {
           : selectedLayer
             ? ("other" as const)
             : ("none" as const);
-  const availableAdjustmentToolIds: PhotoProxToolId[] = useMemo(
+  const availableAdjustmentToolIds: ZynaloToolId[] = useMemo(
     () =>
       selectedLayer instanceof ImageLayer
         ? getAdjustmentsForImage(
@@ -1056,7 +1056,7 @@ const ShowMePanel = () => {
       : `${selectedLayer.name} (not an image layer)`
     : null;
   const availableToolManifest = useMemo(
-    () => getPhotoProxToolManifest(toolContext),
+    () => getZynaloToolManifest(toolContext),
     [toolContext],
   );
   const supportedToolIds = useMemo(
@@ -1695,7 +1695,7 @@ const ShowMePanel = () => {
       "Apply Show Me plan",
     );
     const nextMessage = result.ok
-      ? "Plan applied with the real PhotoProx controls. You can undo it as one action."
+      ? "Plan applied with the real Zynalo controls. You can undo it as one action."
       : result.error;
     setMessage(nextMessage);
     pushConversation(
@@ -1762,7 +1762,7 @@ const ShowMePanel = () => {
                 Show Me
               </div>
               <Button
-                aria-label="Collapse PhotoProx Assistant"
+                aria-label="Collapse Zynalo Assistant"
                 size="icon"
                 type="button"
                 variant="ghost"
@@ -1776,7 +1776,7 @@ const ShowMePanel = () => {
         ) : (
           <div className="flex h-full w-12 items-start justify-center pt-4">
             <Button
-              aria-label="Open PhotoProx Assistant"
+              aria-label="Open Zynalo Assistant"
               className="rounded-full"
               size="icon"
               type="button"
@@ -1791,7 +1791,7 @@ const ShowMePanel = () => {
 
       <div className="xl:hidden">
         <Button
-          aria-label="Open PhotoProx Assistant"
+          aria-label="Open Zynalo Assistant"
           className="fixed right-4 top-20 z-40 rounded-full shadow-lg"
           size="icon"
           type="button"
@@ -1806,9 +1806,9 @@ const ShowMePanel = () => {
             side="right"
           >
             <SheetHeader className="sr-only">
-              <SheetTitle>PhotoProx Assistant</SheetTitle>
+              <SheetTitle>Zynalo Assistant</SheetTitle>
               <SheetDescription>
-                Chat-style editing guidance using real PhotoProx tools.
+                Chat-style editing guidance using real Zynalo tools.
               </SheetDescription>
             </SheetHeader>
             <AssistantContent {...contentProps} />

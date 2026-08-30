@@ -11,7 +11,7 @@ const DarkModeIcon = () => {
     ) as HTMLLinkElement;
     favicon;
     if (favicon) {
-      favicon.href = darkMode ? "/darkfavicon.ico" : "/favicon.ico";
+      favicon.href = "/zynalo-studio.ico";
     }
   }, [darkMode]);
 

@@ -2,11 +2,10 @@
 import {
   DEFAULT_USER_SETTINGS,
   PerformanceSettings,
-  PhotoProXUser,
+  ZynaloUser,
   UserSettings,
 } from "@/interfaces/FirebaseInterfaces";
-import { getAnalytics } from "firebase/analytics";
-import { initializeApp } from "firebase/app";
+import { FirebaseApp, initializeApp } from "firebase/app";
 import {
   Auth,
   GoogleAuthProvider,
@@ -50,9 +49,9 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID,
 };
 
-let app;
+let app: FirebaseApp;
 let user: User | null = null;
-let analytics;
+let analytics: import("firebase/analytics").Analytics | undefined;
 let db: Firestore;
 let auth: Auth;
 let storage: FirebaseStorage;
@@ -63,7 +62,19 @@ if (typeof window !== "undefined") {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
 
-  analytics = getAnalytics(app);
+  // Firebase Analytics is browser-origin telemetry. Electron uses the custom
+  // zynalo:// origin, which Firebase rejects, and its CSP intentionally does
+  // not permit loading Google Tag Manager. Keep the rest of Firebase active
+  // on desktop and initialize Analytics only for supported web browsers.
+  if (!window.zynaloDesktop) {
+    void import("firebase/analytics")
+      .then(async ({ getAnalytics, isSupported }) => {
+        if (await isSupported()) analytics = getAnalytics(app);
+      })
+      .catch((error) => {
+        console.warn("Firebase Analytics is unavailable:", error);
+      });
+  }
 
   // const appCheck = initializeAppCheck(app, {
   //   provider: new ReCaptchaV3Provider(
@@ -116,7 +127,7 @@ export const uploadLayer = async (
         try {
           // Resolve the promise when the upload is complete
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          toast("Image saved to PhotoProX Storage", {
+          toast("Image saved to Zynalo Storage", {
             duration: 10000,
             description: "View the image in Profile -> Photos",
             action: {
@@ -149,16 +160,16 @@ export const handleSignOut = async () => {
   }
 };
 
-export async function getUserState(user: User): Promise<PhotoProXUser> {
+export async function getUserState(user: User): Promise<ZynaloUser> {
   if (user.uid) {
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
     if (userSnap.exists()) {
-      return userSnap.data() as PhotoProXUser;
+      return userSnap.data() as ZynaloUser;
     } else {
       await ensureUserDocument(user);
       const newUserSnap = await getDoc(userRef);
-      return newUserSnap.data() as PhotoProXUser;
+      return newUserSnap.data() as ZynaloUser;
     }
   } else {
     throw new Error("User is not signed in");
@@ -187,7 +198,7 @@ export async function handleUpdateSettings(
 }
 
 async function createDefaultUserDocument(passedUser: User) {
-  const defaultDoc: PhotoProXUser = {
+  const defaultDoc: ZynaloUser = {
     uid: passedUser.uid,
     email: passedUser.email,
     displayName: passedUser.displayName || passedUser.email,
@@ -269,7 +280,7 @@ export const uploadFileFromGallery = async (
           // Resolve the promise when the upload is complete
 
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          toast("Image saved to PhotoProX Storage", {
+          toast("Image saved to Zynalo Storage", {
             duration: 10000,
             description: "View the image in Editor -> Profile -> Photos",
             action: {

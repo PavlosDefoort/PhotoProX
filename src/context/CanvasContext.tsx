@@ -16,4 +16,9 @@ export const CanvasContext = createContext<CanvasContextValue>({
   targetMousePos: { current: { x: 0, y: 0 } },
   targetWorldMousePos: { current: { x: 0, y: 0 } },
   zoomFromUser: { current: false },
+  pendingZoomSnap: { current: null },
+  pixelGridEnabled: false,
+  setPixelGridEnabled: () => {},
+  pixelViewEnabled: false,
+  setPixelViewEnabled: () => {},
 });

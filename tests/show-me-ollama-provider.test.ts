@@ -3,7 +3,7 @@ import test from "node:test";
 import { resolveUntrustedShowMeResponse } from "../src/features/show-me/createShowMePlan";
 import { toEditPlanToolManifest } from "../src/features/show-me/providers";
 import { OllamaEditPlanProvider } from "../src/features/show-me/providers/OllamaEditPlanProvider";
-import { getPhotoProxToolManifest } from "../src/features/show-me/tools/photoProxToolRegistry";
+import { getZynaloToolManifest } from "../src/features/show-me/tools/zynaloToolRegistry";
 import {
   parseVisualAnalysis,
   toPlannerVisualContext,
@@ -22,11 +22,11 @@ const providerInput = {
     ...imageContext,
     imageDimensions: { width: 1920, height: 1080 },
     currentAdjustmentValues: {},
-    supportedToolIds: getPhotoProxToolManifest(imageContext).tools.map(
+    supportedToolIds: getZynaloToolManifest(imageContext).tools.map(
       (tool) => tool.id,
     ),
   },
-  toolManifest: toEditPlanToolManifest(getPhotoProxToolManifest(imageContext)),
+  toolManifest: toEditPlanToolManifest(getZynaloToolManifest(imageContext)),
 };
 
 const visualAnalysisFixture = parseVisualAnalysis({
@@ -194,7 +194,7 @@ test("rejects unknown tools after local AI output via registry boundary", async 
   );
   assert.equal(resolved.ok, false);
   if (!resolved.ok) {
-    assert.match(resolved.error, /Unknown PhotoProx tool/);
+    assert.match(resolved.error, /Unknown Zynalo tool/);
   }
 });
 

@@ -16,10 +16,15 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
     const response = await axios.get(urlString, {
       responseType: "arraybuffer",
     });
-    res.writeHead(200, {
-      "Content-Type": response.headers["content-type"],
-      "Content-Length": response.headers["content-length"],
-    });
+    res.status(200);
+    const contentType = response.headers["content-type"];
+    const contentLength = response.headers["content-length"];
+    if (typeof contentType === "string") {
+      res.setHeader("Content-Type", contentType);
+    }
+    if (typeof contentLength === "string") {
+      res.setHeader("Content-Length", contentLength);
+    }
     res.end(response.data);
   } else {
     // res.status(400).send("Invalid URL");

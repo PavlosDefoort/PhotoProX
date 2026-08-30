@@ -1,4 +1,59 @@
 import { CanvasSource, Texture } from "pixi.js";
+import type { ImageLayer } from "@/models/project/Layers/Layers";
+
+/** Returns the committed, full-resolution working source (never a preview). */
+export const getFullResolutionImageSrc = (imageData: {
+  src: string;
+  fullResolutionSrc?: string;
+}) => imageData.fullResolutionSrc ?? imageData.src;
+
+/** Updates the working raster while preserving the untouched original source. */
+export const setFullResolutionWorkingSource = (
+  layer: ImageLayer,
+  src: string,
+  width: number,
+  height: number,
+  mimeType = layer.imageData.workingMimeType ?? "image/png",
+) => {
+  layer.imageData.src = src;
+  layer.imageData.fullResolutionSrc = src;
+  layer.imageData.imageWidth = width;
+  layer.imageData.imageHeight = height;
+  layer.imageData.fullResolutionWidth = width;
+  layer.imageData.fullResolutionHeight = height;
+  layer.imageData.workingMimeType = mimeType;
+  layer.imageData.previewSrc = undefined;
+  layer.imageData.previewWidth = undefined;
+  layer.imageData.previewHeight = undefined;
+  layer.imageData.previewReason = undefined;
+  layer.textureIsProxy = false;
+};
+
+/** Restores the working representation from persisted original encoded bytes. */
+export const restoreWorkingSourceFromOriginal = (layer: ImageLayer) => {
+  const original = layer.imageData.originalSourceSrc;
+  if (!original) return false;
+  setFullResolutionWorkingSource(
+    layer,
+    original,
+    layer.imageData.originalWidth ?? layer.imageData.imageWidth,
+    layer.imageData.originalHeight ?? layer.imageData.imageHeight,
+    layer.imageData.originalMimeType,
+  );
+  return true;
+};
+
+/** Reconstructs the runtime-only original Blob after JSON project loading. */
+export const originalSourceToBlob = async (layer: ImageLayer) => {
+  const src = layer.imageData.originalSourceSrc;
+  if (!src) return null;
+  const response = await fetch(src);
+  return response.blob();
+};
+
+export const revokeObjectUrl = (url: string | null | undefined) => {
+  if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
+};
 
 export const convertBytesToString = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes";
@@ -35,8 +90,7 @@ export const base64StringToTexture = async (
           height: image.height,
           antialias: true,
           scaleMode: "linear",
-          autoDensity: true,
-          mipmapFilter: "linear",
+          autoDensity: false,
         });
         const imageTexture = new Texture(canvasSource);
 

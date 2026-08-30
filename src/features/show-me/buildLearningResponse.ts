@@ -1,11 +1,11 @@
-import { getPhotoProxTool } from "./tools/photoProxToolRegistry";
-import type { PhotoProxToolId } from "./tools/types";
+import { getZynaloTool } from "./tools/zynaloToolRegistry";
+import type { ZynaloToolId } from "./tools/types";
 import type { ShowMeLearningAnswer } from "./types";
 
 const normalizeRequest = (request: string) => request.trim().toLowerCase();
 
-const findRequestedTools = (request: string): PhotoProxToolId[] => {
-  const matches = new Set<PhotoProxToolId>();
+const findRequestedTools = (request: string): ZynaloToolId[] => {
+  const matches = new Set<ZynaloToolId>();
   if (/\bbrightness\b/.test(request)) matches.add("adjustment.brightness");
   if (/\bcontrast\b/.test(request)) matches.add("adjustment.contrast");
   if (/\bsaturation\b|\bcolou?r\b|\bcolor\b/.test(request))
@@ -18,9 +18,9 @@ const findRequestedTools = (request: string): PhotoProxToolId[] => {
 };
 
 const buildSingleToolLearningAnswer = (
-  toolId: PhotoProxToolId,
+  toolId: ZynaloToolId,
 ): ShowMeLearningAnswer => {
-  const tool = getPhotoProxTool(toolId);
+  const tool = getZynaloTool(toolId);
   return {
     answer: `${tool.displayName} ${tool.education.whatItChanges}`,
     bullets: [
@@ -34,8 +34,8 @@ const buildSingleToolLearningAnswer = (
 };
 
 const buildBrightnessVsContrastAnswer = (): ShowMeLearningAnswer => {
-  const brightness = getPhotoProxTool("adjustment.brightness");
-  const contrast = getPhotoProxTool("adjustment.contrast");
+  const brightness = getZynaloTool("adjustment.brightness");
+  const contrast = getZynaloTool("adjustment.contrast");
   return {
     answer:
       "Brightness changes overall lightness, while contrast changes how strongly light and dark tones separate.",

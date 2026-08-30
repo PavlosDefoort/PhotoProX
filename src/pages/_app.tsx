@@ -17,7 +17,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <div>
       <Head>
-        <title>PhotoProX</title>
+        <title>Zynalo</title>
       </Head>
 
       <AuthProvider>

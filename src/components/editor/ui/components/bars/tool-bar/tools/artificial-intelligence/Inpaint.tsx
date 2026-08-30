@@ -25,7 +25,7 @@ import { useProject } from "@/hooks/useProject";
 import { useCanvas } from "@/hooks/useCanvas";
 import { findLayer } from "@/models/project/LayerManager";
 import { ImageLayer } from "@/models/project/Layers/Layers";
-import { base64StringToTexture } from "@/utils/ImageUtils";
+import { base64StringToTexture, setFullResolutionWorkingSource } from "@/utils/ImageUtils";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import React, { useEffect, useRef, useState, useCallback } from "react";
@@ -1091,9 +1091,12 @@ const Inpaint: React.FC = () => {
         draft.layers = draft.layers.map((layer) => {
           if (layer.id === target.id) {
             const imageLayer = layer as ImageLayer;
-            imageLayer.imageData.src = currentSrc;
-            imageLayer.imageData.imageWidth = target.imageData.imageWidth;
-            imageLayer.imageData.imageHeight = target.imageData.imageHeight;
+            setFullResolutionWorkingSource(
+              imageLayer,
+              currentSrc,
+              target.imageData.imageWidth,
+              target.imageData.imageHeight,
+            );
           }
           return layer;
         });

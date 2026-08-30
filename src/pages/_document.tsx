@@ -19,9 +19,9 @@ export default function Document() {
       <Head>
         <meta
           name="description"
-          content="PhotoProX is your one-stop shop for web based photo editing. With a wide range of tools, you can create stunning images in no time."
+          content="Zynalo is your one-stop shop for web based photo editing. With a wide range of tools, you can create stunning images in no time."
         />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/zynalo-studio.ico" />
         <script dangerouslySetInnerHTML={{ __html: setInitialThemeScript }} />
       </Head>
       <body className="bg-background text-foreground">

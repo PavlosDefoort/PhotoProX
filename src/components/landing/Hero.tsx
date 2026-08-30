@@ -1,7 +1,7 @@
 import { useTheme } from "@/hooks/useTheme";
 import { handleSignIn } from "@/services/FireBase";
 import GoogleColorIcon from "@/svg/GoogleColorIcon";
-import PhotoProXDocsIcon from "@/svg/PhotoProXDocsIcon";
+import ZynaloDocsIcon from "@/svg/ZynaloDocsIcon";
 import { ImgComparisonSlider } from "@img-comparison-slider/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,11 +23,11 @@ export const Hero: React.FC = () => {
             <span className="text-color-change  font-bold">Extraordinary</span>
           </h1>
           <p className="mb-8 leading-relaxed text-black text-lg dark:text-white">
-            Introducing PhotoProX, the ultimate free web based photo editing
+            Introducing Zynalo, the ultimate free web based photo editing
             tool.
           </p>
           <div className="flex flex-row w-full md:justify-center justify-center items-center">
-            <Link href="/editor">
+            <Link href="/studio">
               <button className="animate-bounce mb-6  text-white bg-indigo-500 border-0 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded text-lg">
                 Start Editing
               </button>
@@ -50,12 +50,12 @@ export const Hero: React.FC = () => {
             </button>
             <Link href={"https://photoproxdocs.vercel.app/"} target="_blank">
               <button className="bg-gray-100 dark:bg-black dark:text-slate-100 inline-flex py-3 px-5 rounded-lg items-center lg:ml-4 md:ml-0 ml-4 md:mt-4 mt-0 lg:mt-0 hover:bg-gray-200 focus:outline-none">
-                <PhotoProXDocsIcon />
+                <ZynaloDocsIcon />
                 <span className="ml-4 flex items-start flex-col leading-none">
                   <span className="text-xs text-gray-600 mb-1 dark:text-slate-100">
                     Check Out
                   </span>
-                  <span className="title-font font-medium">PhotoProX-Docs</span>
+                  <span className="title-font font-medium">Zynalo-Docs</span>
                 </span>
               </button>
             </Link>

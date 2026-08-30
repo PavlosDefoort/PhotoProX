@@ -1,7 +1,7 @@
 import {
-  getPhotoProxTool,
-  isPhotoProxToolId,
-} from "./tools/photoProxToolRegistry";
+  getZynaloTool,
+  isZynaloToolId,
+} from "./tools/zynaloToolRegistry";
 import type {
   UntrustedAnalysisAnswer,
   UntrustedEditPlan,
@@ -11,7 +11,7 @@ import type {
   UntrustedShowMeResponse,
 } from "./providers/types";
 import type {
-  PhotoProxToolId,
+  ZynaloToolId,
   ToolAvailabilityContext,
 } from "./tools/types";
 import type {
@@ -21,21 +21,21 @@ import type {
 } from "./types";
 import type { SerializableEditorAction } from "@/interfaces/editor/EditDocument";
 
-export type PlanStepResult<K extends PhotoProxToolId = PhotoProxToolId> =
+export type PlanStepResult<K extends ZynaloToolId = ZynaloToolId> =
   | { ok: true; step: ShowMePlanStep<K> }
   | { ok: false; error: string };
 
-export const createShowMePlanStep = <K extends PhotoProxToolId>(
+export const createShowMePlanStep = <K extends ZynaloToolId>(
   id: string,
   toolId: K,
   parameters: unknown,
   context: ToolAvailabilityContext,
 ): PlanStepResult<K> => {
-  const tool = getPhotoProxTool(toolId);
+  const tool = getZynaloTool(toolId);
   if (!tool.validateParameters(parameters)) {
     return {
       ok: false,
-      error: `Invalid parameters for PhotoProx tool "${toolId}".`,
+      error: `Invalid parameters for Zynalo tool "${toolId}".`,
     };
   }
   if (!tool.supports(context)) {
@@ -71,10 +71,10 @@ export const createShowMePlanStepFromUnknown = (
   parameters: unknown,
   context: ToolAvailabilityContext,
 ): PlanStepResult => {
-  if (!isPhotoProxToolId(toolId)) {
+  if (!isZynaloToolId(toolId)) {
     return {
       ok: false,
-      error: `Unknown PhotoProx tool "${toolId}".`,
+      error: `Unknown Zynalo tool "${toolId}".`,
     };
   }
   return createShowMePlanStep(id, toolId, parameters, context);
@@ -439,7 +439,7 @@ export const resolveUntrustedShowMeResponse = (
           answer: answer.slice(0, 320),
           bullets: sanitizeLineItems(untrustedResponse.bullets, 4),
           relatedTools: (untrustedResponse.relatedTools || [])
-            .filter(isPhotoProxToolId)
+            .filter(isZynaloToolId)
             .slice(0, 3),
           followUp: sanitizeSummary(untrustedResponse.followUp),
         },
